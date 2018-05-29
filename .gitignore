@@ -1,0 +1,14 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# working directories
+output/
+input/
+plots/
+
+# result files .csv / .log / .pdf
+*.csv
+*.log
+*.pdf

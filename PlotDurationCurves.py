@@ -68,6 +68,7 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv',
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
     #%% Output header information to log file
+    print('This is: %s, Version: %s' %(codeName, codeVersion))
     foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
@@ -155,6 +156,7 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
     #%% Output header information to log file
+    print('This is: %s, Version: %s' %(codeName, codeVersion))
     foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))

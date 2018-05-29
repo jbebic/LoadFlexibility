@@ -41,11 +41,13 @@ def GenerateSyntheticProfiles(NumProfiles, tstart, tend, meMean=200, htllr=2.0, 
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
     #%% Output header information to log file
+    print('This is: %s, Version: %s' %(codeName, codeVersion))
     foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
     foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
 
+    print('Generating %d profiles' %(NumProfiles))
     foutLog.write('Generating %d profiles\n' %(NumProfiles))
     foutLog.write('High to low load ratio: %.2f\n' %(htllr))
     foutLog.write('Mean value of monthly load energy: %.2f [MWh]\n' %(meMean))
@@ -80,15 +82,15 @@ def GenerateSyntheticProfiles(NumProfiles, tstart, tend, meMean=200, htllr=2.0, 
             t = np.arange(nint)/nint*days*24 # time[hours] subsamlpes are decimals
             y0 = anAvgs[i]
             y1max = 1/3*np.abs(np.random.normal(0,1)) # p.u. peak for daily variation
-            y1max = np.min([y1max, 0.5]) # limit daily variation peak to 0.5 (max to min daily variation 1.5/0.5 = 3)
+            y1max = min([y1max, 0.5]) # limit daily variation peak to 0.5 (max to min daily variation 1.5/0.5 = 3)
             y1max = y0*y1max # set peak in engineering units
             y1 = y1max*np.sin(((t%24.)-11.5)*2.*np.pi/24.) # generate daily variation as a sin(x) over 24h interval
             y2max = 1/3*np.abs(np.random.normal(0,1)) # pu peak for annual variation
-            y2max = np.min([y2max, (htllr-1.0)/(htllr+1.0)]) # limit annual variation peak to user-specified value htllr; solved from: (av+pk)/(av-pk) = htllr
+            y2max = min([y2max, (htllr-1.0)/(htllr+1.0)]) # limit annual variation peak to user-specified value htllr; solved from: (av+pk)/(av-pk) = htllr
             y2max = y0*y2max # set peak in engineering units
             y2 = y2max*np.sin((2.*(t/24.+(doymax-(doytstart-1)+365./4.)))*2.*np.pi/365.) # seasonal variation sin(2x)
             y = y0+y1+y2
-            y = np.min(y, 0.0) # ensure load can never be negative
+            y = np.maximum(y, np.zeros_like(y)) # ensure load can never be negative
             df1 = pd.DataFrame({'datetime':time,'Demand':y,'CustomerID':c})
             df = df.append(df1, ignore_index=True)
             i += 1
@@ -102,7 +104,8 @@ def GenerateSyntheticProfiles(NumProfiles, tstart, tend, meMean=200, htllr=2.0, 
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
     df.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr','Demand','CustomerID'], header=['datetimestr','Demand','CustomerID'], float_format='%.5f')
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
-
+    print('Finished')
+    
     return
 
 #%% Main script begins here

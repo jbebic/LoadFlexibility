@@ -4,11 +4,9 @@ __pycache__/
 *$py.class
 
 # working directories
-output/
-input/
-plots/
+output/**
+input/**
+plots/**
 
-# result files .csv / .log / .pdf
-*.csv
+# log files
 *.log
-*.pdf

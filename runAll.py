@@ -5,7 +5,7 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
-####### Before running this code, create a output, input and plot folder################# AJ July 10,2018 #########
+####### Before running this code, create an output, input and plot folder ################# AJ July 10,2018 #########
 
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
@@ -17,7 +17,7 @@ if True:
     GenerateSyntheticProfiles(10, # number of profiles to create
                               '2017-01-01 00:00', '2017-12-31 23:45', # date range
                               IDlen=6, meMean=200, htllr=2.0, # ID length, monthly energy mean, high to low load ratio (peak day / low day)
-                              dirout='input/', fnameout='synthetic2.csv', 
+                              dirout='input/', fnameout='synthetic2.csv',
                               dirlog='output/')
 
 #%% Review load profiles

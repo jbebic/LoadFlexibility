@@ -5,6 +5,8 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
+####### Before running this code, create a output, input and plot folder################# AJ July 10,2018 #########
+
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves

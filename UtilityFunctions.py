@@ -26,7 +26,8 @@ def logTime(foutLog, logMsg, tbase):
 def FixDST(dirin='./', fnamein='IntervalDataDST.csv', 
                    dirout='./', fnameout='IntervalData.csv', 
                    dirlog='./', fnameLog='FixDST.log',
-                   tzinput = 'America/Los_Angeles'):
+                   tzinput = 'America/Los_Angeles',
+                   OutputFormat = 'SCE'):
     #%% Version and copyright info to record on the log file
     codeName = 'FixDST.py'
     codeVersion = '1.0'
@@ -36,6 +37,16 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+
+#%% Prep DST transition times dataframe
+    tz = timezone(tzinput)
+    tzTransTimes = tz._utc_transition_times
+    tzTransInfo = tz._transition_info
+    df2 = pd.DataFrame.from_dict({'DSTbeginsUTC':tzTransTimes[11:-2:2], 'DSTendsUTC':tzTransTimes[12:-1:2],
+                                  'tzinfob'     :tzTransInfo[11:-2:2],  'tzinfoe'   :tzTransInfo[12:-1:2]})
+    df2['year']=pd.DatetimeIndex(df2['DSTbeginsUTC']).year.values
+    df2.set_index('year', inplace=True)
+
     
     #%% Output header information to log file
     print('This is: %s, Version: %s' %(codeName, codeVersion))
@@ -52,49 +63,61 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     foutLog.write('Read %d records\n' %df1.shape[0])
     foutLog.write('Columns are: %s\n' %' '.join(str(x) for x in df1.columns.tolist()))
 
-    print('Processing time records...')
-    foutLog.write('Processing time records\n')
-    dstr = df1['datetimestr'].str.split(':').str[0]
-    # print(dstr.head())
-    hstr = df1['datetimestr'].str.split(':').str[1]
-    # print(tstr.head())
-    mstr = df1['datetimestr'].str.split(':').str[2]
-    # sstr = df1['datetimestr'].str.split(':').str[3]
-    temp = dstr + ' ' + hstr + ':' + mstr
-    df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y  %H:%M')
+    print('Processing customers')
+    uniqueCIDs = df1['CustomerID'].unique()
+    print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
+    foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
+    for cid in uniqueCIDs:
+        print('Processing time records for: %s' %(str(cid)))
+        foutLog.write('Processing time records for: %s\n' %(str(cid)))
+        
+        dstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[0]
+        # print(dstr.head())
+        hstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[1]
+        # print(tstr.head())
+        mstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[2]
+        # sstr = df1['datetimestr'].str.split(':').str[3]
+        temp = dstr + ' ' + hstr + ':' + mstr
+        df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y  %H:%M')
 
-    tz = timezone(tzinput)
-    tzTransTimes = tz._utc_transition_times
-    tzTransInfo = tz._transition_info
-    df2 = pd.DataFrame.from_dict({'DSTbeginsUTC':tzTransTimes[11:-2:2], 'DSTendsUTC':tzTransTimes[12:-1:2],
-                                  'tzinfob'     :tzTransInfo[11:-2:2],  'tzinfoe'   :tzTransInfo[12:-1:2]})
-    df2['year']=pd.DatetimeIndex(df2['DSTbeginsUTC']).year.values
-    df2.set_index('year', inplace=True)
-
-    # Find the transtion times for the year in df1
-    year = df1['datetime'][0].year
-    dst1 = df2['DSTbeginsUTC'][year]+df2['tzinfob'][year][0]
-    dst2 = df2['DSTendsUTC'][year]  +df2['tzinfoe'][year][0]
-    
-    dst1a = dst1 - pd.Timedelta(hours=1)
-    # dst2a = dst2 + pd.Timedelta(hours=1)
-    dst2b = dst2 + pd.Timedelta(hours=2)
-    if df1[df1['datetimestr'] == dst1a].empty:
-        # There is a blank record at the start of DST, shift the records to the left
-        df1.loc[(df1['datetimestr'] > dst1a) & (df1['datetimestr'] < dst2b), 'datetimestr'] = df1[(df1['datetimestr'] > dst1a) & (df1['datetimestr'] < dst2b)]['datetimestr'] - pd.Timedelta(hours=1)
-        if (df1[df1['datetimestr'] == dst2]['datetimestr'].size > 1):
-            # There is a double record at the end of DST, move one of them to the right
-            for td in [pd.Timedelta('0 min'), pd.Timedelta('15 min'), pd.Timedelta('30 min'), pd.Timedelta('45 min')]:
-                print(td)
-
+        if df1[df1['CustomerID'] == cid]['datetime'].dt.strftime('%Y').unique().size > 1:
+            print('  Time records contain more than one year of data - aborting\n')
+            foutLog.write('\n  Time records contain more than one year of data - aborting\n')
+            logTime(foutLog, '\nRunFinished at: ', codeTstart)
+            return
+        
+        # Find the transtion times for the year in df1
+        year = df1[df1['CustomerID'] == cid]['datetime'].iloc[0].year
+        dst1 = df2['DSTbeginsUTC'][year]+df2['tzinfob'][year][0]
+        dst2 = df2['DSTendsUTC'][year]  +df2['tzinfoe'][year][0]
+        
+        dst1a = dst1 - pd.Timedelta(hours=1)
+        # dst2a = dst2 + pd.Timedelta(hours=1)
+        dst2b = dst2 + pd.Timedelta(hours=2)
+        if df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst1a)].empty:
+            # There is a blank record at the start of DST, shift the records to the left
+            df1.loc[(df1['CustomerID'] == cid) & (df1['datetime'] > dst1a) & (df1['datetime'] < dst2b), 'datetime'] = df1[(df1['CustomerID'] == cid) & (df1['datetime'] > dst1a) & (df1['datetime'] < dst2b)]['datetime'] - pd.Timedelta(hours=1)
+            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2)]['datetime'].size > 1):
+                # There is a double record at the end of DST, move one of them to the right
+                for td in [pd.Timedelta('0 min'), pd.Timedelta('15 min'), pd.Timedelta('30 min'), pd.Timedelta('45 min')]:
+                    ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
+                    temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
+                    df1.at[ix, 'datetime'] = temp
+                    df1.at[ix, 'datetimestr'] = temp.strftime('%d%b%Y:%H:%M').upper()
 
     print('\nWriting: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df1.to_csv(os.path.join(dirout,fnameout), index=False, float_format='%.1f', columns=['datetimestr', 'Demand', 'CustomerID'])
+    if OutputFormat == 'SCE':
+        df1.sort_values(by=['CustomerID', 'datetimestr'], inplace = True)
+        df1.to_csv(os.path.join(dirout,fnameout), index=False, float_format='%.1f', columns=['datetimestr', 'Demand', 'CustomerID'])
+    else:
+        df1.set_index(['CustomerID', 'datetime'], inplace=True)
+        df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
+        # df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+        df1.to_csv(os.path.join(dirout,fnameout), index=True, float_format='%.1f', date_format='%Y-%m-%d %H:%M', columns=['Demand'])
 
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
-    
     
 def ConvertFeather(dirin='./', fnamein='IntervalData.feather', 
                    dirout='./', fnameout='IntervalData.csv', 
@@ -191,7 +214,8 @@ if __name__ == "__main__":
 #                CorrectDST = True,
 #                writeOutput = True)
 
-    FixDST(dirin='input/', fnamein='synthetic2.csv', 
-                   dirout='output/', fnameout='synthetic2a.csv', 
+    FixDST(dirin='input/', fnamein='two_grocers_DST_test.csv', 
+                   dirout='output/', fnameout='two_grocers.csv', 
                    dirlog='output/', fnameLog='FixDST.log',
-                   tzinput = 'America/Los_Angeles')
+                   tzinput = 'America/Los_Angeles',
+                   OutputFormat = 'SCE')

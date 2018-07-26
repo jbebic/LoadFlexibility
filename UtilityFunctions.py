@@ -52,6 +52,17 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     foutLog.write('Read %d records\n' %df1.shape[0])
     foutLog.write('Columns are: %s\n' %' '.join(str(x) for x in df1.columns.tolist()))
 
+    print('Processing time records...')
+    foutLog.write('Processing time records\n')
+    dstr = df1['datetimestr'].str.split(':').str[0]
+    # print(dstr.head())
+    hstr = df1['datetimestr'].str.split(':').str[1]
+    # print(tstr.head())
+    mstr = df1['datetimestr'].str.split(':').str[2]
+    # sstr = df1['datetimestr'].str.split(':').str[3]
+    temp = dstr + ' ' + hstr + ':' + mstr
+    df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y  %H:%M')
+
     tz = timezone(tzinput)
     tzTransTimes = tz._utc_transition_times
     tzTransInfo = tz._transition_info
@@ -61,7 +72,7 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     df2.set_index('year', inplace=True)
 
     # Find the transtion times for the year in df1
-    year = df1['datetimestr'][0].year
+    year = df1['datetime'][0].year
     dst1 = df2['DSTbeginsUTC'][year]+df2['tzinfob'][year][0]
     dst2 = df2['DSTendsUTC'][year]  +df2['tzinfoe'][year][0]
     

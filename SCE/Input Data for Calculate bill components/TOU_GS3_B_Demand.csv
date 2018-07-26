@@ -1,0 +1,9 @@
+Season,Hour,Number,TOU-GS3-B
+Summer,Peak,1,20.01
+Summer,Mid,2,3.94
+Summer,Off,3,0
+Summer,CPP,4,-11.44
+Winter,Mid,5,0
+Winter,Off,6,0
+Summer,Non-coincident,,18.45
+Winter,Non-coincident,,18.45

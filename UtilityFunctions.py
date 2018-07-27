@@ -67,9 +67,11 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     uniqueCIDs = df1['CustomerID'].unique()
     print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
+    i = 1
     for cid in uniqueCIDs:
-        print('Processing time records for: %s' %(str(cid)))
+        print('Processing time records for: %s (%d of %d)' %(str(cid), i, uniqueCIDs.size))
         foutLog.write('Processing time records for: %s\n' %(str(cid)))
+        i += 1
         
         dstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[0]
         # print(dstr.head())

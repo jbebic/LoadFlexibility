@@ -105,8 +105,9 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
                     ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
                     temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
                     df1.at[ix, 'datetime'] = temp
-                    df1.at[ix, 'datetimestr'] = temp.strftime('%d%b%Y:%H:%M').upper()
-
+            # df1.at[:, 'datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').upper()
+    df1['datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').str.upper()
+            
     if OutputFormat == 'SCE':
         print('\nWriting: %s in %s format' %(os.path.join(dirout,fnameout), OutputFormat))
         foutLog.write('Writing: %s in %s format\n' %(os.path.join(dirout,fnameout), OutputFormat))
@@ -189,4 +190,4 @@ if __name__ == "__main__":
                    dirout='output/', fnameout='two_grocers.csv', 
                    dirlog='output/', fnameLog='FixDST.log',
                    tzinput = 'America/Los_Angeles',
-                   OutputFormat = 'ISO')
+                   OutputFormat = 'SCE')

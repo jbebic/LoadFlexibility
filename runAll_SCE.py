@@ -49,7 +49,7 @@ if False:
 
 #%% Normalize profiles
 if True:
-    NormalizeLoads(dirin='output/', fnamein='synthetic2.csv', ignorein='synthetic2.ignore.csv',
+    NormalizeLoads(dirin='output/', fnamein='synthetic2.csv',
                    dirout='output/', fnameout='synthetic2.normalized.csv',
                    dirlog='output/')
     

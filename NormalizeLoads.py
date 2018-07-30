@@ -56,7 +56,10 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv',
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
     foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
     foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand\n')
+    i = 1
     for cid in uniqueCIDs:
+        print ('%s (%d of %d)' %(cid, i, uniqueCIDs.size))
+        i += 1
         df2 = df1[df1['CustomerID'] == cid]
         foutLog.write('%s, %d, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max()))
 

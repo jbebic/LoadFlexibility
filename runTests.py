@@ -43,7 +43,7 @@ if False:
 
 #%% Normalize profiles
 if True:
-    NormalizeLoads(dirin='testdata/', fnamein='two_grocers_modified.csv',
+    NormalizeLoads(dirin='testdata/', fnamein='two_grocers_modified.csv', ignorein='two_grocers.ignore.csv',
                    dirout='testdata/', fnameout='two_grocers_modified.normalized.csv',
                    dirlog='testdata/')
     

@@ -80,7 +80,7 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         mstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[2]
         # sstr = df1['datetimestr'].str.split(':').str[3]
         temp = dstr + ' ' + hstr + ':' + mstr
-        df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y  %H:%M')
+        df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
 
         if df1[df1['CustomerID'] == cid]['datetime'].dt.strftime('%Y').unique().size > 1:
             print('  Time records contain more than one year of data - aborting\n')

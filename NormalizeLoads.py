@@ -55,9 +55,10 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv',
     uniqueCIDs = df1['CustomerID'].unique()
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
     foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
+    foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand\n')
     for cid in uniqueCIDs:
         df2 = df1[df1['CustomerID'] == cid]
-        foutLog.write('%s: %d records, min=%.2f avg=%.2f, max=%.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max()))
+        foutLog.write('%s, %d, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max()))
 
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
@@ -105,7 +106,7 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv',
     mstr = df1['datetimestr'].str.split(':').str[2]
     # sstr = df1['datetimestr'].str.split(':').str[3]
     temp = dstr + ' ' + hstr + ':' + mstr
-    df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y  %H:%M')
+    df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
 
     df1.set_index(['CustomerID', 'datetime'], inplace=True)
     df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
@@ -136,7 +137,7 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv',
         foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))
         foutLog.write('Time records end on: %s\n' %df2.index[-1].strftime('%Y-%m-%d %H:%M'))
         deltat = df2.index[-1]-df2.index[0]
-        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)))
+        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
         
         dAvg = df2['Demand'].mean()
         dMin = df2['Demand'].min()

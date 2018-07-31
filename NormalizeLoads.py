@@ -134,8 +134,10 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
     print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
     df1['NormDmnd']=np.nan # Add column of normalized demand to enable setting it with slice index later
+    i = 1
     for cid in uniqueCIDs:
-        print('Processing %s' %cid)
+        print ('Processing %s (%d of %d)' %(cid, i, uniqueCIDs.size))
+        i += 1
         df2 = df1.loc[cid] # df1[df1['CustomerID'] == cid]
         df2['deltaT'] = pd.to_timedelta('15min')
         df2.loc[df2.index[1:-1], 'deltaT'] = df2.index.values[1:-1] - df2.index.values[0:-2]

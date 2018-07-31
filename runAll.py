@@ -5,7 +5,7 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
-from UtilityFunctions import ConvertFeather, FixDST
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -46,13 +46,25 @@ if False:
     ReviewLoads(dirin='output/', fnamein='synthetic2.csv',
                    dirout='output/', fnameout='synthetic2.summary.csv',
                    dirlog='output/')
+#%% Export the defected
+if False:   
+    ExportLoadFiles(dirin='output/', fnamein='synthetic2.csv', explist='ExportCIDs.csv',
+                   dirout='output/', # fnameout derived from customer IDs
+                   dirlog='output/')
 
+if True:   
+    ExportLoadFiles(dirin='input/', fnamein='synthetic2.csv', explist='ExportCIDs.csv',
+                   dirout='input/', # fnameout derived from customer IDs
+                   dirlog='input/')
 #%% Normalize profiles
-if True:
+if False:
     NormalizeLoads(dirin='output/', fnamein='synthetic2.csv', ignorein='synthetic2.ignore.csv',
                    dirout='output/', fnameout='synthetic2.normalized.csv',
                    dirlog='output/')
-    
+if False:
+    NormalizeLoads(dirin='output/', fnamein='21861.csv', ignorein='ignore.none.csv',
+                   dirout='output/', fnameout='21861.normalized.csv',
+                   dirlog='output/')
 #%% Plot duration curves
 if False:
     PlotDurationCurves(dirin='output/', fnamein='two_grocers_test.csv',

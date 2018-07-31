@@ -127,7 +127,8 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
     foutLog.write('Number of interval records after re-indexing: %d\n' %df1['Demand'].size)
 
     # Dropping ignored CIDs
-    df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
+    if(len(df9['CustomerID'].tolist())>0):
+        df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
     
     # Processing records by CID
     uniqueCIDs = df1.index.get_level_values('CustomerID').unique().values # df1['CustomerID'].unique()

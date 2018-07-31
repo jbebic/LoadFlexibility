@@ -23,11 +23,72 @@ def logTime(foutLog, logMsg, tbase):
     codeTdelta = codeTnow - tbase
     foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
 
+def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.csv',
+           dirout='./', # fnameout derived from customer IDs
+           dirlog='./', fnameLog='ExportLoadFiles.log',):
+    #%% Version and copyright info to record on the log file
+    codeName = 'ExportLoadFiles.py'
+    codeVersion = '1.0'
+    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
+    codeAuthors = "Jovan Bebic GE Global Research\n"
+
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+
+    #%% Output header information to log file
+    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
+    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
+    foutLog.write('%s\n' %(codeCopyright))
+    foutLog.write('%s\n' %(codeAuthors))
+    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    # Output file information to log file
+
+    print('Reading: %s' %os.path.join(dirin,explist))
+    foutLog.write('Reading: %s\n' %os.path.join(dirin,explist))
+    df9 = pd.read_csv(os.path.join(dirin,explist), 
+                      header = 0, 
+                      usecols = [0], 
+                      names=['CustomerID'],
+                      dtype={'CustomerID':np.str})
+    print('Total number of CIDs to export: %d' %df9['CustomerID'].size)
+    foutLog.write('Total number of interval records read: %d\n' %df9['CustomerID'].size)
+    
+    # Output file information to log file
+    print('Reading: %s' %os.path.join(dirin,fnamein))
+    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
+    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                      header = 0, 
+                      usecols = [0, 1, 2], 
+                      names=['datetimestr', 'Demand', 'CustomerID'],
+                      dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+
+    print('Total number of interval records read: %d' %df1['Demand'].size)
+    foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
+    
+    export_list = df9['CustomerID'].tolist()
+    for cid in export_list:
+        # Check if the cid exists in the input file and export if yes
+        if cid in df1['CustomerID'].unique().tolist():
+            df2 = df1[df1['CustomerID'] == cid]
+            fnameout = str(cid)+'.csv'
+            print('Writing: %s' %os.path.join(dirout,fnameout))
+            foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+            df2.to_csv(os.path.join(dirout,fnameout), float_format='%.1f', index=False) 
+        else: 
+            print('%s not found in input file, skipping' %str(cid))
+            foutLog.write('%s not found in input file, skipping\n' %str(cid))
+
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    print('Finished\n')
+
+    return
+
 def FixDST(dirin='./', fnamein='IntervalDataDST.csv', 
-                   dirout='./', fnameout='IntervalData.csv', 
-                   dirlog='./', fnameLog='FixDST.log',
-                   tzinput = 'America/Los_Angeles',
-                   OutputFormat = 'SCE'):
+           dirout='./', fnameout='IntervalData.csv', 
+           dirlog='./', fnameLog='FixDST.log',
+           tzinput = 'America/Los_Angeles',
+           OutputFormat = 'SCE'):
     #%% Version and copyright info to record on the log file
     codeName = 'FixDST.py'
     codeVersion = '1.0'
@@ -191,3 +252,7 @@ if __name__ == "__main__":
                    dirlog='output/', fnameLog='FixDST.log',
                    tzinput = 'America/Los_Angeles',
                    OutputFormat = 'SCE')
+
+    ExportLoadFiles(dirin='./', fnamein='two_grocers.csv', explist='ExportCIDs.csv',
+                   dirout='./', # fnameout derived from customer IDs
+                   dirlog='./', fnameLog='ExportLoadFiles.log')

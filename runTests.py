@@ -5,7 +5,7 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
-from UtilityFunctions import ConvertFeather, FixDST
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -42,10 +42,17 @@ if False:
                    dirlog='testdata/')
 
 #%% Normalize profiles
-if True:
+if False:
     NormalizeLoads(dirin='testdata/', fnamein='two_grocers_modified.csv', ignorein='two_grocers.ignore.csv',
                    dirout='testdata/', fnameout='two_grocers_modified.normalized.csv',
                    dirlog='testdata/')
+
+#%% Normalize profiles
+if True:
+    ExportLoadFiles(dirin='testdata/', fnamein='two_grocers_modified.csv', explist='two_grocers.export.csv',
+                   dirout='testdata/', 
+                   dirlog='testdata/')
+
     
 #%% Plot duration curves
 if False:

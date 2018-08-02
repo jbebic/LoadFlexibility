@@ -5,7 +5,7 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -27,28 +27,35 @@ if False:
                    renameDict={'DatePeriod':'datetimestr', 'Usage':'Demand'},
                    writeOutput = True)
 
+#%% AnonymizeCIDs
+if True:
+    AnonymizeCIDs(dirin='testdata/', fnamein='two_grocers_DST.csv', 
+                  dirout='testdata/', fnameout='two_grocers_DST.anonymized.csv', fnameKeys='two_grocers_DST.lookup.csv',
+                  dirlog='testdata/', fnameLog='AnonymizeCIDs.log',
+                  IDlen=6)
+
 #%% Fix DST
 if False:
-    FixDST(dirin='testdata/', fnamein='two_grocers_DST_test.csv',
-                   dirout='testdata/', fnameout='two_grocers.csv',
+    FixDST(dirin='testdata/', fnamein='two_grocers_DST_test2.csv',
+                   dirout='testdata/', fnameout='two_grocers2.csv',
                    dirlog='testdata/',
                    tzinput = 'America/Los_Angeles',
                    OutputFormat = 'SCE')
 
 #%% Review load profiles
 if False:
-    ReviewLoads(dirin='testdata/', fnamein='two_grocers_modified.csv',
-                   dirout='testdata/', fnameout='two_grocers_modified.summary.csv',
+    ReviewLoads(dirin='testdata/', fnamein='two_grocers2.csv',
+                   dirout='testdata/', fnameout='two_grocers2.summary.csv',
                    dirlog='testdata/')
 
 #%% Normalize profiles
 if False:
-    NormalizeLoads(dirin='testdata/', fnamein='two_grocers_modified.csv', ignorein='two_grocers.ignore.csv',
-                   dirout='testdata/', fnameout='two_grocers_modified.normalized.csv',
+    NormalizeLoads(dirin='testdata/', fnamein='two_grocers2.csv', ignorein='ignore_none.csv',
+                   dirout='testdata/', fnameout='two_grocers2.normalized.csv',
                    dirlog='testdata/')
 
 #%% Normalize profiles
-if True:
+if False:
     ExportLoadFiles(dirin='testdata/', fnamein='two_grocers_modified.csv', explist='two_grocers.export.csv',
                    dirout='testdata/', 
                    dirlog='testdata/')

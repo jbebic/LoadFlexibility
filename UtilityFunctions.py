@@ -228,12 +228,27 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         if df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst1a)].empty:
             # There is a blank record at the start of DST, shift the records to the left
             df1.loc[(df1['CustomerID'] == cid) & (df1['datetime'] > dst1a) & (df1['datetime'] < dst2b), 'datetime'] = df1[(df1['CustomerID'] == cid) & (df1['datetime'] > dst1a) & (df1['datetime'] < dst2b)]['datetime'] - pd.Timedelta(hours=1)
-            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2)]['datetime'].size > 1):
-                # There is a double record at the end of DST, move one of them to the right
-                for td in [pd.Timedelta('0 min'), pd.Timedelta('15 min'), pd.Timedelta('30 min'), pd.Timedelta('45 min')]:
-                    ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
-                    temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
-                    df1.at[ix, 'datetime'] = temp
+            td = pd.Timedelta('0 min') # pd.Timedelta('15 min'), pd.Timedelta('30 min'), pd.Timedelta('45 min')
+            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
+                ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
+                temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
+                df1.at[ix, 'datetime'] = temp
+            td = pd.Timedelta('15 min') # pd.Timedelta('30 min'), pd.Timedelta('45 min')
+            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
+                ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
+                temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
+                df1.at[ix, 'datetime'] = temp
+            td = pd.Timedelta('30 min') # , pd.Timedelta('45 min')
+            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
+                ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
+                temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
+                df1.at[ix, 'datetime'] = temp
+            td = pd.Timedelta('45 min')
+            if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
+                ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
+                temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
+                df1.at[ix, 'datetime'] = temp
+            
             # df1.at[:, 'datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').upper()
     df1['datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').str.upper()
             

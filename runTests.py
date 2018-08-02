@@ -28,14 +28,14 @@ if False:
                    writeOutput = True)
 
 #%% AnonymizeCIDs
-if True:
+if False:
     AnonymizeCIDs(dirin='testdata/', fnamein='two_grocers_DST.csv', 
                   dirout='testdata/', fnameout='two_grocers_DST.anonymized.csv', fnameKeys='two_grocers_DST.lookup.csv',
                   dirlog='testdata/', fnameLog='AnonymizeCIDs.log',
                   IDlen=6)
 
 #%% Fix DST
-if False:
+if True:
     FixDST(dirin='testdata/', fnamein='two_grocers_DST_test2.csv',
                    dirout='testdata/', fnameout='two_grocers2.csv',
                    dirlog='testdata/',
@@ -43,13 +43,13 @@ if False:
                    OutputFormat = 'SCE')
 
 #%% Review load profiles
-if False:
+if True:
     ReviewLoads(dirin='testdata/', fnamein='two_grocers2.csv',
                    dirout='testdata/', fnameout='two_grocers2.summary.csv',
                    dirlog='testdata/')
 
 #%% Normalize profiles
-if False:
+if True:
     NormalizeLoads(dirin='testdata/', fnamein='two_grocers2.csv', ignorein='ignore_none.csv',
                    dirout='testdata/', fnameout='two_grocers2.normalized.csv',
                    dirlog='testdata/')

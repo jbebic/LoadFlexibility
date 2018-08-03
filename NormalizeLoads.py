@@ -70,6 +70,7 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv',
 def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.csv',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='NormalizeLoads.log',
+                   InputFormat = 'ISO',
                    skipPlots = True):
     #%% Version and copyright info to record on the log file
     codeName = 'NormalizeLoads.py'
@@ -100,26 +101,31 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
-                      header = 0, 
-                      usecols = [0, 1, 2], 
-                      names=['datetimestr', 'Demand', 'CustomerID'],
-                      dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
-
-    print('Total number of interval records read: %d' %df1['Demand'].size)
-    foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
-
-    print('Processing time records...')
-    foutLog.write('Processing time records\n')
-    dstr = df1['datetimestr'].str.split(':').str[0]
-    # print(dstr.head())
-    hstr = df1['datetimestr'].str.split(':').str[1]
-    # print(tstr.head())
-    mstr = df1['datetimestr'].str.split(':').str[2]
-    # sstr = df1['datetimestr'].str.split(':').str[3]
-    temp = dstr + ' ' + hstr + ':' + mstr
-    df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
-
+    if InputFormat == 'SCE':
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['datetimestr', 'Demand', 'CustomerID'],
+                          dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+    
+        print('Total number of interval records read: %d' %df1['Demand'].size)
+        foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
+    
+        print('Processing time records...')
+        foutLog.write('Processing time records\n')
+        dstr = df1['datetimestr'].str.split(':').str[0]
+        # print(dstr.head())
+        hstr = df1['datetimestr'].str.split(':').str[1]
+        # print(tstr.head())
+        mstr = df1['datetimestr'].str.split(':').str[2]
+        # sstr = df1['datetimestr'].str.split(':').str[3]
+        temp = dstr + ' ' + hstr + ':' + mstr
+        df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
+    else:
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'NormDmnd'])
+        foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
+        df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+        
     df1.set_index(['CustomerID', 'datetime'], inplace=True)
     df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
@@ -140,18 +146,18 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
         print ('Processing %s (%d of %d)' %(cid, i, uniqueCIDs.size))
         i += 1
         df2 = df1.loc[cid] # df1[df1['CustomerID'] == cid]
-        df2['deltaT'] = pd.to_timedelta('15min')
-        df2.loc[df2.index[1:-1], 'deltaT'] = df2.index.values[1:-1] - df2.index.values[0:-2]
-        dTunique = df2['deltaT'].unique()
-        dToddballs = np.extract(dTunique != np.timedelta64(15, 'm'), dTunique)
-        # print(dToddballs/np.timedelta64(1, 'm'))
-        if dToddballs.size > 0:
-            foutLog.write('There are interval records with irregular time deltas\n')
-            for dT in dToddballs:
-                foutLog.write('  dT = %.1f minutes at:' %(dT/np.timedelta64(1, 'm')))
-                for ix in df2[df2['deltaT'] == dT].index:
-                    foutLog.write(' %s' %(ix.strftime('%Y/%m/%d %H:%M')))
-                foutLog.write('\n\n')
+#        df2['deltaT'] = pd.to_timedelta('15min')
+#        df2.loc[df2.index[1:-1], 'deltaT'] = df2.index.values[1:-1] - df2.index.values[0:-2]
+#        dTunique = df2['deltaT'].unique()
+#        dToddballs = np.extract(dTunique != np.timedelta64(15, 'm'), dTunique)
+#        # print(dToddballs/np.timedelta64(1, 'm'))
+#        if dToddballs.size > 0:
+#            foutLog.write('There are interval records with irregular time deltas\n')
+#            for dT in dToddballs:
+#                foutLog.write('  dT = %.1f minutes at:' %(dT/np.timedelta64(1, 'm')))
+#                for ix in df2[df2['deltaT'] == dT].index:
+#                    foutLog.write(' %s' %(ix.strftime('%Y/%m/%d %H:%M')))
+#                foutLog.write('\n\n')
         
         foutLog.write('\nCustomerID: %s\n' %(cid))
         foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))

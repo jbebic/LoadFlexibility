@@ -156,7 +156,8 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
            dirout='./', fnameout='IntervalData.csv', 
            dirlog='./', fnameLog='FixDST.log',
            tzinput = 'America/Los_Angeles',
-           OutputFormat = 'SCE'):
+           OutputFormat = 'SCE',
+           VectorProcessTimeRecords = True):
     #%% Version and copyright info to record on the log file
     codeName = 'FixDST.py'
     codeVersion = '1.0'
@@ -192,6 +193,19 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     foutLog.write('Read %d records\n' %df1.shape[0])
     foutLog.write('Columns are: %s\n' %' '.join(str(x) for x in df1.columns.tolist()))
 
+    if VectorProcessTimeRecords:
+        print('Vector processing time records, this takes a while...')
+        foutLog.write('Vector processing time records\n')
+        dstr = df1['datetimestr'].str.split(':').str[0]
+        # print(dstr.head())
+        hstr = df1['datetimestr'].str.split(':').str[1]
+        # print(tstr.head())
+        mstr = df1['datetimestr'].str.split(':').str[2]
+        # sstr = df1['datetimestr'].str.split(':').str[3]
+        temp = dstr + ' ' + hstr + ':' + mstr
+        df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
+        logTime(foutLog, '\nFinished processing time records: ', codeTstart)
+
     print('Processing customers')
     uniqueCIDs = df1['CustomerID'].unique()
     print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
@@ -202,14 +216,15 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         foutLog.write('Processing time records for: %s\n' %(str(cid)))
         i += 1
         
-        dstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[0]
-        # print(dstr.head())
-        hstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[1]
-        # print(tstr.head())
-        mstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[2]
-        # sstr = df1['datetimestr'].str.split(':').str[3]
-        temp = dstr + ' ' + hstr + ':' + mstr
-        df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
+        if not VectorProcessTimeRecords:
+            dstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[0]
+            # print(dstr.head())
+            hstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[1]
+            # print(tstr.head())
+            mstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[2]
+            # sstr = df1['datetimestr'].str.split(':').str[3]
+            temp = dstr + ' ' + hstr + ':' + mstr
+            df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
 
         if df1[df1['CustomerID'] == cid]['datetime'].dt.strftime('%Y').unique().size > 1:
             print('  Time records contain more than one year of data - aborting\n')

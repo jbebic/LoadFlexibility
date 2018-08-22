@@ -117,16 +117,6 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
     foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
-    UniqueIDs = df1['CustomerID'].unique().tolist()
-    if considerCIDs != '':
-        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
-                          header = 0, 
-                          usecols = [0], 
-                          names=['CustomerID'],
-                          dtype={'CustomerID':np.str})
-        considerIDs = df9['CustomerID'].tolist()
-        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
-
     if ignoreCIDs != '':
         print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
@@ -136,10 +126,20 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
 
-        if(len(df9['CustomerID'].tolist())>0):
-            df1.drop(df9['CustomerID'].tolist(), inplace=True) # level=0
+        ignoreIDs = df9['CustomerID'].tolist()
+        if(len(ignoreIDs)>0):
+            df1.drop(ignoreIDs, inplace=True) # level=0
 
     UniqueIDs = df1['CustomerID'].unique().tolist()
+    if considerCIDs != '':
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0], 
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
 
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     i = 1

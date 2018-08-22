@@ -50,7 +50,7 @@ if False:
                    OutputFormat = 'ISO')
 
 #%% Review load profiles
-if False:
+if True:
     ReviewLoads(dirin='input/', fnamein=fnamebase + '.A.csv',
                    dirout='input/', fnameout=fnamebase+'A.summary.csv',
                    dirlog='input/')
@@ -61,7 +61,7 @@ if False:
 
 #%% Normalize profiles
 if False:
-    NormalizeLoads(dirin='input/', fnamein='.csv', ignorein=fnamebase + '.A.ignore.csv',
+    NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', ignorein=fnamebase + '.A.ignore.csv',
                    dirout='output/', fnameout=fnamebase + '.A.normalized.csv',
                    dirlog='output/')
 
@@ -73,17 +73,17 @@ if False:
 
     
 #%% Plot duration curves
-if True:
-    PlotDurationCurves(dirin='testdata/', fnamein='two_grocers2.normalized.csv',
-                       dirout='testdata/', fnameout='DurationCurves.two_grocers2.pdf',
-                       dirlog='testdata/')
+if False:
+    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
+                       dirout='plots/', fnameout=fnamebase + '.A.duration.pdf',
+                       dirlog='plots/')
     
-    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein='two_grocers2.normalized.csv',
-                               dirout='testdata/', fnameout='FamilyOfDurationCurves.two_grocers2.pdf',
-                               dirlog='testdata/')
+    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
+                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf',
+                               dirlog='plots/')
 
 #%% Plot heatmaps
 if False:    
-    PlotHeatMaps(dirin='testdata/', fnamein='two_grocers_modified.normalized.csv',
-                 dirout='testdata/', fnameout='HeatMaps.two_grocers_modified.pdf',
-                 dirlog='testdata/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
+                 dirlog='plots/')

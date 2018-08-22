@@ -4,7 +4,13 @@ Created on Wed May  9 10:37:28 2018
 
 @author: jbebic
 
+v1.1 JZB20180822
+Moved pivoting outside of plot function to mitigate the impact of dynamic memory allocation
+Added optional input to limit the customerIDs to a specific group
+
+v1.0 JZB20180509
 Heatmaps and daily wisker plots of normalized loads
+
 """
 
 #%% Importing all the necessary Python packages
@@ -25,17 +31,12 @@ def logTime(foutLog, logMsg, tbase):
     codeTdelta = codeTnow - tbase
     foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
 
-def outputLoadHeatmap1h(pltPdf, df, title):
+def outputLoadHeatmap1h(pltPdf, df1, title):
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,
                               figsize=(8,6),
                               sharex=True)
 
     fig.suptitle(title) # This titles the figure
-
-    df['day'] = df.index.dayofyear
-    df['hour'] = df.index.hour + df.index.minute/60.
-    df1 = df.pivot(index='hour', columns='day', values='NormDmnd') 
-    df.drop(['day','hour'], axis=1, inplace=True) # drop columns
 
     cmin = 0.
     cmax = df1.max().max()
@@ -73,13 +74,13 @@ def outputLoadHeatmap1h(pltPdf, df, title):
     plt.close() # Closes fig to clean up memory
     return
 
-def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', 
+def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', group='', 
                  dirout='./', fnameout='HeatMaps.pdf', 
                  dirlog='./', fnameLog='PlotHeatMaps.log',
                  skipPlots = False):
     #%% Version and copyright info to record on the log file
     codeName = 'PlotHeatMaps.py'
-    codeVersion = '1.0'
+    codeVersion = '1.1'
     codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
     codeAuthors = "Jovan Bebic GE Global Research\n"
 
@@ -103,6 +104,8 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv',
     df1.set_index(['datetime'], inplace=True)
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     df1.sort_index(inplace=True) # sort on datetime
+    df1['day'] = df1.index.dayofyear
+    df1['hour'] = df1.index.hour + df1.index.minute/60.
         
     # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
     foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
@@ -114,10 +117,25 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv',
     foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
 
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-    UniqueIDs = df1['CustomerID'].unique()
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    if group != '':
+        df9 = pd.read_csv(os.path.join(dirin,group), 
+                          header = 0, 
+                          usecols = [0], 
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        groupIDs = df9['CustomerID'].tolist()
+        UniqueIDs = list(set(UniqueIDs).intersection(groupIDs))
+    
+    df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
+    i = 1
     for cID in UniqueIDs:
+        print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
+        i += 1
         df2 = df1[df1['CustomerID']==cID]
-        outputLoadHeatmap1h(pltPdf1, df2, fnamein+'/'+cID)
+        df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
+        df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
+        outputLoadHeatmap1h(pltPdf1, df3, fnamein+'/'+cID)
 
     #%% Closing plot files
     print('Closing plot files')

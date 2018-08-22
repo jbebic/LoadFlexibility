@@ -67,7 +67,7 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv',
     print('Finished')
     return
     
-def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.csv',
+def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='', group='',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='NormalizeLoads.log',
                    InputFormat = 'ISO',
@@ -88,15 +88,6 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
     foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
-    
-    # Output file information to log file
-    print('Reading: %s' %os.path.join(dirin,ignorein))
-    foutLog.write('Reading: %s\n' %os.path.join(dirin,ignorein))
-    df9 = pd.read_csv(os.path.join(dirin,ignorein), 
-                      header = 0, 
-                      usecols = [0], 
-                      names=['CustomerID'],
-                      dtype={'CustomerID':np.str})
     
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -130,16 +121,33 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignorein='IgnoreCIDs.
     df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
-    foutLog.write('Number of interval records after re-indexing: %d\n' %df1['Demand'].size)
 
     # Dropping ignored CIDs
-    if(len(df9['CustomerID'].tolist())>0):
-        df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
+    if ignorein != '':
+        print('Reading: %s' %os.path.join(dirin,ignorein))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,ignorein))
+        df9 = pd.read_csv(os.path.join(dirin,ignorein), 
+                          header = 0, 
+                          usecols = [0], 
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+
+        if(len(df9['CustomerID'].tolist())>0):
+            df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
     
     # Processing records by CID
     uniqueCIDs = df1.index.get_level_values('CustomerID').unique().values # df1['CustomerID'].unique()
     print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
+    if group != '':
+        df9 = pd.read_csv(os.path.join(dirin,group), 
+                          header = 0, 
+                          usecols = [0], 
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        groupIDs = df9['CustomerID'].tolist()
+        uniqueCIDs = list(set(uniqueCIDs).intersection(groupIDs))
+
     df1['NormDmnd']=np.nan # Add column of normalized demand to enable setting it with slice index later
     i = 1
     for cid in uniqueCIDs:

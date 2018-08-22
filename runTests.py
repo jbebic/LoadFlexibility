@@ -11,13 +11,15 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps
 
+fnamebase = 'synthetic20'
+
 #%% Create profiles
 if False:
-    GenerateSyntheticProfiles(10, # number of profiles to create
+    GenerateSyntheticProfiles(20, # number of profiles to create
                               '2017-01-01 00:00', '2017-12-31 23:45', # date range
                               IDlen=6, meMean=200, htllr=2.0, # ID length, monthly energy mean, high to low load ratio (peak day / low day)
-                              dirout='input/', fnameout='synthetic2.csv', 
-                              dirlog='output/')
+                              dirout='testdata/', fnameout = fnamebase + '.csv', 
+                              dirlog='testdata/')
 
 #%% Convert Feather file
 if False:
@@ -35,7 +37,7 @@ if False:
                   IDlen=6)
 
 #%% Fix DST
-if True:
+if False:
     FixDST(dirin='testdata/', fnamein='two_grocers_DST_test2.csv',
                    dirout='testdata/', fnameout='two_grocers2.csv',
                    dirlog='testdata/',
@@ -43,36 +45,37 @@ if True:
                    OutputFormat = 'SCE')
 
 #%% Review load profiles
-if True:
-    ReviewLoads(dirin='testdata/', fnamein='two_grocers2.csv',
-                   dirout='testdata/', fnameout='two_grocers2.summary.csv',
-                   dirlog='testdata/')
-
-#%% Normalize profiles
-if True:
-    NormalizeLoads(dirin='testdata/', fnamein='two_grocers2.csv', ignorein='ignore_none.csv',
-                   dirout='testdata/', fnameout='two_grocers2.normalized.csv',
+if False:
+    ReviewLoads(dirin='testdata/', fnamein=fnamebase+'.csv',
+                   dirout='testdata/', fnameout=fnamebase+'.summary.csv',
                    dirlog='testdata/')
 
 #%% Normalize profiles
 if False:
-    ExportLoadFiles(dirin='testdata/', fnamein='two_grocers_modified.csv', explist='two_grocers.export.csv',
+    NormalizeLoads(dirin='testdata/', fnamein=fnamebase+'.csv', 
+                   dirout='testdata/', fnameout=fnamebase+'.normalized.csv',
+                   dirlog='testdata/', 
+                   InputFormat='SCE')
+
+#%% Normalize profiles
+if False:
+    ExportLoadFiles(dirin='testdata/', fnamein=fnamebase+'.csv', explist=fnamebase+'.export.csv',
                    dirout='testdata/', 
                    dirlog='testdata/')
 
     
 #%% Plot duration curves
 if False:
-    PlotDurationCurves(dirin='testdata/', fnamein='two_grocers_modified.normalized.csv',
-                       dirout='testdata/', fnameout='DurationCurves.two_grocers_modified.pdf',
+    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
+                       dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
     
-    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein='two_grocers_modified.normalized.csv',
-                               dirout='testdata/', fnameout='FamilyOfDurationCurves.two_grocers_modified.pdf',
+    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
+                               dirout='testdata/', fnameout=fnamebase+'.FamilyOfDurationCurves.pdf',
                                dirlog='testdata/')
 
 #%% Plot heatmaps
-if False:    
-    PlotHeatMaps(dirin='testdata/', fnamein='two_grocers_modified.normalized.csv',
-                 dirout='testdata/', fnameout='HeatMaps.two_grocers_modified.pdf',
+if True:    
+    PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
+                 dirout='testdata/', fnameout=fnamebase+'.HeatMaps.pdf',
                  dirlog='testdata/')

@@ -24,7 +24,8 @@ def logTime(foutLog, logMsg, tbase):
 
 def ReviewLoads(dirin='./', fnamein='IntervalData.csv', 
                 dirout='./', fnameout='IntervalData.summary.csv', 
-                dirlog='./', fnameLog='ReviewLoads.log',
+                dirlog='./', fnameLog='ReviewLoads.log',,
+                InputFormat = 'ISO',
                 skipPlots = True):
     #%% Version and copyright info to record on the log file
     codeName = 'ReviewLoads.py'
@@ -46,11 +47,18 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv',
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
-                      header = 0, 
-                      usecols = [0, 1, 2], 
-                      names=['datetimestr', 'Demand', 'CustomerID'],
-                      dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+    if InputFormat == 'SCE':
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['datetimestr', 'Demand', 'CustomerID'],
+                          dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+    else:
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['CustomerID', 'datetime', 'Demand'])
+            
     print('Processing...')
     uniqueCIDs = df1['CustomerID'].unique()
     foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)

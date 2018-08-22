@@ -65,7 +65,7 @@ if False:
 
     
 #%% Plot duration curves
-if False:
+if True:
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
@@ -75,7 +75,7 @@ if False:
                                dirlog='testdata/')
 
 #%% Plot heatmaps
-if True:    
+if False:    
     PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                  dirout='testdata/', fnameout=fnamebase+'.HeatMaps.pdf',
                  dirlog='testdata/')

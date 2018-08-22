@@ -134,7 +134,8 @@ def outputFamilyOfDurationCurves(pltPdf, df, title):
         df2 = df1.sort_values('NormDmnd', ascending=False)
         ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID)
     
-    plt.legend()
+    legend = ax0.legend() # plt.legend()
+    legend.remove()
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory

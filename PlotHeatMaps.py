@@ -31,6 +31,7 @@ def logTime(foutLog, logMsg, tbase):
     codeTdelta = codeTnow - tbase
     foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
 
+#%%
 def outputLoadHeatmap1h(pltPdf, df1, title):
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,
                               figsize=(8,6),
@@ -74,11 +75,12 @@ def outputLoadHeatmap1h(pltPdf, df1, title):
     plt.close() # Closes fig to clean up memory
     return
 
+#%%
 def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='./', fnameout='HeatMaps.pdf', 
                  dirlog='./', fnameLog='PlotHeatMaps.log',
                  skipPlots = False):
-    #%% Version and copyright info to record on the log file
+    # Version and copyright info to record on the log file
     codeName = 'PlotHeatMaps.py'
     codeVersion = '1.1'
     codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
@@ -88,14 +90,14 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
-    #%% Output header information to log file
+    # Output header information to log file
     print('This is: %s, Version: %s' %(codeName, codeVersion))
     foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
     foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
     
-    # Output mat file information to log file
+    # Output csv file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
     df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'NormDmnd'])
@@ -111,12 +113,11 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
     foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
     foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
     deltat = df1.index[-1]-df1.index[0]
-    foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)))
+    foutLog.write('Expected number of interval records: %d\n' %(deltat.total_seconds()/(60*15)+1))
     
-    print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))
-    foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
-    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
     if ignoreCIDs != '':
         print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
@@ -127,11 +128,12 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
                           dtype={'CustomerID':np.str})
 
         ignoreIDs = df9['CustomerID'].tolist()
-        if(len(ignoreIDs)>0):
-            df1.drop(ignoreIDs, inplace=True) # level=0
+        # if(len(ignoreIDs)>0):
+        #     df1.drop(ignoreIDs, inplace=True) # level=0
 
-    UniqueIDs = df1['CustomerID'].unique().tolist()
     if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
         df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
                           header = 0, 
                           usecols = [0], 
@@ -140,6 +142,11 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
+
+    print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))
+    foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
+    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     i = 1

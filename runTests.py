@@ -48,7 +48,8 @@ if False:
 if False:
     ReviewLoads(dirin='testdata/', fnamein=fnamebase+'.csv',
                    dirout='testdata/', fnameout=fnamebase+'.summary.csv',
-                   dirlog='testdata/')
+                   dirlog='testdata/',
+                   InputFormat = 'SCE')
 
 #%% Normalize profiles
 if False:
@@ -65,7 +66,7 @@ if False:
 
     
 #%% Plot duration curves
-if True:
+if False:
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
@@ -75,7 +76,7 @@ if True:
                                dirlog='testdata/')
 
 #%% Plot heatmaps
-if False:    
-    PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
-                 dirout='testdata/', fnameout=fnamebase+'.HeatMaps.pdf',
+if True:    
+    PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv', considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
+                 dirout='testdata/', fnameout=fnamebase+'.HeatMaps.g1.pdf',
                  dirlog='testdata/')

@@ -5,6 +5,7 @@ __pycache__/
 
 # results from testdata
 testdata/*.pdf
+testdata/*.log
 
 # working directories
 private/**

@@ -50,7 +50,7 @@ if False:
                    OutputFormat = 'ISO')
 
 #%% Review load profiles
-if True:
+if False:
     ReviewLoads(dirin='input/', fnamein=fnamebase + '.A.csv',
                    dirout='input/', fnameout=fnamebase+'A.summary.csv',
                    dirlog='input/')
@@ -83,7 +83,44 @@ if False:
                                dirlog='plots/')
 
 #%% Plot heatmaps
-if False:    
-    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
-                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
+if True:    
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G0.pdf',
                  dirlog='plots/')
+    
+if False:    
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group1.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G1.pdf',
+                 dirlog='plots/')
+    
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group2.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G2.pdf',
+                 dirlog='plots/')
+    
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group3.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G3.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group4.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G4.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group5.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G5.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group6.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G6.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group7.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G7.pdf',
+                 dirlog='plots/')
+    
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group8.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G8.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group9.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G9.pdf',
+                 dirlog='plots/')
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group10.csv', #ignoreCIDs = 'ignore.G1.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G10.pdf',
+                 dirlog='plots/')
+
+

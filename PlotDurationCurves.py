@@ -53,7 +53,7 @@ def outputDurationCurve(pltPdf, df, title):
     plt.close() # Closes fig to clean up memory
     return
 
-def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', 
+def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='plots/', fnameout='DurationCurves.pdf', 
                  dirlog='./', fnameLog='PlotDurationCurves.log'):
 
@@ -88,12 +88,40 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv',
     foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
     foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
     deltat = df1.index[-1]-df1.index[0]
-    foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)))
+    foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
+
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
+    if ignoreCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
+                          header = 0, 
+                          usecols = [0], 
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+
+        ignoreIDs = df9['CustomerID'].tolist()
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
-    UniqueIDs = df1['CustomerID'].unique()
     for cID in UniqueIDs:
         df2 = df1[df1['CustomerID']==cID]
         outputDurationCurve(pltPdf1, df2, fnamein+'/'+cID)
@@ -106,7 +134,7 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv',
     
     return
 
-def outputFamilyOfDurationCurves(pltPdf, df, title):
+def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
                               figsize=(8,6),
                               sharex=True)
@@ -134,18 +162,20 @@ def outputFamilyOfDurationCurves(pltPdf, df, title):
         df2 = df1.sort_values('NormDmnd', ascending=False)
         ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID)
     
-    legend = ax0.legend() # plt.legend()
-    legend.remove()
+    if skipLegend:
+        legend = ax0.legend() # plt.legend()
+        legend.remove()
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory
     return
 
 
-def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', 
+def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', ignoreCIDs='', considerCIDs='',
                                dirout='./', fnameout='DurationCurvesFamily.pdf', 
                                dirlog='./', fnameLog='PlotFamilyOfDurationCurves.log',
-                 skipPlots = False):
+                               skipPlots = False,
+                               skipLegend = True):
     #%% Version and copyright info to record on the log file
     codeName = 'PlotFamilyOfDurationCurves.py'
     codeVersion = '1.0'
@@ -172,16 +202,47 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     df1.set_index(['datetime'], inplace=True)
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     df1.sort_index(inplace=True) # sort on datetime
-        
+
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
+    if ignoreCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
+                          header = 0, 
+                          usecols = [0], 
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+
+        ignoreIDs = df9['CustomerID'].tolist()
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
+
+    df1a = df1[df1['CustomerID'].isin(UniqueIDs)]
+
     # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
     foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
     foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
     deltat = df1.index[-1]-df1.index[0]
-    foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)))
+    foutLog.write('Expected number of interval records: %d\n' %(deltat.total_seconds()/(60*15)+1))
     
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-    outputFamilyOfDurationCurves(pltPdf1, df1, fnamein)
+    outputFamilyOfDurationCurves(pltPdf1, df1a, fnamein, skipLegend)
 
     #%% Closing plot files
     print("Closing plot files")

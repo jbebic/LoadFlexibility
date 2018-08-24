@@ -60,39 +60,39 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
                           names=['CustomerID', 'datetime', 'Demand'])
             
     print('Processing...')
-    uniqueCIDs = df1['CustomerID'].unique()
-    foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
-    foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
-    
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
     if ignoreCIDs != '':
         print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
         df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
                           header = 0, 
                           usecols = [0], 
+                          comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
 
-        if(len(df9['CustomerID'].tolist())>0):
-            df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
+        ignoreIDs = df9['CustomerID'].tolist()
 
-    uniqueCIDs = df1['CustomerID'].unique()
-    foutLog.write('Number of customer IDs after ignore list: %d\n' %uniqueCIDs.size)
     if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
         df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
                           header = 0, 
-                          usecols = [0], 
+                          usecols = [0],
+                          comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
-        uniqueCIDs = list(set(uniqueCIDs).intersection(considerIDs))
-    
-    foutLog.write('Number of customer IDs after consider list: %d\n' %len(uniqueCIDs))
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
     foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand\n')
     i = 1
-    for cid in uniqueCIDs:
-        print ('%s (%d of %d)' %(cid, i, uniqueCIDs.size))
+    for cid in UniqueIDs:
+        print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         df2 = df1[df1['CustomerID'] == cid]
         foutLog.write('%s, %d, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max()))
@@ -156,36 +156,39 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
 
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
 
-    # Dropping ignored CIDs
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
     if ignoreCIDs != '':
         print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
         df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
                           header = 0, 
                           usecols = [0], 
+                          comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
 
-        if(len(df9['CustomerID'].tolist())>0):
-            df1.drop(df9['CustomerID'].tolist(), inplace=True, level=0)
-    
-    # Processing records by CID
-    uniqueCIDs = df1.index.get_level_values('CustomerID').unique().values # df1['CustomerID'].unique()
-    print('Number of unique customer IDs in the file: %d' %uniqueCIDs.size)
-    foutLog.write('Number of unique customer IDs in the file: %d\n' %uniqueCIDs.size)
+        ignoreIDs = df9['CustomerID'].tolist()
+
     if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
         df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
                           header = 0, 
-                          usecols = [0], 
+                          usecols = [0],
+                          comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
-        uniqueCIDs = list(set(uniqueCIDs).intersection(considerIDs))
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
 
     df1['NormDmnd']=np.nan # Add column of normalized demand to enable setting it with slice index later
     i = 1
-    for cid in uniqueCIDs:
-        print ('Processing %s (%d of %d)' %(cid, i, uniqueCIDs.size))
+    for cid in UniqueIDs:
+        print ('Processing %s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         df2 = df1.loc[cid] # df1[df1['CustomerID'] == cid]
 #        df2['deltaT'] = pd.to_timedelta('15min')

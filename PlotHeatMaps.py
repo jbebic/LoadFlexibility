@@ -124,12 +124,11 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
         df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
                           header = 0, 
                           usecols = [0], 
+                          comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
 
         ignoreIDs = df9['CustomerID'].tolist()
-        # if(len(ignoreIDs)>0):
-        #     df1.drop(ignoreIDs, inplace=True) # level=0
 
     if considerCIDs != '':
         print('Reading: %s' %os.path.join(dirin,considerCIDs))

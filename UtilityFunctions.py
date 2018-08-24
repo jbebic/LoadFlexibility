@@ -340,24 +340,107 @@ def ConvertFeather(dirin='./', fnamein='IntervalData.feather',
 
     return
 
+def SplitToGroups(ngroups, 
+                  dirin='/testdata', fnamein='synthetic20.normalized.csv', ignoreCIDs='', considerCIDs='',
+                  dirout='/testdata', foutbase='synthetic20', # 
+                  dirlog='/testdata', fnameLog='SplitToGroups.log'):
+    
+    #%% Version and copyright info to record on the log file
+    codeName = 'SplitToGroups.py'
+    codeVersion = '1.0'
+    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
+    codeAuthors = "Jovan Bebic GE Global Research\n"
+
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+    
+    #%% Output header information to log file
+    print('This is: %s, Version: %s' %(codeName, codeVersion))
+    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
+    foutLog.write('%s\n' %(codeCopyright))
+    foutLog.write('%s\n' %(codeAuthors))
+    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    
+    # Output information to log file
+    print("Reading input file")
+    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
+    df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [1, 2, 0], names=['CustomerID', 'datetimestr', 'NormDmnd']) # add dtype conversions
+    foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
+
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
+    if ignoreCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
+                          header = 0, 
+                          usecols = [0], 
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+
+        ignoreIDs = df9['CustomerID'].tolist()
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
+
+    print("Writing groups...")
+    gid = 1
+    nidspg = int(len(UniqueIDs)/ngroups)+1 # number of IDs per group
+    i1 = 0
+    i2 = i1 + nidspg
+    while i1<i2:
+        cIDgroup = UniqueIDs[i1:i2]
+        i1 = i2
+        i2 = i1+nidspg
+        i2 = min(i2, len(UniqueIDs))
+        # print(cIDgroup)
+        df1 = pd.DataFrame(cIDgroup, columns=['CustomerID'])
+        df1.to_csv(os.path.join(dirout,foutbase+'.g'+str(gid)+'c.csv'), index=False)
+        gid += 1
+
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    
+    return
+
+
 if __name__ == "__main__":
-    ConvertFeather(dirin='input/', fnamein='GroceryTOU_GS3B_Q1O15_152017.feather',
-                dirout='input/', fnameout='GroceryTOU_GS3B_Q1O15_152017.csv',
-                dirlog='output/',
-                renameDict={'DatePeriod':'datetimestr', 'Usage':'Demand'},
-                writeOutput = True)
-
-    FixDST(dirin='input/', fnamein='two_grocers_DST_test.csv', 
-                   dirout='output/', fnameout='two_grocers.csv', 
-                   dirlog='output/', fnameLog='FixDST.log',
-                   tzinput = 'America/Los_Angeles',
-                   OutputFormat = 'SCE')
-
-    ExportLoadFiles(dirin='./', fnamein='two_grocers.csv', explist='ExportCIDs.csv',
-                   dirout='./', # fnameout derived from customer IDs
-                   dirlog='./', fnameLog='ExportLoadFiles.log')
-
-    AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
-                  dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
-                  dirlog='./', fnameLog='AnonymizeCIDs.log',
-                  IDlen=6)
+    if True:
+        SplitToGroups(3, 
+                      dirin='testdata/', fnamein='synthetic20.normalized.csv', ignoreCIDs='', considerCIDs='',
+                      dirout='testdata/', foutbase='synthetic20', # 
+                      dirlog='testdata/', fnameLog='SplitToGroups.log')    
+    if False:
+        ConvertFeather(dirin='input/', fnamein='GroceryTOU_GS3B_Q1O15_152017.feather',
+                    dirout='input/', fnameout='GroceryTOU_GS3B_Q1O15_152017.csv',
+                    dirlog='output/',
+                    renameDict={'DatePeriod':'datetimestr', 'Usage':'Demand'},
+                    writeOutput = True)
+    
+        FixDST(dirin='input/', fnamein='two_grocers_DST_test.csv', 
+                       dirout='output/', fnameout='two_grocers.csv', 
+                       dirlog='output/', fnameLog='FixDST.log',
+                       tzinput = 'America/Los_Angeles',
+                       OutputFormat = 'SCE')
+    
+        ExportLoadFiles(dirin='./', fnamein='two_grocers.csv', explist='ExportCIDs.csv',
+                       dirout='./', # fnameout derived from customer IDs
+                       dirlog='./', fnameLog='ExportLoadFiles.log')
+    
+        AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
+                      dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
+                      dirlog='./', fnameLog='AnonymizeCIDs.log',
+                      IDlen=6)

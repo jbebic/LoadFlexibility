@@ -5,13 +5,16 @@ Created on Mon May 28 09:28:36 2018
 @author: jbebic
 """
 
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs
+import numpy as np
+
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps
 
 fnamebase = 'synthetic2'
+Ngroups = 10
 
 #%% Create profiles
 if False:
@@ -87,6 +90,16 @@ if True:
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
                  dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G0.pdf',
                  dirlog='plots/')
+    
+if True:
+    SplitToGroups(Ngroups, 
+                  dirin='testdata/', fnamein='synthetic20.normalized.csv', ignoreCIDs='', considerCIDs='',
+                  dirout='testdata/', foutbase='synthetic20', # 
+                  dirlog='testdata/', fnameLog='SplitToGroups.log')    
+    for i in np.arange(1, Ngroups+1):
+        PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = fnamebase + '.g' + str(i) + 'c.csv', ignoreCIDs = fnamebase + '.g' + str(i) + 'i.csv',
+                     dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.g' + str(i) + '.pdf',
+                     dirlog='plots/')
     
 if False:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group1.csv', #ignoreCIDs = 'ignore.G1.csv',

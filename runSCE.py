@@ -77,18 +77,18 @@ if False:
     
 #%% Plot duration curves
 if True:
-    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
+    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',
                        dirout='plots/', fnameout=fnamebase + '.A.duration.pdf',
                        dirlog='plots/')
     
-    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
+    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',
                                dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf',
                                dirlog='plots/')
 
 #%% Plot heatmaps
 if False:    
-    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
-                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G0.pdf',
+    PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',
+                 dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
                  dirlog='plots/')
     
 if False:

@@ -76,28 +76,29 @@ if False:
 
     
 #%% Plot duration curves
-if False:
-    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
+if True:
+    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
                        dirout='plots/', fnameout=fnamebase + '.A.duration.pdf',
                        dirlog='plots/')
     
-    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv',
+    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
                                dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf',
                                dirlog='plots/')
 
 #%% Plot heatmaps
-if True:    
+if False:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = 'Group0.csv', ignoreCIDs = 'ignore.G0.csv',
                  dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.G0.pdf',
                  dirlog='plots/')
     
-if True:
+if False:
     SplitToGroups(Ngroups, 
-                  dirin='testdata/', fnamein='synthetic20.normalized.csv', ignoreCIDs='', considerCIDs='',
-                  dirout='testdata/', foutbase='synthetic20', # 
-                  dirlog='testdata/', fnameLog='SplitToGroups.log')    
-    for i in np.arange(1, Ngroups+1):
-        PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = fnamebase + '.g' + str(i) + 'c.csv', ignoreCIDs = fnamebase + '.g' + str(i) + 'i.csv',
+                  dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs='', considerCIDs='',
+                  dirout='output/', foutbase=fnamebase, # 
+                  dirlog='output/', fnameLog='SplitToGroups.log')    
+if False:
+    for i in np.arange(1, Ngroups+1): #for i in np.arange(1, 2):
+        PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', considerCIDs = fnamebase + '.g' + str(i) + 'c.csv', #ignoreCIDs = fnamebase + '.g' + str(i) + 'i.csv',
                      dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.g' + str(i) + '.pdf',
                      dirlog='plots/')
     

@@ -117,6 +117,10 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
     print("Opening plot files")
@@ -230,6 +234,10 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
 
     df1a = df1[df1['CustomerID'].isin(UniqueIDs)]

@@ -142,6 +142,10 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
 
     print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))

@@ -87,6 +87,10 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
     foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand\n')
@@ -183,6 +187,10 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
 
     df1['NormDmnd']=np.nan # Add column of normalized demand to enable setting it with slice index later

@@ -126,7 +126,10 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
+    i = 1
     for cID in UniqueIDs:
+        print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
+        i += 1
         df2 = df1[df1['CustomerID']==cID]
         outputDurationCurve(pltPdf1, df2, fnamein+'/'+cID)
 

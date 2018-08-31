@@ -144,20 +144,22 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
     ymin = 0.0
     ymax = 2.0 # df['NormDmnd'].max()
     
+    df = df.assign(month=pd.Series(np.asarray( df.index.month ), index=df.index))
+    df = df.assign(monthInverse=pd.Series(12 - np.asarray( df.index.month ), index=df.index))
+    df1 = df.sort_values(['monthInverse', 'NormDmnd'], ascending=False)
+    months = np.asarray(df['month'])
+    tickindex = [ np.asarray(np.where(months==i))[0][0] for i in range(1,13,1)]
+    monthsList = [ date(2016, i,1).strftime('%b') for i in [1,2,3,4,5,6,7,8,9,10,11,12,1]]
+
     ax0.set_title('Normalized Load')
     ax0.set_ylim([ymin,ymax])
     ax0.set_ylabel('Load [pu]')
     ax0.set_xlim([0,8760*4])
-    ax0.set_xticks(np.linspace(0, 8760*4, num=13).tolist())
-    monthsList = [ date(2016, i,1).strftime('%b') for i in [1,2,3,4,5,6,7,8,9,10,11,12,1]]
+    ax0.set_xticks(tickindex)
     ax0.set_xticklabels(monthsList)
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.set_aspect('auto')
 
-    df = df.assign(month=pd.Series(np.asarray( df.index.month ), index=df.index))
-    df = df.assign(monthInverse=pd.Series(12 - np.asarray( df.index.month ), index=df.index))
-
-    df1 = df.sort_values(['monthInverse', 'NormDmnd'], ascending=False)
     ax0.step(np.arange(df1.shape[0]), (df1['NormDmnd']),  label='Normalized Demand [pu]')
     
     pltPdf.savefig() 

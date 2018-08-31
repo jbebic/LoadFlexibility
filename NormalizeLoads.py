@@ -155,12 +155,14 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
         foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
         df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
         
+    # moved this line of code to before CustomerID is set to the index
+    UniqueIDs = df1['CustomerID'].unique().tolist() 
+        
     df1.set_index(['CustomerID', 'datetime'], inplace=True)
     df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
 
-    UniqueIDs = df1['CustomerID'].unique().tolist()
     foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
     ignoreIDs = []
     if ignoreCIDs != '':

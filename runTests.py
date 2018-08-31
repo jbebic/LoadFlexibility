@@ -4,7 +4,6 @@ Created on Mon May 28 09:28:36 2018
 
 @author: jbebic
 """
-
 from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
@@ -13,8 +12,9 @@ from PlotHeatMaps import PlotHeatMaps
 
 fnamebase = 'synthetic20'
 
+
 #%% Create profiles
-if False:
+if True:
     GenerateSyntheticProfiles(20, # number of profiles to create
                               '2017-01-01 00:00', '2017-12-31 23:45', # date range
                               IDlen=6, meMean=200, htllr=2.0, # ID length, monthly energy mean, high to low load ratio (peak day / low day)
@@ -45,38 +45,45 @@ if False:
                    OutputFormat = 'SCE')
 
 #%% Review load profiles
-if False:
+if True:
     ReviewLoads(dirin='testdata/', fnamein=fnamebase+'.csv',
                    dirout='testdata/', fnameout=fnamebase+'.summary.csv',
                    dirlog='testdata/',
                    InputFormat = 'SCE')
 
 #%% Normalize profiles
-if False:
+if True:
     NormalizeLoads(dirin='testdata/', fnamein=fnamebase+'.csv', 
                    dirout='testdata/', fnameout=fnamebase+'.normalized.csv',
                    dirlog='testdata/', 
                    InputFormat='SCE')
 
-#%% Normalize profiles
+#%% Export Load Files
 if False:
-    ExportLoadFiles(dirin='testdata/', fnamein=fnamebase+'.csv', explist=fnamebase+'.export.csv',
+    ExportLoadFiles(dirin='testdata/', fnamein=fnamebase+'.csv', 
+                    explist=fnamebase+'.export.csv',
                    dirout='testdata/', 
                    dirlog='testdata/')
 
-    
 #%% Plot duration curves
-if False:
+if False: # annual duration curve 
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
     
+if True: # monthly uration curve  showing entire year with duration for each month
+    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
+                       dirout='testdata/', fnameout=fnamebase+'.DurationCurvesByMonth.pdf',
+                       dirlog='testdata/',
+                       byMonthFlag = True)    
+    
+if False: # family of duration curves on one plot
     PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                                dirout='testdata/', fnameout=fnamebase+'.FamilyOfDurationCurves.pdf',
                                dirlog='testdata/')
 
 #%% Plot heatmaps
-if True:    
+if False:    
     PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv', considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
                  dirout='testdata/', fnameout=fnamebase+'.HeatMaps.g1.pdf',
                  dirlog='testdata/')

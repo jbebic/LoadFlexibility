@@ -487,6 +487,7 @@ def AssignRatePeriods_TOUGS3B(df):
     df.loc[(18 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 23) & (df['Season'] == 's'), 'RatePeriod'] = 2
     df.loc[df['Season'] == 'w', 'RatePeriod'] = 6
     df.loc[( 8 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 21) & (df['Season'] == 'w'), 'RatePeriod'] = 5
+    
     return df
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', ratein='TOU-GS3-B.csv',
@@ -496,7 +497,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                      writeSummaryFile=True):
     
     #%% Version and copyright info to record on the log file
-    codeName = 'ReviewLoads.py'
+    codeName = 'UtilityFunctions.py'
     codeVersion = '1.1'
     codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
     codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
@@ -522,7 +523,6 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                       dtype={'CustomerID':np.str, 'datetimestr':np.str, 'Demand':np.float})
     
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
-        
     # df1.set_index(['CustomerID', 'datetime'], inplace=True)
     # df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
@@ -622,7 +622,9 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         print("Solve for monthly & annual bills for all customers")
         df4 = df3.assign(month=pd.Series( np.asarray( df3['datetime'].dt.month ), index=df3.index))
         df5 = df3.assign(month=pd.Series( np.asarray(["entire year" for i in df3['datetime'].dt.month]) , index=df3.index))
-    
+        df5['Demand'] = df5['Demand']/4
+        df4['Demand'] = df4['Demand']/4
+        
         df_total = pd.pivot_table(df5, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         df_month = pd.pivot_table(df4, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         df_summary = pd.merge(df_total, df_month, left_index=True, right_index=True)

@@ -494,9 +494,9 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                      dirlog='./', fnameLog='CalculateBilling.log',):
     #%% Version and copyright info to record on the log file
     codeName = 'ReviewLoads.py'
-    codeVersion = '1.0'
+    codeVersion = '1.1'
     codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
+    codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -576,7 +576,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     
     df4 = pd.DataFrame(index=np.arange(0, 31*24, 0.25), columns=np.arange(0,3))
     i = 1
-    for cid in UniqueIDs:
+    for cid in [UniqueIDs[0]]:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         # Calculate energy charge for every interval
@@ -614,8 +614,14 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
 
 
     # Write Summary Data file with total charges for each month
-    df3 = df3.assign(month=pd.Series(np.asarray( df3['datetime'].dt.month ), index=df3.index))
-    df_summary = pd.pivot_table(df3, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc='sum', fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    print('Writing: %s' %os.path.join(dirout,"summary." +fnameout))
+    df4 = df3.assign(month=pd.Series( np.asarray( df3['datetime'].dt.month ), index=df3.index))
+    df5 = df3.assign(month=pd.Series( np.asarray([13 for i in df3['datetime'].dt.month]) , index=df3.index))
+
+    df_total = pd.pivot_table(df5, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    df_month = pd.pivot_table(df4, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    df_summary = pd.merge(df_total, df_month, left_index=True, right_index=True)
+    
     df_summary.to_csv(os.path.join(dirout,"summary." + fnameout), 
                index=True, 
                float_format='%.2f')      

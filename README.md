@@ -11,13 +11,15 @@ The technology to enable flexibility is readily available. Expanding on the exam
 The benefits of using load flexibility are primarily associated with reducing power system operating costs. This has two main components:
 
 1.	Reducing the amount of spinning reserves needed to deal with the combined uncertainty of load and variable renewable generation, and
-1.	Modifying the shape of net load to maximize utilization of renewable energy and thus avoid curtailments.   
+1.	Modifying the shape of net load to maximize utilization of renewable energy and thus reduce curtailments.   
 
-The tools in this repository use utility interval meter data to quantify load flexibility in the context of the second item. We study the patterns of consumption of similar loads relative to the time-of-use (TOU) utility rates and quantify the differences in energy consumed at the time of high prices. The loads are ranked based on what they pay for energy: the ones that pay the least are called <em>leaders</em> and all the rest are called <em>others</em>. The difference between the normalized consumption of <em>leaders</em> and <em>others</em> yields daily duration curves of flexibility. This is used as input to production simulation tools to modify the daily load profiles and measure the avoided cost by exercising load flexibility.  
+The tools in this repository use utility interval meter data to quantify load flexibility in the context of the second item. We study the patterns of consumption of similar loads relative to the time-of-use (TOU) utility rates and quantify the differences in energy consumed at the time of high prices. The combination of [NAICS](https://www.census.gov/eos/www/naics/) code and a time-of-use rate is used as a measure of similarity. For example, grocery stores (NAICS code 4451*) subscribed to a [TOU-GS-3 rate](https://www.sce.com/NR/sc3/tm2/pdf/CE281.pdf) is a pairing that determines similarity.
+
+For each group, the loads are ranked based on what they pay for energy: the ones that pay the least are called <em>leaders</em> and all the rest are called <em>others</em>. The difference between the normalized consumption of <em>leaders</em> and <em>others</em> yields daily duration curves of flexibility. The process yields a normalized duration curve of flexibility for every day of the year. The curves are separated for seasons of the year and, within each season, into weekdays and weekends (including public holidays).
+
+This is used as input to production simulation tools to modify the daily load profiles and measure the avoided cost by exercising load flexibility.  
 
 The production simulation tool then modifies the original load profiles to maximize the system benefit, while ensuring that the delta between modified and original load profiles has the duration curve that does not exceed the flexibility duration curve supplied by this analysis.
 
 # Disclaimer
-This is a high-level overview. Additional details are provided in the comments of various code modules and in the documentation. 
-
-June 11, 2018 - Anthony was here
+This is a high-level overview. Additional details are provided in the comments of various code modules and in the documentation.

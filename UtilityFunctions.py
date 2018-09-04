@@ -435,7 +435,7 @@ def AssignRatePeriods_TOUGS3B(df):
     df['DayType'] = 'wd' # weekday
     df.loc[df['datetime'].dt.dayofweek > 5, 'DayType'] = 'we' # weekend
     # New Year's Day
-    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 2), 'DayType'] = 'o'
     else:
@@ -445,8 +445,8 @@ def AssignRatePeriods_TOUGS3B(df):
     df.loc[(df['datetime'].dt.month == 2) & (df['datetime'].dt.dayofweek == 0) &
            (15 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 21), 'DayType'] = 'h'
     
-    # Independence Day
-    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values[0].dayofweek == 6):
+    # Independence Day    
+    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
     else:
@@ -457,7 +457,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (1 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 7), 'DayType'] = 'h'
 
     # Veterans Day
-    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 12), 'DayType'] = 'o'
     else:
@@ -468,7 +468,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (22 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 28), 'DayType'] = 'h'
 
     # Christmas Day
-    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 26), 'DayType'] = 'o'
     else:
@@ -582,7 +582,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         # Calculate energy charge for every interval
         df3.loc[df3['CustomerID'] == cid, 'EnergyCharge'] = df3[df3['CustomerID'] == cid]['Demand'] * df3[df3['CustomerID'] == cid]['EnergyCost']
         # Calculate demand charges, based on the peak Demand in the relevant RatePeriod
-        dix = df3.columns.get_loc('DemandCost')
+        dix = df3.columns.get_loc('DemandCharge')
         for mNo in (np.arange(0, 12, 1)+1):
             df4.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other months
             df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand']]
@@ -602,7 +602,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         
         # Sum the energy and demand charges into total cost for each interval
         df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge']
-                        
+               
+    # Write data file with charges for each time period         
     print('Writing: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
     df3.to_csv(os.path.join(dirout,fnameout), 
@@ -611,6 +612,14 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                date_format='%Y-%m-%d %H:%M',
                columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) 
 
+
+    # Write Summary Data file with total charges for each month
+    df3 = df3.assign(month=pd.Series(np.asarray( df3['datetime'].dt.month ), index=df3.index))
+    df_summary = pd.pivot_table(df3, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc='sum', fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    df_summary.to_csv(os.path.join(dirout,"summary." + fnameout), 
+               index=True, 
+               float_format='%.2f')      
+    
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
     print('Finished')

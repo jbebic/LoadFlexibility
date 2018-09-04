@@ -149,7 +149,7 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
     df1 = df.sort_values(['monthInverse', 'NormDmnd'], ascending=False)
     months = np.asarray(df['month'])
     tickindex = [ np.asarray(np.where(months==i))[0][0] for i in range(1,13,1)]
-    monthsList = [ date(2016, i,1).strftime('%b') for i in [1,2,3,4,5,6,7,8,9,10,11,12,1]]
+    monthsList = [ date(2016, i,1).strftime('%b') for i in range(1,13,1)]
 
     ax0.set_title('Normalized Load')
     ax0.set_ylim([ymin,ymax])
@@ -211,9 +211,9 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
 
     # Version and copyright info to record on the log file
     codeName = 'PlotDurationCurves.py'
-    codeVersion = '1.0'
+    codeVersion = '1.1'
     codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
+    codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -247,7 +247,6 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     logTime(foutLog, '\nRunFinished at: ', codeTfinish)
     
     return
-
 
 # create family of duration curves "
 def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', ignoreCIDs='', considerCIDs='',

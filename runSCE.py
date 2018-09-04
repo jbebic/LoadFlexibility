@@ -7,7 +7,7 @@ Created on Mon May 28 09:28:36 2018
 
 import numpy as np
 
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups, CalculateBilling
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -61,10 +61,15 @@ if False:
 #%% Manual steps:
 #  1) Open  
 
+#%% Calculate Billing
+if True:
+    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs=fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                   dirout='output/', fnameout=fnamebase + '.A.billing.csv',
+                   dirlog='output/')
 
 #%% Normalize profiles
 if False:
-    NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', ignorein=fnamebase + '.A.ignore.csv',
+    NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs=fnamebase + '.A.ignore.csv',
                    dirout='output/', fnameout=fnamebase + '.A.normalized.csv',
                    dirlog='output/')
 
@@ -77,14 +82,14 @@ if False:
     
 #%% Plot duration curves
 if True:
-    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',
+    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                       byMonthFlag=True,
                        dirout='plots/', fnameout=fnamebase + '.A.duration.pdf',
                        dirlog='plots/')
-    
+if False:   
     PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',
                                dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf',
                                dirlog='plots/')
-
 #%% Plot heatmaps
 if False:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.ignore.csv',

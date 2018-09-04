@@ -491,7 +491,10 @@ def AssignRatePeriods_TOUGS3B(df):
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', ratein='TOU-GS3-B.csv',
                      dirout='./', fnameout='IntervalCharges.csv',
-                     dirlog='./', fnameLog='CalculateBilling.log',):
+                     dirlog='./', fnameLog='CalculateBilling.log',
+                     writeDataFile=False,
+                     writeSummaryFile=True):
+    
     #%% Version and copyright info to record on the log file
     codeName = 'ReviewLoads.py'
     codeVersion = '1.1'
@@ -603,28 +606,29 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         # Sum the energy and demand charges into total cost for each interval
         df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge']
                
-    # Write data file with charges for each time period         
-    print('Writing: %s' %os.path.join(dirout,fnameout))
-    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df3.to_csv(os.path.join(dirout,fnameout), 
-               index=False, 
-               float_format='%.2f',
-               date_format='%Y-%m-%d %H:%M',
-               columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) 
+    # Write data file with charges for each time period  
+    if writeDataFile:       
+        print('Writing: %s' %os.path.join(dirout,fnameout))
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+        df3.to_csv(os.path.join(dirout,fnameout), 
+                   index=False, 
+                   float_format='%.2f',
+                   date_format='%Y-%m-%d %H:%M',
+                   columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) 
 
 
     # Write Summary Data file with total charges for each month
-    print('Writing: %s' %os.path.join(dirout,"summary." +fnameout))
-    df4 = df3.assign(month=pd.Series( np.asarray( df3['datetime'].dt.month ), index=df3.index))
-    df5 = df3.assign(month=pd.Series( np.asarray([13 for i in df3['datetime'].dt.month]) , index=df3.index))
-
-    df_total = pd.pivot_table(df5, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-    df_month = pd.pivot_table(df4, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-    df_summary = pd.merge(df_total, df_month, left_index=True, right_index=True)
+    if writeSummaryFile:
+        print("Solve for monthly & annual bills for all customers")
+        df4 = df3.assign(month=pd.Series( np.asarray( df3['datetime'].dt.month ), index=df3.index))
+        df5 = df3.assign(month=pd.Series( np.asarray(["entire year" for i in df3['datetime'].dt.month]) , index=df3.index))
     
-    df_summary.to_csv(os.path.join(dirout,"summary." + fnameout), 
-               index=True, 
-               float_format='%.2f')      
+        df_total = pd.pivot_table(df5, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        df_month = pd.pivot_table(df4, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        df_summary = pd.merge(df_total, df_month, left_index=True, right_index=True)
+        
+        print('Writing: %s' %os.path.join(dirout,"summary." +fnameout))
+        df_summary.to_csv(os.path.join(dirout,"summary." + fnameout), index=True, float_format='%.2f')      
     
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()

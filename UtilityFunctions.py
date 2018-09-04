@@ -10,11 +10,9 @@ Utiliy functions to cope with data irregularities
 #%% Importing all the necessary Python packages
 import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
-
 from datetime import datetime # time stamps
 from pytz import timezone
 import os # operating system interface
-
 import string
 import random
 
@@ -435,7 +433,7 @@ def AssignRatePeriods_TOUGS3B(df):
     df['DayType'] = 'wd' # weekday
     df.loc[df['datetime'].dt.dayofweek > 5, 'DayType'] = 'we' # weekend
     # New Year's Day
-    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 2), 'DayType'] = 'o'
     else:
@@ -446,7 +444,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (15 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 21), 'DayType'] = 'h'
     
     # Independence Day    
-    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values.iloc[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
     else:
@@ -457,7 +455,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (1 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 7), 'DayType'] = 'h'
 
     # Veterans Day
-    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values.iloc[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 12), 'DayType'] = 'o'
     else:
@@ -468,7 +466,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (22 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 28), 'DayType'] = 'h'
 
     # Christmas Day
-    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values.iloc[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 26), 'DayType'] = 'o'
     else:

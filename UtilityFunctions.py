@@ -576,7 +576,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     
     df4 = pd.DataFrame(index=np.arange(0, 31*24, 0.25), columns=np.arange(0,3))
     i = 1
-    for cid in [UniqueIDs[0]]:
+    for cid in UniqueIDs:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         # Calculate energy charge for every interval

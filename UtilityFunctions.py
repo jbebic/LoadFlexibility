@@ -11,10 +11,20 @@ Utiliy functions to cope with data irregularities
 import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
+from datetime import date
 from pytz import timezone
 import os # operating system interface
 import string
 import random
+import matplotlib.pyplot as plt # plotting 
+import matplotlib.backends.backend_pdf as dpdf # pdf output
+
+
+#%% Version and copyright info to record on the log file
+codeName = 'UtilityFunctions.py'
+codeVersion = '1.1'
+codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
+codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 # %% Function definitions
 # Time logging
@@ -415,6 +425,7 @@ def SplitToGroups(ngroups,
     return
 
 def AssignRatePeriods_TOUGS3B(df):
+    # update 
     # https://www.sce.com/NR/sc3/tm2/pdf/CE281.pdf
     # Summer: [June 1 00:00AM, Sep 30, 23:45]
     # Winter: complement
@@ -489,20 +500,18 @@ def AssignRatePeriods_TOUGS3B(df):
     return df
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', ratein='TOU-GS3-B.csv',
-                     dirout='./', fnameout='IntervalCharges.csv',
+                     dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
-                     writeDataFile=False,
-                     writeSummaryFile=True):
+                     writeDataFile=False, writeSummaryFile=True):
     
-    #%% Version and copyright info to record on the log file
-    codeName = 'UtilityFunctions.py'
-    codeVersion = '1.1'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
-
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+    
+    if fnameoutsummary:
+        pass
+    else:
+        fnameoutsummary = 'summary.'  + fnameout
     
     #%% Output header information to log file
     print('This is: %s, Version: %s' %(codeName, codeVersion))
@@ -608,7 +617,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     if writeDataFile:       
         print('Writing: %s' %os.path.join(dirout,fnameout))
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-        df3.to_csv(os.path.join(dirout,fnameout), 
+        dfwrite = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
+        dfwrite.to_csv(os.path.join(dirout,fnameout), 
                    index=False, 
                    float_format='%.2f',
                    date_format='%Y-%m-%d %H:%M',
@@ -617,24 +627,193 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
 
     # Write Summary Data file with total charges for each month
     if writeSummaryFile:
-        print("Solve for monthly & annual bills for all customers")
-        df4 = df3.assign(month=pd.Series( np.asarray( df3['datetime'].dt.month ), index=df3.index))
-        df5 = df3.assign(month=pd.Series( np.asarray(["entire year" for i in df3['datetime'].dt.month]) , index=df3.index))
-        df5['Demand'] = df5['Demand']/4
-        df4['Demand'] = df4['Demand']/4
         
-        df_total = pd.pivot_table(df5, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-        df_month = pd.pivot_table(df4, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-        df_summary = pd.merge(df_total, df_month, left_index=True, right_index=True)
+        print("Solve for monthly & annual bills")
+        dfm = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
+        dfm = dfm.assign(month=pd.Series( np.asarray( dfm['datetime'].dt.month ), index=dfm.index))
         
-        print('Writing: %s' %os.path.join(dirout,"summary." +fnameout))
-        df_summary.to_csv(os.path.join(dirout,"summary." + fnameout), index=True, float_format='%.2f')      
-    
+        dfy = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
+        dfy = dfy.assign(month=pd.Series( np.asarray(['entire year' for i in dfy['datetime'].dt.month]) , index=dfy.index))
+
+        dfm['Demand'] = dfm['Demand']/4
+        dfy['Demand'] = dfy['Demand']/4
+        
+        dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        df_summary = pd.merge(dfy, dfm, left_index=True, right_index=True)
+        
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
+        print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
+        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')      
+            
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
     print('Finished')
     
-    return
+    return 
+
+
+def CalculateGroups(dirin='./', fnamein='summary.billing.csv', 
+                     dirout='./', fnameout='groups.csv',
+                     dirlog='./', fnameLog='CalculateGroups.log',
+                     plotGroups=False):
+    
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+    
+    #%% Output header information to log file
+    print('This is: %s, Version: %s' %(codeName, codeVersion))
+    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
+    foutLog.write('%s\n' %(codeCopyright))
+    foutLog.write('%s\n' %(codeAuthors))
+    foutLog.write('Run started on: %s\n' %(str(codeTstart)))
+
+    # Output file information to log file
+    print('Reading: %s' %os.path.join(dirin,fnamein))
+    foutLog.write('\nReading: %s' %os.path.join(dirin,fnamein))
+    df_summary = pd.read_csv(os.path.join(dirin, fnamein), index_col=[0])
+    df_summary = df_summary.drop('month')
+    df_summary = df_summary.drop('CustomerID')
+    demand = np.asarray([ float(i) for i in df_summary['Demand'] ])
+    totalCharge = np.asarray([ float(i) for i in df_summary['TotalCharge'] ])
+    
+    df_summary = df_summary.assign(Demand =pd.Series(demand,index=df_summary.index))
+    df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
+    df_summary= df_summary.assign(TotalChargePerkWhYear =pd.Series(totalCharge/demand,index=df_summary.index))
+
+    print("Grouping by Annual Demand & Billing")
+
+    for mNo in range(1,13,1):
+        df_summary["TotalChargePerkWh." + str(mNo)]=pd.Series(df_summary['TotalCharge'+ "." + str(mNo)]/df_summary['Demand'+ "." + str(mNo)],index=df_summary.index)
+    
+    qx = np.percentile(demand, [25,50,75])
+    qD = {0.25: qx[0], 0.5: qx[1], 0.75: qx[2]}
+   
+    q1 = df_summary.loc[  (df_summary['Demand']  < qD[0.25])  ]
+    q1b = q1['TotalChargePerkWhYear'].quantile([0.1])
+    q1_L = list(q1.loc[ (q1['TotalChargePerkWhYear'] <= q1b[0.1])  ].index)
+    q1_O = list(q1.loc[ (q1['TotalChargePerkWhYear'] > q1b[0.1])  ].index)
+
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1L." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q1L." +fnameout))
+    pd.Series(q1_L).to_csv(os.path.join(dirout,"q1L." + fnameout), index=False) 
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1O." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q1O." +fnameout))
+    pd.Series(q1_O).to_csv(os.path.join(dirout,"q1O." + fnameout), index=False) 
+        
+    q2 = df_summary.loc[  (demand >= qD[0.25])  &  (demand < qD[0.5])  ]
+    q2b = q2['TotalChargePerkWhYear'].quantile([0.1])
+    q2_L = q2.loc[ (q2['TotalChargePerkWhYear'] <= q2b[0.1])  ].index
+    q2_O = q2.loc[ (q2['TotalChargePerkWhYear'] > q2b[0.1])  ].index
+    
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2L." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q2L." +fnameout))
+    pd.Series(q2_L).to_csv(os.path.join(dirout,"q2L." + fnameout), index=False) 
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2O." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q2O." +fnameout))
+    pd.Series(q2_O).to_csv(os.path.join(dirout,"q2O." + fnameout), index=False)
+
+    q3 = df_summary.loc[  (df_summary['Demand'] >= qD[0.5]) &  (df_summary['Demand'] < qD[0.75])   ]
+    q3b = q3['TotalChargePerkWhYear'].quantile([0.1])
+    q3_L = q3.loc[ (q3['TotalChargePerkWhYear'] <= q3b[0.1])  ].index
+    q3_O = q3.loc[ (q3['TotalChargePerkWhYear'] > q3b[0.1])  ].index
+ 
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3L." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q3L." +fnameout))
+    pd.Series(q3_L).to_csv(os.path.join(dirout,"q3L." + fnameout), index=False)
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3O." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q3O." +fnameout))
+    pd.Series(q3_O).to_csv(os.path.join(dirout,"q3O." + fnameout), index=False)
+    
+    q4 = df_summary.loc[  (df_summary['Demand'] >= qD[0.75])  ]
+    q4b = q4['TotalChargePerkWhYear'].quantile([0.1])
+    q4_L = q4.loc[ (q4['TotalChargePerkWhYear'] <= q4b[0.1])  ].index
+    q4_O = q4.loc[ (q4['TotalChargePerkWhYear'] > q4b[0.1])  ].index
+    
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4L." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q4L." +fnameout))
+    pd.Series(q4_L).to_csv(os.path.join(dirout,"q4L." + fnameout), index=False) 
+    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4O." +fnameout))
+    print('Writing: %s' %os.path.join(dirout,"q4O." +fnameout))
+    pd.Series(q4_O).to_csv(os.path.join(dirout,"q4O." + fnameout), index=False)
+        
+    if plotGroups:
+        
+        print("Plotting Demand vs Total Cost of Energy for Each Month")
+        pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
+                
+        ms = 7
+        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+        ax.set_title('Entire Year')
+        ax.set_xlabel('Average Total Energy Cost [$/kWh]')
+        ax.set_ylabel('Total Demand [Wh]')
+        
+        ax.plot(df_summary.loc[q1_L,'TotalChargePerkWhYear' ], df_summary.loc[q1_L,'Demand'], 'o', color="#1da15a", ms=ms, label="Q1")
+        ax.plot(df_summary.loc[q2_L,'TotalChargePerkWhYear'], df_summary.loc[q2_L,'Demand'], 'o', color="#002F5C" , ms=ms, label="Q2")
+        ax.plot(df_summary.loc[q3_L,'TotalChargePerkWhYear'], df_summary.loc[q3_L,'Demand'], 'o', color="#00b5e2", ms=ms, label="Q3")
+        ax.plot(df_summary.loc[q4_L,'TotalChargePerkWhYear'], df_summary.loc[q4_L,'Demand'], 'o', color="#FE5000", ms=ms, label="Q4")
+        
+        ax.plot(df_summary.loc[q1_O,'TotalChargePerkWhYear'], df_summary.loc[q1_O,'Demand'], 'o', color="#1da15a" , ms=ms, markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q2_O,'TotalChargePerkWhYear'], df_summary.loc[q2_O,'Demand'], 'o', color= "#002F5C", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q3_O,'TotalChargePerkWhYear'], df_summary.loc[q3_O,'Demand'], 'o', color="#00b5e2", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q4_O,'TotalChargePerkWhYear'], df_summary.loc[q4_O,'Demand'], 'o', color="#FE5000", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        
+        ax.plot([xlim[0], xlim[1]], [ qD[0.25],  qD[0.25]], '-',lw=0.5, color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [ qD[0.5],  qD[0.5]], '-',lw=0.5,color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [ qD[0.75],  qD[0.75]], '-',lw=0.5,color="#999999" )
+        ax.plot([ q4b[0.1], q4b[0.1]], [ qD[0.75],  ylim[1]], '-',lw=0.5,color="#999999" )
+        ax.plot([ q3b[0.1], q3b[0.1]], [ qD[0.5],  qD[0.75]], '-',lw=0.5,color="#999999" )
+        ax.plot([ q2b[0.1], q2b[0.1]], [ qD[0.25],  qD[0.5]], '-',lw=0.5,color="#999999" )
+        ax.plot([ q1b[0.1], q1b[0.1]], [ ylim[0],  qD[0.25]], '-',lw=0.5,color="#999999" )
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        
+        chartBox = ax.get_position()
+        ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
+        ax.legend(labels=['Q1', 'Q2', 'Q3', 'Q4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+        
+        pltPdf1.savefig() # Saves fig to pdf
+        plt.close() # Closes fig to clean up memory
+    
+        for mNo in [1,2,3,4,5,6,7,8,9,10,11,12]:
+            
+            fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+            if np.isreal(mNo):
+                ax.set_title(date(2016, mNo,1).strftime('%B'))
+            else:
+                ax.set_title( mNo)
+                
+            ax.set_xlabel('Average Total Energy Cost [$/kWh]')
+            ax.set_ylabel('Total Demand [Wh]')
+            
+            ax.plot(df_summary.loc[q1_L,'TotalChargePerkWh' + "." + str(mNo)], df_summary.loc[q1_L,'Demand'+ "." + str(mNo)], 'o', color="#1da15a", ms=ms, label='Q1')
+            ax.plot(df_summary.loc[q2_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q2_L,'Demand'+ "." + str(mNo)], 'o', color="#002F5C" , ms=ms, label="Q2")
+            ax.plot(df_summary.loc[q3_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q3_L,'Demand'+ "." + str(mNo)], 'o', color="#00b5e2", ms=ms, label="Q3")
+            ax.plot(df_summary.loc[q4_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q4_L,'Demand'+ "." + str(mNo)], 'o', color="#FE5000", ms=ms, label="Q4")
+            
+            ax.plot(df_summary.loc[q1_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q1_O,'Demand'+ "." + str(mNo)], 'o', color="#1da15a" , ms=ms, markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q2_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q2_O,'Demand'+ "." + str(mNo)], 'o', color= "#002F5C", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q3_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q3_O,'Demand'+ "." + str(mNo)], 'o', color="#00b5e2", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q4_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q4_O,'Demand'+ "." + str(mNo)], 'o', color="#FE5000", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            
+            chartBox = ax.get_position()
+            ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
+            ax.legend(labels=['Q1', 'Q2', 'Q3', 'Q4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+            pltPdf1.savefig() # Saves fig to pdf
+            plt.close() # Closes fig to clean up memory
+            
+        print('Writing: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
+        foutLog.write('\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
+        pltPdf1.close()
+        
+    logTime(foutLog, '\n\nRunFinished at: ', codeTstart)
+    foutLog.close()
+    print('Finished')
+    
+    return 
 
 if __name__ == "__main__":
     if False:

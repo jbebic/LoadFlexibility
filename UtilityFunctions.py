@@ -625,7 +625,6 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                    date_format='%Y-%m-%d %H:%M',
                    columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) 
 
-
     # Write Summary Data file with total charges for each month
     if writeSummaryFile:
         
@@ -636,8 +635,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         dfy = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
         dfy = dfy.assign(month=pd.Series( np.asarray(['entire year' for i in dfy['datetime'].dt.month]) , index=dfy.index))
 
-        dfm['Demand'] = dfm['Demand']/4
-        dfy['Demand'] = dfy['Demand']/4
+        dfm['Demand'] = dfm['Demand']
+        dfy['Demand'] = dfy['Demand']
         
         dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
@@ -645,7 +644,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
         print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
-        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')      
+        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.8f')      
             
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
@@ -676,8 +675,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     df1 = pd.read_csv(os.path.join(dirin, fnamein), index_col=[0])
     df1 = df1.drop('month')
     df1 = df1.drop('CustomerID')
-#    df1= df1.index.rename('CustomerID')
     
+    # Find UniqueIDs ignoring and considering selected IDs
     print('Processing...')
     UniqueIDs = df1.index.unique().tolist()
     foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
@@ -709,12 +708,14 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     else:
         considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
-        
+
+    # only consider customers within UniqueID
     df_summary = df1.loc[UniqueIDs]
     
+    # deal with the data format of the demand and total charge
     demand = np.asarray([ float(i) for i in df_summary['Demand'] ])
     totalCharge = np.asarray([ float(i) for i in df_summary['TotalCharge'] ])
-    
+    # assign back to df_summary
     df_summary = df_summary.assign(Demand =pd.Series(demand,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(TotalChargePerkWhYear =pd.Series(totalCharge/demand,index=df_summary.index))
@@ -724,26 +725,29 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     for mNo in range(1,13,1):
         df_summary["TotalChargePerkWh." + str(mNo)]=pd.Series(df_summary['TotalCharge'+ "." + str(mNo)]/df_summary['Demand'+ "." + str(mNo)],index=df_summary.index)
     
+    # solve for transitions between quartiles of energy demand
     qx = np.percentile(demand, [25,50,75])
     qD = {0.25: qx[0], 0.5: qx[1], 0.75: qx[2]}
    
+    # first quartile: 0% to 25%
     q1 = df_summary.loc[  (df_summary['Demand']  < qD[0.25])  ]
     q1b = q1['TotalChargePerkWhYear'].quantile([0.1])
     q1_L = list(q1.loc[ (q1['TotalChargePerkWhYear'] <= q1b[0.1])  ].index)
     q1_O = list(q1.loc[ (q1['TotalChargePerkWhYear'] > q1b[0.1])  ].index)
-
+    # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q1L." +fnameout))
     pd.Series(q1_L).to_csv(os.path.join(dirout,"q1L." + fnameout), index=False) 
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1O." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q1O." +fnameout))
     pd.Series(q1_O).to_csv(os.path.join(dirout,"q1O." + fnameout), index=False) 
-        
+
+    # secnd quartile: 25% to 50%
     q2 = df_summary.loc[  (demand >= qD[0.25])  &  (demand < qD[0.5])  ]
     q2b = q2['TotalChargePerkWhYear'].quantile([0.1])
     q2_L = q2.loc[ (q2['TotalChargePerkWhYear'] <= q2b[0.1])  ].index
     q2_O = q2.loc[ (q2['TotalChargePerkWhYear'] > q2b[0.1])  ].index
-    
+    # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q2L." +fnameout))
     pd.Series(q2_L).to_csv(os.path.join(dirout,"q2L." + fnameout), index=False) 
@@ -751,11 +755,12 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     print('Writing: %s' %os.path.join(dirout,"q2O." +fnameout))
     pd.Series(q2_O).to_csv(os.path.join(dirout,"q2O." + fnameout), index=False)
 
+    # third quartile: 50% to 75%
     q3 = df_summary.loc[  (df_summary['Demand'] >= qD[0.5]) &  (df_summary['Demand'] < qD[0.75])   ]
     q3b = q3['TotalChargePerkWhYear'].quantile([0.1])
     q3_L = q3.loc[ (q3['TotalChargePerkWhYear'] <= q3b[0.1])  ].index
     q3_O = q3.loc[ (q3['TotalChargePerkWhYear'] > q3b[0.1])  ].index
- 
+    # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q3L." +fnameout))
     pd.Series(q3_L).to_csv(os.path.join(dirout,"q3L." + fnameout), index=False)
@@ -763,11 +768,12 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     print('Writing: %s' %os.path.join(dirout,"q3O." +fnameout))
     pd.Series(q3_O).to_csv(os.path.join(dirout,"q3O." + fnameout), index=False)
     
+    # fourth quartile: 75% to 100%
     q4 = df_summary.loc[  (df_summary['Demand'] >= qD[0.75])  ]
     q4b = q4['TotalChargePerkWhYear'].quantile([0.1])
     q4_L = q4.loc[ (q4['TotalChargePerkWhYear'] <= q4b[0.1])  ].index
     q4_O = q4.loc[ (q4['TotalChargePerkWhYear'] > q4b[0.1])  ].index
-    
+    # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q4L." +fnameout))
     pd.Series(q4_L).to_csv(os.path.join(dirout,"q4L." + fnameout), index=False) 
@@ -777,14 +783,16 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
     if plotGroups:
         
-        print("Plotting Demand vs Total Cost of Energy for Each Month")
+        print("Plotting Energy Consumption vs Total Cost of Energy")
         pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
                 
         ms = 7
+        
+        # Plot Annual Energy vs Tot
         fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
         ax.set_title('Entire Year')
         ax.set_xlabel('Average Total Energy Cost [$/kWh]')
-        ax.set_ylabel('Total Demand [Wh]')
+        ax.set_ylabel('Total Energy [Wh]')
         
         ax.plot(df_summary.loc[q1_L,'TotalChargePerkWhYear' ], df_summary.loc[q1_L,'Demand'], 'o', color="#1da15a", ms=ms, label="Q1")
         ax.plot(df_summary.loc[q2_L,'TotalChargePerkWhYear'], df_summary.loc[q2_L,'Demand'], 'o', color="#002F5C" , ms=ms, label="Q2")
@@ -795,6 +803,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         ax.plot(df_summary.loc[q2_O,'TotalChargePerkWhYear'], df_summary.loc[q2_O,'Demand'], 'o', color= "#002F5C", ms=ms,markerfacecolor='none', markeredgewidth=2)
         ax.plot(df_summary.loc[q3_O,'TotalChargePerkWhYear'], df_summary.loc[q3_O,'Demand'], 'o', color="#00b5e2", ms=ms,markerfacecolor='none', markeredgewidth=2)
         ax.plot(df_summary.loc[q4_O,'TotalChargePerkWhYear'], df_summary.loc[q4_O,'Demand'], 'o', color="#FE5000", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         
@@ -824,7 +833,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                 ax.set_title( mNo)
                 
             ax.set_xlabel('Average Total Energy Cost [$/kWh]')
-            ax.set_ylabel('Total Demand [Wh]')
+            ax.set_ylabel('Total Energy [Wh]')
             
             ax.plot(df_summary.loc[q1_L,'TotalChargePerkWh' + "." + str(mNo)], df_summary.loc[q1_L,'Demand'+ "." + str(mNo)], 'o', color="#1da15a", ms=ms, label='Q1')
             ax.plot(df_summary.loc[q2_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q2_L,'Demand'+ "." + str(mNo)], 'o', color="#002F5C" , ms=ms, label="Q2")

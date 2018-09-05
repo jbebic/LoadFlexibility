@@ -4,7 +4,7 @@ Created on Mon May 28 09:28:36 2018
 
 @author: jbebic
 """
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -66,12 +66,20 @@ if False:
                    dirlog='testdata/')
     
 #%% Calculate Billing
-if True:
+if False:
     CalculateBilling(dirin='testdata/', fnamein=fnamebase+'.normalized.csv', # '.csv',
                      dirout='testdata/', fnameout=fnamebase+'.billing.csv',
+                     fnameoutsummary ='summary.' + fnamebase + 'billing.csv',
                      dirlog='testdata/',
                      writeDataFile=False,
                      writeSummaryFile=True)
+    
+#%% Group Customers
+if True:
+    CalculateGroups(dirin='testdata/', fnamein="summary." + fnamebase+'.billing.csv',
+                     dirout='testdata/', fnameout=fnamebase+'.groups.csv',
+                     dirlog='testdata/',
+                     plotGroups=True)
 
 #%% Plot duration curves
 if False: # annual duration curve 
@@ -79,7 +87,7 @@ if False: # annual duration curve
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
     
-if False: # monthly uration curve  showing entire year with duration for each month
+if False: # monthly duration curve  showing entire year with duration for each month
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurvesByMonth.pdf',
                        dirlog='testdata/',

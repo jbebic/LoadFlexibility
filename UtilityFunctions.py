@@ -22,7 +22,7 @@ import matplotlib.backends.backend_pdf as dpdf # pdf output
 
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
-codeVersion = '1.1'
+codeVersion = '1.2'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
@@ -38,11 +38,12 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
            dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
            dirlog='./', fnameLog='AnonymizeCIDs.log',
            IDlen=6):
-    #%% Version and copyright info to record on the log file
-    codeName = 'AnonymizeCIDs.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
+    
+#    %% Version and copyright info to record on the log file
+#    codeName = 'AnonymizeCIDs.py'
+#    codeVersion = '1.0'
+#    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
+#    codeAuthors = "Jovan Bebic GE Global Research\n"
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -653,7 +654,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     return 
 
 
-def CalculateGroups(dirin='./', fnamein='summary.billing.csv', 
+def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='',
                      dirout='./', fnameout='groups.csv',
                      dirlog='./', fnameLog='CalculateGroups.log',
                      plotGroups=False):
@@ -668,13 +669,49 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv',
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
     foutLog.write('Run started on: %s\n' %(str(codeTstart)))
-
+    
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('\nReading: %s' %os.path.join(dirin,fnamein))
-    df_summary = pd.read_csv(os.path.join(dirin, fnamein), index_col=[0])
-    df_summary = df_summary.drop('month')
-    df_summary = df_summary.drop('CustomerID')
+    df1 = pd.read_csv(os.path.join(dirin, fnamein), index_col=[0])
+    df1 = df1.drop('month')
+    df1 = df1.drop('CustomerID')
+#    df1= df1.index.rename('CustomerID')
+    
+    print('Processing...')
+    UniqueIDs = df1.index.unique().tolist()
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+    ignoreIDs = []
+    if ignoreCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,ignoreCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,ignoreCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
+                          header = 0, 
+                          usecols = [0], 
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+
+        ignoreIDs = df9['CustomerID'].tolist()
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+        
+    df_summary = df1.loc[UniqueIDs]
+    
     demand = np.asarray([ float(i) for i in df_summary['Demand'] ])
     totalCharge = np.asarray([ float(i) for i in df_summary['TotalCharge'] ])
     

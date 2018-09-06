@@ -426,14 +426,12 @@ def SplitToGroups(ngroups,
     return
 
 def AssignRatePeriods_TOUGS3B(df):
-    # update 
+    
     # https://www.sce.com/NR/sc3/tm2/pdf/CE281.pdf
     # Summer: [June 1 00:00AM, Sep 30, 23:45]
     # Winter: complement
     df['Season'] = 'w'
     df.loc[(df['datetime'].dt.month > 5) & (df['datetime'].dt.month < 10), 'Season'] = 's'
-    print( df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values )
-    print( type(df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values))
     
     # Holidays: 
     #   Jan 1 (New Year's Day)
@@ -746,7 +744,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     
     # solve for transitions between quartiles of energy demand
     qD = np.percentile(totalEnergy, energyPercentiles)
-   
+        
     # first quartile: 0% to 25%
     q1 = df_summary.loc[ (df_summary["Energy"] >= qD[0])  &  (df_summary["Energy"] < qD[1]) ]
     q1b = q1['ChargePerUnitYear'].quantile([0.1])

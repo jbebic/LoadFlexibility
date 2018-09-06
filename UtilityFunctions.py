@@ -442,6 +442,7 @@ def AssignRatePeriods_TOUGS3B(df):
     #   4th Thursday in November (Thanksgiving Day)
     #   Dec 25 (Christmas)
     # When a holidays falls on Sunday, the following Monday is recognized as an off-peak period)
+        
     df['DayType'] = 'wd' # weekday
     df.loc[df['datetime'].dt.dayofweek > 5, 'DayType'] = 'we' # weekend
     # New Year's Day
@@ -456,6 +457,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (15 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 21), 'DayType'] = 'h'
     
     # Independence Day    
+
     if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
@@ -631,21 +633,22 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         print("Solve for monthly & annual bills")
         dfm = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
         dfm = dfm.assign(month=pd.Series( np.asarray( dfm['datetime'].dt.month ), index=dfm.index))
-        
+		
+		
         dfy = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
-        dfy = dfy.assign(month=pd.Series( np.asarray(['entire year' for i in dfy['datetime'].dt.month]) , index=dfy.index))
-
-        dfm['Demand'] = dfm['Demand']
-        dfy['Demand'] = dfy['Demand']
-        
+        inputArray = np.asarray(['entire year' for i in dfy['datetime'].dt.month])
+        dfy = dfy.assign(month=pd.Series( inputArray , index=dfy.index))
+		
+        dfp = pd.pivot_table(dfy, values=['Demand'], index= ['CustomerID'], columns=['month'], aggfunc=np.max, fill_value=0.0, margins=False, dropna=True, margins_name='All')  
         dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-        df_summary = pd.merge(dfy, dfm, left_index=True, right_index=True)
+        df_summary = pd.merge(dfy, dfm,  left_index=True, right_index=True)
+        df_summary['PeakDemand', 'entire year'] = np.asarray(dfp['Demand']['entire year'].values*4)
         
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
         print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
-        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.8f')      
-            
+        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')   
+        
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
     print('Finished')
@@ -661,6 +664,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+	
+    energyColumnName = 'Demand'
     
     #%% Output header information to log file
     print('This is: %s, Version: %s' %(codeName, codeVersion))
@@ -713,27 +718,29 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     df_summary = df1.loc[UniqueIDs]
     
     # deal with the data format of the demand and total charge
-    demand = np.asarray([ float(i) for i in df_summary['Demand'] ])
+    totalEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName] ])
     totalCharge = np.asarray([ float(i) for i in df_summary['TotalCharge'] ])
     # assign back to df_summary
-    df_summary = df_summary.assign(Demand =pd.Series(demand,index=df_summary.index))
+    df_summary = df_summary.assign(Energy=pd.Series(totalEnergy,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
-    df_summary= df_summary.assign(TotalChargePerkWhYear =pd.Series(totalCharge/demand,index=df_summary.index))
+    df_summary= df_summary.assign(TotalChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
 
     print("Grouping by Annual Demand & Billing")
 
     for mNo in range(1,13,1):
-        df_summary["TotalChargePerkWh." + str(mNo)]=pd.Series(df_summary['TotalCharge'+ "." + str(mNo)]/df_summary['Demand'+ "." + str(mNo)],index=df_summary.index)
+        monthlyEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName + "." + str(mNo)] ])
+        df_summary["Energy." + str(mNo)]=pd.Series(monthlyEnergy,index=df_summary.index)
+        df_summary["TotalChargePerUnit." + str(mNo)]=pd.Series(100 * df_summary['TotalCharge'+ "." + str(mNo)]/df_summary['Energy'+ "." + str(mNo)],index=df_summary.index)
     
     # solve for transitions between quartiles of energy demand
-    qx = np.percentile(demand, [25,50,75])
+    qx = np.percentile(totalEnergy, [25,50,75])
     qD = {0.25: qx[0], 0.5: qx[1], 0.75: qx[2]}
    
     # first quartile: 0% to 25%
-    q1 = df_summary.loc[  (df_summary['Demand']  < qD[0.25])  ]
-    q1b = q1['TotalChargePerkWhYear'].quantile([0.1])
-    q1_L = list(q1.loc[ (q1['TotalChargePerkWhYear'] <= q1b[0.1])  ].index)
-    q1_O = list(q1.loc[ (q1['TotalChargePerkWhYear'] > q1b[0.1])  ].index)
+    q1 = df_summary.loc[  (df_summary["Energy"]  < qD[0.25])  ]
+    q1b = q1['TotalChargePerUnitYear'].quantile([0.1])
+    q1_L = list(q1.loc[ (q1['TotalChargePerUnitYear'] <= q1b[0.1])  ].index)
+    q1_O = list(q1.loc[ (q1['TotalChargePerUnitYear'] > q1b[0.1])  ].index)
     # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q1L." +fnameout))
@@ -743,10 +750,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     pd.Series(q1_O).to_csv(os.path.join(dirout,"q1O." + fnameout), index=False) 
 
     # secnd quartile: 25% to 50%
-    q2 = df_summary.loc[  (demand >= qD[0.25])  &  (demand < qD[0.5])  ]
-    q2b = q2['TotalChargePerkWhYear'].quantile([0.1])
-    q2_L = q2.loc[ (q2['TotalChargePerkWhYear'] <= q2b[0.1])  ].index
-    q2_O = q2.loc[ (q2['TotalChargePerkWhYear'] > q2b[0.1])  ].index
+    q2 = df_summary.loc[  (df_summary["Energy"] >= qD[0.25])  &  (df_summary["Energy"] < qD[0.5])  ]
+    q2b = q2['TotalChargePerUnitYear'].quantile([0.1])
+    q2_L = q2.loc[ (q2['TotalChargePerUnitYear'] <= q2b[0.1])  ].index
+    q2_O = q2.loc[ (q2['TotalChargePerUnitYear'] > q2b[0.1])  ].index
     # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q2L." +fnameout))
@@ -756,10 +763,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     pd.Series(q2_O).to_csv(os.path.join(dirout,"q2O." + fnameout), index=False)
 
     # third quartile: 50% to 75%
-    q3 = df_summary.loc[  (df_summary['Demand'] >= qD[0.5]) &  (df_summary['Demand'] < qD[0.75])   ]
-    q3b = q3['TotalChargePerkWhYear'].quantile([0.1])
-    q3_L = q3.loc[ (q3['TotalChargePerkWhYear'] <= q3b[0.1])  ].index
-    q3_O = q3.loc[ (q3['TotalChargePerkWhYear'] > q3b[0.1])  ].index
+    q3 = df_summary.loc[  (df_summary["Energy"] >= qD[0.5]) &  (df_summary["Energy"] < qD[0.75])   ]
+    q3b = q3['TotalChargePerUnitYear'].quantile([0.1])
+    q3_L = q3.loc[ (q3['TotalChargePerUnitYear'] <= q3b[0.1])  ].index
+    q3_O = q3.loc[ (q3['TotalChargePerUnitYear'] > q3b[0.1])  ].index
     # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q3L." +fnameout))
@@ -769,10 +776,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     pd.Series(q3_O).to_csv(os.path.join(dirout,"q3O." + fnameout), index=False)
     
     # fourth quartile: 75% to 100%
-    q4 = df_summary.loc[  (df_summary['Demand'] >= qD[0.75])  ]
-    q4b = q4['TotalChargePerkWhYear'].quantile([0.1])
-    q4_L = q4.loc[ (q4['TotalChargePerkWhYear'] <= q4b[0.1])  ].index
-    q4_O = q4.loc[ (q4['TotalChargePerkWhYear'] > q4b[0.1])  ].index
+    q4 = df_summary.loc[  (df_summary["Energy"] >= qD[0.75])  ]
+    q4b = q4['TotalChargePerUnitYear'].quantile([0.1])
+    q4_L = q4.loc[ (q4['TotalChargePerUnitYear'] <= q4b[0.1])  ].index
+    q4_O = q4.loc[ (q4['TotalChargePerUnitYear'] > q4b[0.1])  ].index
     # write to file
     foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4L." +fnameout))
     print('Writing: %s' %os.path.join(dirout,"q4L." +fnameout))
@@ -787,39 +794,42 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
                 
         ms = 7
+        scaleEnergy = 1/1000/1000
+        unitEnergy = 'MWh'
         
         # Plot Annual Energy vs Tot
         fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
         ax.set_title('Entire Year')
-        ax.set_xlabel('Average Total Energy Cost [$/kWh]')
-        ax.set_ylabel('Total Energy [Wh]')
+        ax.set_xlabel('Average Total Energy Cost [₵/kWh]')
+        ax.set_ylabel('Total Energy [' + unitEnergy + ']')
         
-        ax.plot(df_summary.loc[q1_L,'TotalChargePerkWhYear' ], df_summary.loc[q1_L,'Demand'], 'o', color="#1da15a", ms=ms, label="Q1")
-        ax.plot(df_summary.loc[q2_L,'TotalChargePerkWhYear'], df_summary.loc[q2_L,'Demand'], 'o', color="#002F5C" , ms=ms, label="Q2")
-        ax.plot(df_summary.loc[q3_L,'TotalChargePerkWhYear'], df_summary.loc[q3_L,'Demand'], 'o', color="#00b5e2", ms=ms, label="Q3")
-        ax.plot(df_summary.loc[q4_L,'TotalChargePerkWhYear'], df_summary.loc[q4_L,'Demand'], 'o', color="#FE5000", ms=ms, label="Q4")
+        ax.plot(df_summary.loc[q1_L,'TotalChargePerUnitYear' ], df_summary.loc[q1_L,'Energy']*scaleEnergy, '^', color="blue", ms=ms+1, label="Q1")
+        ax.plot(df_summary.loc[q2_L,'TotalChargePerUnitYear'], df_summary.loc[q2_L,'Energy']*scaleEnergy, '^', color="limegreen" , ms=ms+1, label="Q2")
+        ax.plot(df_summary.loc[q3_L,'TotalChargePerUnitYear'], df_summary.loc[q3_L,'Energy']*scaleEnergy, '^', color="gold", ms=ms+1, label="Q3")
+        ax.plot(df_summary.loc[q4_L,'TotalChargePerUnitYear'], df_summary.loc[q4_L,'Energy']*scaleEnergy, '^', color="red", ms=ms+1, label="Q4")
         
-        ax.plot(df_summary.loc[q1_O,'TotalChargePerkWhYear'], df_summary.loc[q1_O,'Demand'], 'o', color="#1da15a" , ms=ms, markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q2_O,'TotalChargePerkWhYear'], df_summary.loc[q2_O,'Demand'], 'o', color= "#002F5C", ms=ms,markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q3_O,'TotalChargePerkWhYear'], df_summary.loc[q3_O,'Demand'], 'o', color="#00b5e2", ms=ms,markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q4_O,'TotalChargePerkWhYear'], df_summary.loc[q4_O,'Demand'], 'o', color="#FE5000", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q1_O,'TotalChargePerUnitYear'], df_summary.loc[q1_O,'Energy']*scaleEnergy, 'o', color="blue" , ms=ms, markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q2_O,'TotalChargePerUnitYear'], df_summary.loc[q2_O,'Energy']*scaleEnergy, 'o', color= "limegreen", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q3_O,'TotalChargePerUnitYear'], df_summary.loc[q3_O,'Energy']*scaleEnergy, 'o', color="gold", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        ax.plot(df_summary.loc[q4_O,'TotalChargePerUnitYear'], df_summary.loc[q4_O,'Energy']*scaleEnergy, 'o', color="red", ms=ms,markerfacecolor='none', markeredgewidth=2)
         
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         
-        ax.plot([xlim[0], xlim[1]], [ qD[0.25],  qD[0.25]], '-',lw=0.5, color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[0.5],  qD[0.5]], '-',lw=0.5,color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[0.75],  qD[0.75]], '-',lw=0.5,color="#999999" )
-        ax.plot([ q4b[0.1], q4b[0.1]], [ qD[0.75],  ylim[1]], '-',lw=0.5,color="#999999" )
-        ax.plot([ q3b[0.1], q3b[0.1]], [ qD[0.5],  qD[0.75]], '-',lw=0.5,color="#999999" )
-        ax.plot([ q2b[0.1], q2b[0.1]], [ qD[0.25],  qD[0.5]], '-',lw=0.5,color="#999999" )
-        ax.plot([ q1b[0.1], q1b[0.1]], [ ylim[0],  qD[0.25]], '-',lw=0.5,color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [ qD[0.25]*scaleEnergy,  qD[0.25]*scaleEnergy], '-',lw=0.5, color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [ qD[0.5]*scaleEnergy,  qD[0.5]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [ qD[0.75]*scaleEnergy,  qD[0.75]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        ax.plot([ q4b[0.1], q4b[0.1]], [ qD[0.75]*scaleEnergy,  ylim[1]], '-',lw=0.5,color="#999999" )
+        ax.plot([ q3b[0.1], q3b[0.1]], [ qD[0.5]*scaleEnergy,  qD[0.75]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        ax.plot([ q2b[0.1], q2b[0.1]], [ qD[0.25]*scaleEnergy,  qD[0.5]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        ax.plot([ q1b[0.1], q1b[0.1]], [ ylim[0],  qD[0.25]*scaleEnergy], '-',lw=0.5,color="#999999" )
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
         
         chartBox = ax.get_position()
         ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
         ax.legend(labels=['Q1', 'Q2', 'Q3', 'Q4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+#        plt.show()
         
         pltPdf1.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
@@ -832,18 +842,18 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             else:
                 ax.set_title( mNo)
                 
-            ax.set_xlabel('Average Total Energy Cost [$/kWh]')
-            ax.set_ylabel('Total Energy [Wh]')
+            ax.set_xlabel("Average Total Energy Cost [₵/kWh]")
+            ax.set_ylabel('Total Energy [' + unitEnergy + ']')
             
-            ax.plot(df_summary.loc[q1_L,'TotalChargePerkWh' + "." + str(mNo)], df_summary.loc[q1_L,'Demand'+ "." + str(mNo)], 'o', color="#1da15a", ms=ms, label='Q1')
-            ax.plot(df_summary.loc[q2_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q2_L,'Demand'+ "." + str(mNo)], 'o', color="#002F5C" , ms=ms, label="Q2")
-            ax.plot(df_summary.loc[q3_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q3_L,'Demand'+ "." + str(mNo)], 'o', color="#00b5e2", ms=ms, label="Q3")
-            ax.plot(df_summary.loc[q4_L,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q4_L,'Demand'+ "." + str(mNo)], 'o', color="#FE5000", ms=ms, label="Q4")
+            ax.plot(df_summary.loc[q1_L,'TotalChargePerUnit' + "." + str(mNo)], df_summary.loc[q1_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="blue", ms=ms+1, label='Q1')
+            ax.plot(df_summary.loc[q2_L,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q2_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="limegreen" , ms=ms+1, label="Q2")
+            ax.plot(df_summary.loc[q3_L,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q3_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="gold", ms=ms+1, label="Q3")
+            ax.plot(df_summary.loc[q4_L,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q4_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="red", ms=ms+1, label="Q4")
             
-            ax.plot(df_summary.loc[q1_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q1_O,'Demand'+ "." + str(mNo)], 'o', color="#1da15a" , ms=ms, markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q2_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q2_O,'Demand'+ "." + str(mNo)], 'o', color= "#002F5C", ms=ms,markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q3_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q3_O,'Demand'+ "." + str(mNo)], 'o', color="#00b5e2", ms=ms,markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q4_O,'TotalChargePerkWh'+ "." + str(mNo)], df_summary.loc[q4_O,'Demand'+ "." + str(mNo)], 'o', color="#FE5000", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q1_O,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q1_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="blue" , ms=ms, markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q2_O,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q2_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color= "limegreen", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q3_O,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q3_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="gold", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[q4_O,'TotalChargePerUnit'+ "." + str(mNo)], df_summary.loc[q4_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="red", ms=ms,markerfacecolor='none', markeredgewidth=2)
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])

@@ -53,9 +53,10 @@ if False:
                    InputFormat = 'SCE')
 
 #%% Calculate Billing
-if False:
+if True:
     CalculateBilling(dirin='testdata/', fnamein=fnamebase+'.normalized.csv', # '.csv',
                      dirout='testdata/', fnameout=fnamebase+'.billing.csv',
+                     writeDataFile = True,
                      dirlog='testdata/')
 
 #%% Plot Billing

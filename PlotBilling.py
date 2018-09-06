@@ -27,31 +27,36 @@ def logTime(foutLog, logMsg, tbase):
 
 def outputBillingPage(pltPdf, df1, title):
     fig, axes = plt.subplots(nrows=6, ncols=2,
-                              figsize=(8,6),
+                              figsize=(8.5,11),
                               sharex=True)
-
+    
     fig.suptitle(title) # This titles the figure
 
+    ymin = 0 # df1['Demand'].min()
+    ymax = df1['Demand'].max()
+    y2min = 0
+    y2max = df1['TotalCharge'].cumsum().max()/12.*1.5 # total for the year, divided by 12 months, then multiplied by 1.5 to allow for a peak month
     month = 1
-    for ax0 in axes:
-        df = df1[df1['datetime'].dt.month == month]
-        month += 1
-        ymin = 0.
-        ymax = df['Demand'].max()
+    for cix in np.arange(axes.shape[1]):
+        col = axes[:,cix]
+        for ax0 in col:
+            df = df1[df1.index.month == month] # df = df1[df1['datetime'].dt.month == month]
+            month += 1
+            
+            # ax0.set_title('Load and Billing')
+            ax0.set_ylim([ymin,ymax])
+            # ax0.set_ylabel('Demand [kWh]')
         
-        ax0.set_title('Load and Billing')
-        ax0.set_ylim([ymin,ymax])
-        ax0.set_ylabel('Demand [kWh]')
-        ax0.set_ylabel('Demand [kWh]')
-    
-        # ax0.set_xlim([0,8760*4])
-        # ax0.set_xticks(np.linspace(0, 8760*4, num=5).tolist())
-        # ax0.set_xticklabels(np.linspace(0, 8760, num=5, dtype=np.int16).tolist())
-        ax0.set_xlabel('Day')
-    
-        ax0.set_aspect('auto')
-     
-        ax0.step(df1['datetime'].dt.day, (df1['Demand']), 'C3', label='Demand [kWh]')
+            # ax0.set_xlim([0,8760*4])
+            # ax0.set_xticks(np.linspace(0, 8760*4, num=5).tolist())
+            # ax0.set_xticklabels(np.linspace(0, 8760, num=5, dtype=np.int16).tolist())
+            # ax0.set_xlabel('Day')
+        
+            ax0.set_aspect('auto')
+            ax0.step(df['fractionalday'], df['Demand'],'C3', label='Demand [kWh]')
+            ax0t = ax0.twinx()
+            ax0t.set_ylim([y2min,y2max])
+            ax0t.step(df['fractionalday'], df['TotalCharge'].cumsum(),'C2', label='Charges [$]')
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory
@@ -83,15 +88,15 @@ def PlotBillingData(dirin='./', fnamein='IntervalData.billing.csv', ignoreCIDs='
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
     df1 = pd.read_csv(os.path.join(dirin,fnamein), 
                       header = 0, 
-                      usecols = [1, 2, 0],
+                      usecols = [0, 1, 2, 3, 4, 5, 6],
                       parse_dates = ['datetime'], 
-                      names=['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) # add dtype conversions
+                      names=['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge']) # add dtype conversions
                       
     foutLog.write('Number of interval records read: %d\n' %df1['Demand'].size)
     # df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
-    df1.set_index(['datetime'], inplace=True)
+    # df1.set_index(['datetime'], inplace=True)
     # df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
-    df1.sort_index(inplace=True) # sort on datetime
+    # df1.sort_index(inplace=True) # sort on datetime
         
     UniqueIDs = df1['CustomerID'].unique().tolist()
     foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
@@ -125,15 +130,20 @@ def PlotBillingData(dirin='./', fnamein='IntervalData.billing.csv', ignoreCIDs='
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
 
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
+
+    df1.set_index(['CustomerID', 'datetime'], inplace=True)
+    df1.sort_index(inplace=True) # sorts on CustomerID, then datetime
     
+    df1['fractionalday'] = df1.index.get_level_values(1).day.values-1. + df1.index.get_level_values(1).hour.values/24. + df1.index.get_level_values(1).minute.values/60./24.
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
     i = 1
+    idx = pd.IndexSlice
     for cID in UniqueIDs:
         print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
         i += 1
-        df2 = df1[df1['CustomerID']==cID]
+        df2 = df1.loc[idx[cID,:]] # df2 = df1[df1['CustomerID']==cID]
         outputBillingPage(pltPdf1, df2, fnamein+'/'+cID)
 
     #%% Closing plot files
@@ -143,3 +153,9 @@ def PlotBillingData(dirin='./', fnamein='IntervalData.billing.csv', ignoreCIDs='
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
+
+if __name__ == "__main__":
+    fnamebase = 'synthetic20'
+    PlotBillingData(dirin='testdata/', fnamein=fnamebase+'.billing.csv', # '.csv',
+                     dirout='testdata/', fnameout=fnamebase+'.billing.pdf',
+                     dirlog='testdata/')

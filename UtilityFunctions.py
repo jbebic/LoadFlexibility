@@ -551,6 +551,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df3 = pd.merge(df1, df2, how='left', on=['RatePeriod'])
     df3['EnergyCharge'] = 0
     df3['DemandCharge'] = 0
+    df3['FacilityCharge'] = 0
     df3['TotalCharge'] = 0
 
     print('Processing...')
@@ -596,6 +597,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         df3.loc[df3['CustomerID'] == cid, 'EnergyCharge'] = df3[df3['CustomerID'] == cid]['Demand'] * df3[df3['CustomerID'] == cid]['EnergyCost']
         # Calculate demand charges, based on the peak Demand in the relevant RatePeriod
         dix = df3.columns.get_loc('DemandCharge')
+        fix = df3.columns.get_loc('FacilityCharge')
         for mNo in (np.arange(0, 12, 1)+1):
             df4.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other months
             df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand']]
@@ -612,9 +614,13 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
             if df4[df4['RatePeriod'] == 5].shape[0] > 0:
                 idxmax = df4[df4['RatePeriod'] == 5]['Demand'].idxmax()
                 df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
-        
+            # AQddeing facilities related demand charge
+            temp1= df2[df2['RatePeriod']==0]['DemandCost'].values[0] # Facility charge
+            idxmax = df4['Demand'].idxmax()
+            df3.iloc[idxmax, fix] = df3.iloc[idxmax]['Demand'] * temp1 * 4.
+            
         # Sum the energy and demand charges into total cost for each interval
-        df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge']
+        df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge'] + df3[df3['CustomerID'] == cid]['FacilityCharge']
                
     # Write data file with charges for each time period  
     if writeDataFile:       
@@ -625,7 +631,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                    index=False, 
                    float_format='%.2f',
                    date_format='%Y-%m-%d %H:%M',
-                   columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge']) 
+                   columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge']) 
 
     # Write Summary Data file with total charges for each month
     if writeSummaryFile:
@@ -640,8 +646,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         dfy = dfy.assign(month=pd.Series( inputArray , index=dfy.index))
 		
         dfp = pd.pivot_table(dfy, values=['Demand'], index= ['CustomerID'], columns=['month'], aggfunc=np.max, fill_value=0.0, margins=False, dropna=True, margins_name='All')  
-        dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
-        dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+        dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         df_summary = pd.merge(dfy, dfm,  left_index=True, right_index=True)
         df_summary['PeakDemand', 'entire year'] = np.asarray(dfp['Demand']['entire year'].values*4)
         

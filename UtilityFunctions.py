@@ -19,7 +19,6 @@ import random
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 
-
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
 codeVersion = '1.2'
@@ -446,7 +445,7 @@ def AssignRatePeriods_TOUGS3B(df):
     df['DayType'] = 'wd' # weekday
     df.loc[df['datetime'].dt.dayofweek > 5, 'DayType'] = 'we' # weekend
     # New Year's Day
-    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 2), 'DayType'] = 'o'
     else:
@@ -457,8 +456,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (15 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 21), 'DayType'] = 'h'
     
     # Independence Day    
-
-    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
     else:
@@ -469,7 +467,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (1 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 7), 'DayType'] = 'h'
 
     # Veterans Day
-    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 12), 'DayType'] = 'o'
     else:
@@ -480,7 +478,7 @@ def AssignRatePeriods_TOUGS3B(df):
            (22 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 28), 'DayType'] = 'h'
 
     # Christmas Day
-    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values[0].dayofweek == 6):
+    if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 26), 'DayType'] = 'o'
     else:
@@ -639,7 +637,6 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         print("Solve for monthly & annual bills")
         dfm = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
         dfm = dfm.assign(month=pd.Series( np.asarray( dfm['datetime'].dt.month ), index=dfm.index))
-		
 		
         dfy = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
         inputArray = np.asarray(['entire year' for i in dfy['datetime'].dt.month])

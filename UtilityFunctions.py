@@ -734,6 +734,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
 
+
+    df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]
+
     print("Grouping by Annual Demand & Billing")
 
     for mNo in range(1,13,1):
@@ -757,7 +760,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     for n in range(0, N+1,1):
         
         # find demand group
-        group = df_summary.loc[ (df_summary["Energy"] >= qD[n])  &  (df_summary["Energy"] < qD[n+1]) ]
+        if n==0:
+            group = df_summary.loc[ (df_summary["Energy"] >= qD[n])  &  (df_summary["Energy"] <= qD[n+1]) ]
+        else:
+            group = df_summary.loc[ (df_summary["Energy"] > qD[n])  &  (df_summary["Energy"] <= qD[n+1]) ]
         chargePerUnit = np.asarray([ float(i) for i in group['ChargePerUnitYear'] ])
         qb = np.percentile( chargePerUnit, ratePercentiles) 
         qB.append( qb[1] )
@@ -769,16 +775,16 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
         pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
         foutLog.write('\nWriting: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
-        print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
+#        print('Writing: %~s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
         pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
 
-        for i in range(0, int( np.ceil(len(Others[n])/len(Leaders[n]))), 1):
-            v = np.asarray([ x for x in range(i*len(Leaders[n]), len(Leaders[n])*(i+1),1)])
-            if np.max(v)> len(Others[n]):
-                iv = v.index(len(Others[n]))
-                v = v[:iv]
-            print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O_" + str(i+1) + "." +fnameout))
-            pd.Series(Others[n])[v].to_csv(os.path.join(dirout,"g" + str(int(n+1)) +  "O_" + str(i+1) + "." + fnameout), index=False) 
+#        for i in range(0, int( np.ceil(len(Others[n])/len(Leaders[n]))), 1):
+#            v = np.asarray([ x for x in range(i*len(Leaders[n]), len(Leaders[n])*(i+1),1)])
+#            if np.max(v)> len(Others[n]):
+#                iv = v.index(len(Others[n]))
+#                v = v[:iv]
+#            print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O_" + str(i+1) + "." +fnameout))
+#            pd.Series(Others[n])[v].to_csv(os.path.join(dirout,"g" + str(int(n+1)) +  "O_" + str(i+1) + "." + fnameout), index=False) 
 
         for i in Leaders[n]:
             Excluded.remove(i)
@@ -825,7 +831,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Others[n],'ChargePerUnitYear'], df_summary.loc[Others[n],'Energy']*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
         
-        ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy']*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+#        ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy']*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         for n in range(0,len(qD),1):
@@ -868,7 +874,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             for n in range(0,N+1,1):
                 ax.plot(df_summary.loc[Others[n],'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Others[n],'Energy' + "." + str(mNo)]*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
             
-            ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+#            ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])

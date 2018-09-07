@@ -18,6 +18,7 @@ import string
 import random
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
+import matplotlib.pylab as pl
 
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
@@ -663,17 +664,18 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                      dirout='./', fnameout='groups.csv',
                      dirlog='./', fnameLog='CalculateGroups.log',
                      energyPercentiles = [0, 25, 50, 75, 100], 
+                     ratePercentiles = [0, 10, 100],
                      plotGroups=False, chargeType="Total"):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
 	
-
+    # Capture start time of code execution and open log file
     chargeColumnName = chargeType + "Charge"
     energyColumnName = 'Demand'
     
-    #%% Output header information to log file
+    # Output header information to log file
     print('This is: %s, Version: %s' %(codeName, codeVersion))
     foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
     foutLog.write('%s\n' %(codeCopyright))
@@ -701,7 +703,6 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                           comment = '#',
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
-
         ignoreIDs = df9['CustomerID'].tolist()
 
     if considerCIDs != '':
@@ -739,71 +740,69 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         df_summary["Energy." + str(mNo)]=pd.Series(monthlyEnergy,index=df_summary.index)
         df_summary["ChargePerUnit." + str(mNo)]=pd.Series(100 * df_summary[chargeColumnName + "." + str(mNo)]/df_summary['Energy'+ "." + str(mNo)],index=df_summary.index)
     
+    
     # solve for transitions between quartiles of energy demand
     qD = np.percentile(totalEnergy, energyPercentiles)
-        
-    # first quartile: 0% to 25%
-    q1 = df_summary.loc[ (df_summary["Energy"] >= qD[0])  &  (df_summary["Energy"] < qD[1]) ]
-    q1b = q1['ChargePerUnitYear'].quantile([0.1])
-    q1_L = list(q1.loc[ (q1['ChargePerUnitYear'] <= q1b[0.1])  ].index)
-    q1_O = list(q1.loc[ (q1['ChargePerUnitYear'] > q1b[0.1])  ].index)
-    # write to file
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1L." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q1L." +fnameout))
-    pd.Series(q1_L).to_csv(os.path.join(dirout,"q1L." + fnameout), index=False) 
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q1O." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q1O." +fnameout))
-    pd.Series(q1_O).to_csv(os.path.join(dirout,"q1O." + fnameout), index=False) 
-
-    # secnd quartile: 25% to 50%
-    q2 = df_summary.loc[ (df_summary["Energy"] >= qD[1])  &  (df_summary["Energy"] < qD[2])  ]
-    q2b = q2['ChargePerUnitYear'].quantile([0.1])
-    q2_L = q2.loc[ (q2['ChargePerUnitYear'] <= q2b[0.1])  ].index
-    q2_O = q2.loc[ (q2['ChargePerUnitYear'] > q2b[0.1])  ].index
-    # write to file
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2L." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q2L." +fnameout))
-    pd.Series(q2_L).to_csv(os.path.join(dirout,"q2L." + fnameout), index=False) 
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q2O." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q2O." +fnameout))
-    pd.Series(q2_O).to_csv(os.path.join(dirout,"q2O." + fnameout), index=False)
-
-    # third quartile: 50% to 75%
-    q3 = df_summary.loc[ (df_summary["Energy"] >= qD[2])  &  (df_summary["Energy"] < qD[3])  ]
-    q3b = q3['ChargePerUnitYear'].quantile([0.1])
-    q3_L = q3.loc[ (q3['ChargePerUnitYear'] <= q3b[0.1])  ].index
-    q3_O = q3.loc[ (q3['ChargePerUnitYear'] > q3b[0.1])  ].index
-    # write to file
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3L." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q3L." +fnameout))
-    pd.Series(q3_L).to_csv(os.path.join(dirout,"q3L." + fnameout), index=False)
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q3O." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q3O." +fnameout))
-    pd.Series(q3_O).to_csv(os.path.join(dirout,"q3O." + fnameout), index=False)
     
-    # fourth quartile: 75% to 100%
-    q4 = df_summary.loc[ (df_summary["Energy"] >= qD[3])  &  (df_summary["Energy"] <= qD[4]) ]
-    q4b = q4['ChargePerUnitYear'].quantile([0.1])
-    q4_L = q4.loc[ (q4['ChargePerUnitYear'] <= q4b[0.1])  ].index
-    q4_O = q4.loc[ (q4['ChargePerUnitYear'] > q4b[0.1])  ].index
-    # write to file
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4L." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q4L." +fnameout))
-    pd.Series(q4_L).to_csv(os.path.join(dirout,"q4L." + fnameout), index=False) 
-    foutLog.write('\nWriting: %s' %os.path.join(dirout,"q4O." +fnameout))
-    print('Writing: %s' %os.path.join(dirout,"q4O." +fnameout))
-    pd.Series(q4_O).to_csv(os.path.join(dirout,"q4O." + fnameout), index=False)
+    N = len(qD) - 2
+    qB = []
+    Leaders = {}
+    Others = {}
+    for n in range(0,N,1):
+        Others[n] = []
+        Leaders[n] = []
+        
+    Excluded = UniqueIDs.copy()
+    for n in range(0, N+1,1):
+        
+        # find demand group
+        group = df_summary.loc[ (df_summary["Energy"] >= qD[n])  &  (df_summary["Energy"] < qD[n+1]) ]
+        chargePerUnit = np.asarray([ float(i) for i in group['ChargePerUnitYear'] ])
+        qb = np.percentile( chargePerUnit, ratePercentiles) 
+        qB.append( qb[1] )
+        Leaders[n] = list(group.loc[ (group['ChargePerUnitYear']<=qb[1])].index)
+        Others[n]  = list(group.loc[ (group['ChargePerUnitYear']>qb[1])].index)
+        
+        # write to file
+        foutLog.write('\nWriting: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
+        print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
+        pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
+        foutLog.write('\nWriting: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
+        print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
+        pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
+
+        for i in range(0, int( np.ceil(len(Others[n])/len(Leaders[n]))), 1):
+            v = np.asarray([ x for x in range(i*len(Leaders[n]), len(Leaders[n])*(i+1),1)])
+            if np.max(v)> len(Others[n]):
+                iv = v.index(len(Others[n]))
+                v = v[:iv]
+            print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O_" + str(i+1) + "." +fnameout))
+            pd.Series(Others[n])[v].to_csv(os.path.join(dirout,"g" + str(int(n+1)) +  "O_" + str(i+1) + "." + fnameout), index=False) 
+
+        for i in Leaders[n]:
+            Excluded.remove(i)
+            
+        for i in Others[n]:
+            Excluded.remove(i)
+    
+    qB = np.asarray(qB)
         
     if plotGroups:
         
         print("Plotting Energy Consumption vs Total Cost of Energy")
         pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
                 
-        ms = 7
+        if len(UniqueIDs)<100:
+            ew = 2
+            ms = 7
+        else:
+            ew = 1
+            ms = 5
+            
         scaleEnergy = 1/1000/1000
         unitEnergy = 'MWh'
         
-        # Plot Annual Energy vs Tot
+        # Plot Annual Energy vs Rate of bill
         fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
         ax.set_title('Entire Year')
         if chargeType=="Energy":
@@ -815,28 +814,24 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                 ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
         ax.set_ylabel('Total Energy [' + unitEnergy + ']')
         
-        ax.plot(df_summary.loc[q1_L,'ChargePerUnitYear' ], df_summary.loc[q1_L,'Energy']*scaleEnergy, '^', color="blue", ms=ms+1, label="Q1")
-        ax.plot(df_summary.loc[q2_L,'ChargePerUnitYear'], df_summary.loc[q2_L,'Energy']*scaleEnergy, '^', color="limegreen" , ms=ms+1, label="Q2")
-        ax.plot(df_summary.loc[q3_L,'ChargePerUnitYear'], df_summary.loc[q3_L,'Energy']*scaleEnergy, '^', color="gold", ms=ms+1, label="Q3")
-        ax.plot(df_summary.loc[q4_L,'ChargePerUnitYear'], df_summary.loc[q4_L,'Energy']*scaleEnergy, '^', color="red", ms=ms+1, label="Q4")
+        colorsV = ['blue', 'limegreen','gold', 'red']
+        if N>4:
+            colorsV = pl.cm.jet(np.linspace(0,1,N+1))
         
-        ax.plot(df_summary.loc[q1_O,'ChargePerUnitYear'], df_summary.loc[q1_O,'Energy']*scaleEnergy, 'o', color="blue" , ms=ms, markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q2_O,'ChargePerUnitYear'], df_summary.loc[q2_O,'Energy']*scaleEnergy, 'o', color= "limegreen", ms=ms,markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q3_O,'ChargePerUnitYear'], df_summary.loc[q3_O,'Energy']*scaleEnergy, 'o', color="gold", ms=ms,markerfacecolor='none', markeredgewidth=2)
-        ax.plot(df_summary.loc[q4_O,'ChargePerUnitYear'], df_summary.loc[q4_O,'Energy']*scaleEnergy, 'o', color="red", ms=ms,markerfacecolor='none', markeredgewidth=2)
+        for n in range(0,N+1,1):
+            ax.plot(df_summary.loc[Leaders[n],'ChargePerUnitYear' ], df_summary.loc[Leaders[n],'Energy']*scaleEnergy, '^', color=colorsV[n], ms=ms, label="G" + str(n))        
         
+        for n in range(0,N+1,1):
+            ax.plot(df_summary.loc[Others[n],'ChargePerUnitYear'], df_summary.loc[Others[n],'Energy']*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
+        
+        ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy']*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-        ax.plot([xlim[0], xlim[1]], [ qD[0]*scaleEnergy,  qD[0]*scaleEnergy], '-',lw=0.5, color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[1]*scaleEnergy,  qD[1]*scaleEnergy], '-',lw=0.5, color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[2]*scaleEnergy,  qD[2]*scaleEnergy], '-',lw=0.5,color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[3]*scaleEnergy,  qD[3]*scaleEnergy], '-',lw=0.5,color="#999999" )
-        ax.plot([xlim[0], xlim[1]], [ qD[4]*scaleEnergy,  qD[4]*scaleEnergy], '-',lw=0.5,color="#999999" )
-                
-        ax.plot([ q4b[0.1], q4b[0.1]], [ qD[3]*scaleEnergy,  qD[4]*scaleEnergy], '-',lw=0.5,color="#999999" )
-        ax.plot([ q3b[0.1], q3b[0.1]], [ qD[2]*scaleEnergy,  qD[3]*scaleEnergy], '-',lw=0.5,color="#999999" )
-        ax.plot([ q2b[0.1], q2b[0.1]], [ qD[1]*scaleEnergy,  qD[2]*scaleEnergy], '-',lw=0.5,color="#999999" )
-        ax.plot([ q1b[0.1], q1b[0.1]], [ qD[0]*scaleEnergy,  qD[1]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        for n in range(0,len(qD),1):
+            ax.plot([xlim[0], xlim[1]], [qD[n]*scaleEnergy,  qD[n]*scaleEnergy], '-',lw=0.5, color="#999999" )
+        for n in range(0,N+1,1):
+            ax.plot([ qB[n], qB[n]], [qD[n]*scaleEnergy,  qD[n+1]*scaleEnergy], '-',lw=0.5,color="#999999" )
+        ax.plot([xlim[0], xlim[1]], [np.max(qD)*scaleEnergy,  np.max(qD)*scaleEnergy], '-',lw=0.5, color="#999999" )
                 
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
@@ -848,6 +843,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         pltPdf1.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
     
+        # Plot for all 12 months of the year
         for mNo in [1,2,3,4,5,6,7,8,9,10,11,12]:
             
             fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
@@ -864,16 +860,14 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                 else:
                     ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
             ax.set_ylabel('Total Energy [' + unitEnergy + ']')
+           
+            for n in range(0,N+1,1):
+                ax.plot(df_summary.loc[Leaders[n],'ChargePerUnit' + "." + str(mNo) ], df_summary.loc[Leaders[n],'Energy' + "." + str(mNo)]*scaleEnergy, '^', color=colorsV[n], ms=ms, label="G" + str(n))        
             
-            ax.plot(df_summary.loc[q1_L,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[q1_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="blue", ms=ms+1, label='Q1')
-            ax.plot(df_summary.loc[q2_L,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q2_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="limegreen" , ms=ms+1, label="Q2")
-            ax.plot(df_summary.loc[q3_L,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q3_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="gold", ms=ms+1, label="Q3")
-            ax.plot(df_summary.loc[q4_L,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q4_L,'Energy'+ "." + str(mNo)]*scaleEnergy, '^', color="red", ms=ms+1, label="Q4")
+            for n in range(0,N+1,1):
+                ax.plot(df_summary.loc[Others[n],'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Others[n],'Energy' + "." + str(mNo)]*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
             
-            ax.plot(df_summary.loc[q1_O,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q1_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="blue" , ms=ms, markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q2_O,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q2_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color= "limegreen", ms=ms,markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q3_O,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q3_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="gold", ms=ms,markerfacecolor='none', markeredgewidth=2)
-            ax.plot(df_summary.loc[q4_O,'ChargePerUnit'+ "." + str(mNo)], df_summary.loc[q4_O,'Energy'+ "." + str(mNo)]*scaleEnergy, 'o', color="red", ms=ms,markerfacecolor='none', markeredgewidth=2)
+            ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
@@ -881,6 +875,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             pltPdf1.savefig() # Saves fig to pdf
             plt.close() # Closes fig to clean up memory
             
+        # save figures to pdf file
         print('Writing: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
         foutLog.write('\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
         pltPdf1.close()

@@ -544,6 +544,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df2 = pd.read_csv(os.path.join(dirin,ratein),
                       header = 0,
                       usecols = [0, 1, 2],
+                      comment = '#',
                       names = ['RatePeriod', 'EnergyCost', 'DemandCost'],
                       dtype = {'RatePeriod':np.int8, 'EnergyCost':np.float, 'DemandCost':np.float})
     df3 = pd.merge(df1, df2, how='left', on=['RatePeriod'])

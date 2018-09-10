@@ -686,8 +686,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                      dirout='./', fnameout='groups.csv',
                      dirlog='./', fnameLog='CalculateGroups.log',
                      energyPercentiles = [0, 25, 50, 75, 100], 
-                     ratePercentiles = [0, 10, 100],
-                     plotGroups=False, chargeType="Total"):
+                     ratePercentiles = [0,10, 100],
+                     plotGroups=False, 
+                     chargeType="Total", 
+                     ignore1515=False):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -755,16 +757,16 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
 
-
+    # ignore customers paying an average of $0/kWh, that is an error
     df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]
-
-    print("Grouping by Annual Demand & Billing")
+    
+    # recalculate UniqueIDs
+    UniqueIDs = list(set( df_summary.index))
 
     for mNo in range(1,13,1):
         monthlyEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName + "." + str(mNo)] ])
         df_summary["Energy." + str(mNo)]=pd.Series(monthlyEnergy,index=df_summary.index)
         df_summary["ChargePerUnit." + str(mNo)]=pd.Series(100 * df_summary[chargeColumnName + "." + str(mNo)]/df_summary['Energy'+ "." + str(mNo)],index=df_summary.index)
-    
     
     # solve for transitions between quartiles of energy demand
     qD = np.percentile(totalEnergy, energyPercentiles)
@@ -773,7 +775,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     qB = []
     Leaders = {}
     Others = {}
-    for n in range(0,N,1):
+    for n in range(0,N+1,1):
         Others[n] = []
         Leaders[n] = []
         
@@ -785,27 +787,80 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             group = df_summary.loc[ (df_summary["Energy"] >= qD[n])  &  (df_summary["Energy"] <= qD[n+1]) ]
         else:
             group = df_summary.loc[ (df_summary["Energy"] > qD[n])  &  (df_summary["Energy"] <= qD[n+1]) ]
+            
         chargePerUnit = np.asarray([ float(i) for i in group['ChargePerUnitYear'] ])
-        qb = np.percentile( chargePerUnit, ratePercentiles) 
-        qB.append( qb[1] )
-        Leaders[n] = list(group.loc[ (group['ChargePerUnitYear']<=qb[1])].index)
-        Others[n]  = list(group.loc[ (group['ChargePerUnitYear']>qb[1])].index)
+        ratePerc = ratePercentiles.copy() 
+        ratePerc[1] = ratePerc[1]-1.0
+        leaders = list([])
+        others = list([])
+        maxShareL = 0.0
         
-        # write to file
-        foutLog.write('\nWriting: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
-        print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
-        pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
-        foutLog.write('\nWriting: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
-#        print('Writing: %~s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
-        pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
-
-#        for i in range(0, int( np.ceil(len(Others[n])/len(Leaders[n]))), 1):
-#            v = np.asarray([ x for x in range(i*len(Leaders[n]), len(Leaders[n])*(i+1),1)])
-#            if np.max(v)> len(Others[n]):
-#                iv = v.index(len(Others[n]))
-#                v = v[:iv]
-#            print('Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O_" + str(i+1) + "." +fnameout))
-#            pd.Series(Others[n])[v].to_csv(os.path.join(dirout,"g" + str(int(n+1)) +  "O_" + str(i+1) + "." + fnameout), index=False) 
+        if ignore1515: 
+            # use default percentile to find leaders & others
+            ratePerc = ratePercentiles.copy() 
+            qb = np.percentile( chargePerUnit, ratePerc)
+            leaders = list(group.loc[ (group['ChargePerUnitYear']<=qb[1]) ].index)
+            others = list(group.loc[ (group['ChargePerUnitYear']>qb[1]) ].index)
+            
+        else:
+            
+            # iterate percentiles to get at least 15 leaders
+            while len(leaders)<15:
+                ratePerc[1] = ratePerc[1]+1.0
+                if ratePerc[1] >=100:
+                    break
+                qb = np.percentile( chargePerUnit, ratePerc) 
+                leaders = list(group.loc[ (group['ChargePerUnitYear']<=qb[1]) ].index)
+                others = list(group.loc[ (group['ChargePerUnitYear']>qb[1]) ].index)
+                
+            # iterate percentiles to get at least 15 others
+            while len(others)<15:
+                ratePerc[1] = ratePerc[1]-1.0
+                if ratePerc[1] <=0:
+                    break
+                qb = np.percentile( chargePerUnit, ratePerc) 
+                leaders = list(group.loc[ (group['ChargePerUnitYear']<=qb[1]) ].index)            
+                others = list(group.loc[ (group['ChargePerUnitYear']>qb[1]) ].index)
+            
+        # find max individual share of the group of leaders
+        leadersMaxD = np.max(group.loc[leaders, 'Energy'])
+        leadersTotalD = np.sum(group.loc[leaders, 'Energy'])
+        maxShareL = leadersMaxD/leadersTotalD  * 100          
+        
+        # find max individual share of the group of others
+        othersMaxD = np.max(group.loc[others, 'Energy'])
+        othersTotalD = np.sum(group.loc[others, 'Energy'])
+        maxShareO = othersMaxD/othersTotalD  * 100   
+        
+        # write to file, if 1515 is passed
+        if ((len(leaders)>=15) and (maxShareL<15) and (len(others)>=15)  and (maxShareL<15) )  or (ignore1515):
+            Leaders[n] = leaders
+            Others[n]  = others
+            qB.append( qb[1] )
+            if (len(leaders)>=15) and (maxShareL<15) and (len(others)>=15)  and (maxShareL<15) :
+                print("\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                foutLog.write("\n\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+            else:
+                print("\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                foutLog.write("\n\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+            foutLog.write("\n  " + str(int(len(Leaders[n]))) + " Leaders with a max share of " + str(int(maxShareL)) + "%")# 
+            foutLog.write("\n  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
+            print("  " + str(int(len(Leaders[n]))) + " Leaders with a max share of " + str(int(maxShareL)) + "%")# 
+            print("  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
+            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
+            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
+            pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
+            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
+            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
+            pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
+        else:
+            foutLog.write("\n\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
+            foutLog.write("\n  " + str(int(len(leaders))) + " LEADERS with a max share of " + str(int(maxShareL)) + "%")# 
+            foutLog.write("\n  " + str(int(len(others))) + " OTHERS with a max share of " + str(int(maxShareO)) + "%")# 
+            print("\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
+            print("  " + str(int(len(leaders))) + " LEADERS with a max share of " + str(int(maxShareL)) + "%")# 
+            print("  " + str(int(len(others))) + " OTHERS with a max share of " + str(int(maxShareO)) + "%")#             
+            qB.append( np.nan )
 
         for i in Leaders[n]:
             Excluded.remove(i)
@@ -814,10 +869,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             Excluded.remove(i)
     
     qB = np.asarray(qB)
-        
+    
     if plotGroups:
         
-        print("Plotting Energy Consumption vs Total Cost of Energy")
+        print("\nPlotting Energy Consumption vs Total Cost of Energy")
         pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
                 
         if len(UniqueIDs)<100:
@@ -827,7 +882,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             ew = 1
             ms = 5
             
-        scaleEnergy = 1/1000/1000
+        scaleEnergy = 1/1000
         unitEnergy = 'MWh'
         
         # Plot Annual Energy vs Rate of bill
@@ -843,7 +898,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         ax.set_ylabel('Total Energy [' + unitEnergy + ']')
         
         colorsV = ['blue', 'limegreen','gold', 'red']
-        if N>4:
+        if N>3:
             colorsV = pl.cm.jet(np.linspace(0,1,N+1))
         
         for n in range(0,N+1,1):
@@ -851,8 +906,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Others[n],'ChargePerUnitYear'], df_summary.loc[Others[n],'Energy']*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
+        ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy' ]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
         
-#        ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy']*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         for n in range(0,len(qD),1):
@@ -895,7 +950,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             for n in range(0,N+1,1):
                 ax.plot(df_summary.loc[Others[n],'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Others[n],'Energy' + "." + str(mNo)]*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
             
-#            ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+            ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
@@ -905,7 +960,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             
         # save figures to pdf file
         print('Writing: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
-        foutLog.write('\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
+        foutLog.write('\n\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
         pltPdf1.close()
         
     logTime(foutLog, '\n\nRunFinished at: ', codeTstart)

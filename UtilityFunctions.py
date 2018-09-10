@@ -504,7 +504,8 @@ def AssignRatePeriods_TOUGS3B(df):
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', ratein='TOU-GS3-B.csv',
                      dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
-                     writeDataFile=False, writeSummaryFile=True):
+                     writeDataFile=False, writeSummaryFile=True, 
+                     demandUnit='Wh'):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -536,6 +537,25 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     # df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+
+    # update units into kWh
+    if "kW" in demandUnit:
+        scale = 1.0
+    elif "MW" in demandUnit:
+        scale = 1000.0
+    elif "GW" in demandUnit:
+        scale = 1000.0 * 1000.0
+    elif "W" in demandUnit:
+        scale = 1.0/1000.0
+    if not('h' in demandUnit):
+        deltaT = df1.ix[1,'datetime'] - df1.ix[0,'datetime']
+        timeStep = deltaT.seconds/60
+        scale = scale * timeStep / 60
+    if np.isclose(scale,1.0):
+        pass
+    else:
+        print("Converting Demand from " + demandUnit + " to kWh using scaling factor of " +  str(scale))
+        df1['Demand']  = df1['Demand'] * scale    
 
     print('Assigning rate periods')
     df1['Season'] = ''

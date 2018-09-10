@@ -614,10 +614,11 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
             if df4[df4['RatePeriod'] == 5].shape[0] > 0:
                 idxmax = df4[df4['RatePeriod'] == 5]['Demand'].idxmax()
                 df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
-            # AQddeing facilities related demand charge
+            # Adding facilities related demand charge
             temp1= df2[df2['RatePeriod']==0]['DemandCost'].values[0] # Facility charge
-            idxmax = df4['Demand'].idxmax()
-            df3.iloc[idxmax, fix] = df3.iloc[idxmax]['Demand'] * temp1 * 4.
+            if df4.shape[0] > 0:
+                idxmax = df4['Demand'].idxmax()
+                df3.iloc[idxmax, fix] = df3.iloc[idxmax]['Demand'] * temp1 * 4.
             
         # Sum the energy and demand charges into total cost for each interval
         df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge'] + df3[df3['CustomerID'] == cid]['FacilityCharge']

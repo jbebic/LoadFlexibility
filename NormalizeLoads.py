@@ -14,6 +14,13 @@ import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
 import os # operating system interface
 
+#%% Version and copyright info to record on the log file
+codeName = 'NormalizeLoads.py'
+codeVersion = '1.1'
+codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
+codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
+
+
 # %% Function definitions
 # Time logging
 def logTime(foutLog, logMsg, tbase):
@@ -27,12 +34,6 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
                 dirlog='./', fnameLog='ReviewLoads.log',
                 InputFormat = 'ISO',
                 skipPlots = True):
-    #%% Version and copyright info to record on the log file
-    codeName = 'ReviewLoads.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
@@ -109,12 +110,7 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='NormalizeLoads.log',
                    InputFormat = 'ISO',
-                   skipPlots = True):
-    #%% Version and copyright info to record on the log file
-    codeName = 'NormalizeLoads.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
+                   skipPlots = True, normalizeBy='year'):
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -158,8 +154,8 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
     # moved this line of code to before CustomerID is set to the index
     UniqueIDs = df1['CustomerID'].unique().tolist() 
         
-    df1.set_index(['CustomerID', 'datetime'], inplace=True)
-    df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
+#    df1.set_index(['CustomerID', 'datetime'], inplace=True)
+#    df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
 
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
 
@@ -195,45 +191,62 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
 
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
 
-    df1['NormDmnd']=np.nan # Add column of normalized demand to enable setting it with slice index later
-    i = 1
-    for cid in UniqueIDs:
-        print ('Processing %s (%d of %d)' %(cid, i, len(UniqueIDs)))
-        i += 1
-        df2 = df1.loc[cid] # df1[df1['CustomerID'] == cid]
-#        df2['deltaT'] = pd.to_timedelta('15min')
-#        df2.loc[df2.index[1:-1], 'deltaT'] = df2.index.values[1:-1] - df2.index.values[0:-2]
-#        dTunique = df2['deltaT'].unique()
-#        dToddballs = np.extract(dTunique != np.timedelta64(15, 'm'), dTunique)
-#        # print(dToddballs/np.timedelta64(1, 'm'))
-#        if dToddballs.size > 0:
-#            foutLog.write('There are interval records with irregular time deltas\n')
-#            for dT in dToddballs:
-#                foutLog.write('  dT = %.1f minutes at:' %(dT/np.timedelta64(1, 'm')))
-#                for ix in df2[df2['deltaT'] == dT].index:
-#                    foutLog.write(' %s' %(ix.strftime('%Y/%m/%d %H:%M')))
-#                foutLog.write('\n\n')
-        
-        foutLog.write('\nCustomerID: %s\n' %(cid))
-        foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))
-        foutLog.write('Time records end on: %s\n' %df2.index[-1].strftime('%Y-%m-%d %H:%M'))
-        deltat = df2.index[-1]-df2.index[0]
-        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
-        
-        dAvg = df2['Demand'].mean()
-        dMin = df2['Demand'].min()
-        dMax = df2['Demand'].max()
-        foutLog.write('maxDemand: %.2f\n' %dMax)
-        foutLog.write('avgDemand: %.2f\n' %dAvg)
-        foutLog.write('minDemand: %.2f\n' %dMin)
-        df1.loc[cid]['NormDmnd'] = df2['Demand']/dAvg
+    df1['NormDmnd'] = np.nan # Add column of normalized demand to enable setting it with slice index later
+    df2 = df1.copy() #.loc[df1['CustomerID'].isin(UniqueIDs)]    
 
+    if normalizeBy=='month':
+        # normalize by average demand for each month
+        i = 1
+        for cid in UniqueIDs:
+            print ('Processing monthly %s (%d of %d)' %(cid, i, len(UniqueIDs)))
+            i += 1
+            for m in range(1,13,1):
+                month =  df1.datetime.dt.month
+                customer = df1.CustomerID
+                relevant =  (customer==cid) & (month==m) 
+                dAvg = df1.loc[relevant,'Demand'].mean()
+                dMin = df1.loc[relevant,'Demand'].min()
+                dMax = df1.loc[relevant,'Demand'].max()
+                df2.loc[relevant,'NormDmnd'] = df1.loc[relevant,'Demand'].copy()/dAvg 
+                        
+    elif normalizeBy=='day':
+        # normalize by average demand over each day
+        i = 1
+        for cid in UniqueIDs:
+            print ('Processing daily %s (%d of %d)' %(cid, i, len(UniqueIDs)))
+            i += 1
+            for m in range(1,13,1):
+                month =  df1.datetime.dt.month
+                day = df1.datetime.dt.day
+                customer = df1.CustomerID
+                days = list(set(df1.loc[(customer==cid) & (month==m), "datetime" ].dt.day))
+                for d in days:
+                    relevant =  (customer==cid) & (month==m) & (day==d)
+                    dAvg = df1.loc[relevant,'Demand'].mean()
+                    dMin = df1.loc[relevant,'Demand'].min()
+                    dMax = df1.loc[relevant,'Demand'].max()
+                    df2.loc[relevant,'NormDmnd'] = df1.loc[relevant,'Demand'].copy()/dAvg 
+                                
+    else:
+        # normalize by average demand over entire year
+        i = 1
+        for cid in UniqueIDs:
+            print ('Processing all data of %s (%d of %d)' %(cid, i, len(UniqueIDs)))
+            i += 1
+            customer = df1.CustomerID
+            relevant =  (customer==cid) 
+            dAvg = df1.loc[relevant,'Demand'].mean()
+            dMin = df1.loc[relevant,'Demand'].min()
+            dMax = df1.loc[relevant,'Demand'].max()
+            df2.loc[relevant,'NormDmnd'] = df1.loc[relevant,'Demand'].copy() / dAvg
+                
+    # write to file & to log
     print('\nWriting: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df1.to_csv(os.path.join(dirout,fnameout), columns=['NormDmnd'], float_format='%.5f', date_format='%Y-%m-%d %H:%M') # this is a multiindexed dataframe, so only the data column is written
+    df2.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
-    
+            
     return
 
 if __name__ == "__main__":

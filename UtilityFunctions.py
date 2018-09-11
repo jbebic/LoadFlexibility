@@ -852,15 +852,15 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             # write leaders to file
             foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
             print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
-            pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
+            pd.DataFrame(Leaders[n], columns=['CustomerID']).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
             # write others to file
-            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
-            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
-            pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
+            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "o." +fnameout))
+            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "o." +fnameout))
+            pd.DataFrame(Others[n], columns=['CustomerID']).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "o." + fnameout), index=False) 
         else:
             # print/log compliance to 15/15
-            foutLog.write("\n\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
-            print("\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
+            foutLog.write("\n\nGroup " + str(n+1) + " -- Did **NOT** pass 15/15 Rule ***")
+            print("\nGroup " + str(n+1) + " -- Did **NOT** pass 15/15 Rule ***")
             # error message and print/log stats on leaders / others groups
             foutLog.write("\n  " + str(int(len(leaders))) + " LEADERS with a max share of " + str(int(maxShareL)) + "%")# 
             foutLog.write("\n  " + str(int(len(others))) + " OTHERS with a max share of " + str(int(maxShareO)) + "%")# 

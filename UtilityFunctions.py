@@ -589,7 +589,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                           dtype={'CustomerID':np.str})
 
         ignoreIDs = df9['CustomerID'].tolist()
-
+        ignoreIDs = [x.replace(" ", "") for x in ignoreIDs]
+        
     if considerCIDs != '':
         print('Reading: %s' %os.path.join(dirin,considerCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
@@ -601,6 +602,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
     else:
         considerIDs = list(set(UniqueIDs)-set(ignoreIDs))

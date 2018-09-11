@@ -564,7 +564,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df1 = AssignRatePeriods_TOUGS3B(df1)
     df2 = pd.read_csv(os.path.join(dirin,ratein),
                       header = 0,
-                      usecols = [0, 1, 2],
+                      usecols = [0, 1, 2], 
                       comment = '#',
                       names = ['RatePeriod', 'EnergyCost', 'DemandCost'],
                       dtype = {'RatePeriod':np.int8, 'EnergyCost':np.float, 'DemandCost':np.float})
@@ -665,11 +665,11 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         inputArray = np.asarray(['entire year' for i in dfy['datetime'].dt.month])
         dfy = dfy.assign(month=pd.Series( inputArray , index=dfy.index))
 		
-        dfp = pd.pivot_table(dfy, values=['Demand'], index= ['CustomerID'], columns=['month'], aggfunc=np.max, fill_value=0.0, margins=False, dropna=True, margins_name='All')  
+#        dfp = pd.pivot_table(dfy, values=['Demand'], index= ['CustomerID'], columns=['month'], aggfunc=np.max, fill_value=0.0, margins=False, dropna=True, margins_name='All')  
         dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         df_summary = pd.merge(dfy, dfm,  left_index=True, right_index=True)
-        df_summary['PeakDemand', 'entire year'] = np.asarray(dfp['Demand']['entire year'].values*4)
+#        df_summary['PeakDemand', 'entire year'] = np.asarray(dfp['Demand']['entire year'].values*4)
         
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
         print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
@@ -833,31 +833,37 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         maxShareO = othersMaxD/othersTotalD  * 100   
         
         # write to file, if 1515 is passed
-        if ((len(leaders)>=15) and (maxShareL<15) and (len(others)>=15)  and (maxShareL<15) )  or (ignore1515):
+        if ((len(leaders)>=15) and (maxShareL<=15) and (len(others)>=15)  and (maxShareL<=15) )  or (ignore1515):
             Leaders[n] = leaders
             Others[n]  = others
             qB.append( qb[1] )
-            if (len(leaders)>=15) and (maxShareL<15) and (len(others)>=15)  and (maxShareL<15) :
+            # print/log compliance to 15/15
+            if (len(leaders)>=15) and (maxShareL<=15) and (len(others)>=15)  and (maxShareL<=15) :
                 print("\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
                 foutLog.write("\n\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
             else:
                 print("\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
                 foutLog.write("\n\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+            # print/log stats on leaders / others groups
             foutLog.write("\n  " + str(int(len(Leaders[n]))) + " Leaders with a max share of " + str(int(maxShareL)) + "%")# 
             foutLog.write("\n  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
             print("  " + str(int(len(Leaders[n]))) + " Leaders with a max share of " + str(int(maxShareL)) + "%")# 
             print("  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
+            # write leaders to file
             foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
             print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
             pd.Series(Leaders[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
+            # write others to file
             foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
             print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "O." +fnameout))
             pd.Series(Others[n]).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "O." + fnameout), index=False) 
         else:
+            # print/log compliance to 15/15
             foutLog.write("\n\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
+            print("\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
+            # error message and print/log stats on leaders / others groups
             foutLog.write("\n  " + str(int(len(leaders))) + " LEADERS with a max share of " + str(int(maxShareL)) + "%")# 
             foutLog.write("\n  " + str(int(len(others))) + " OTHERS with a max share of " + str(int(maxShareO)) + "%")# 
-            print("\nGroup " + str(n) + " -- Did **NOT** pass 15/15 Rule ***")
             print("  " + str(int(len(leaders))) + " LEADERS with a max share of " + str(int(maxShareL)) + "%")# 
             print("  " + str(int(len(others))) + " OTHERS with a max share of " + str(int(maxShareO)) + "%")#             
             qB.append( np.nan )

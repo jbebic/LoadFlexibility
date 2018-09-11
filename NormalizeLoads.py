@@ -249,6 +249,149 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
             
     return
 
+
+def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
+                   dirout='./', fnameout='IntervalData.normalized.csv', 
+                   dirlog='./', fnameLog='NormalizeGroup.log', 
+                   InputFormat = 'ISO', groupName='group',
+                   normalizeBy="year"):
+    
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = open(os.path.join(dirout, fnameLog), 'w')
+    
+    #%% Output header information to log file
+    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
+    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
+    foutLog.write('%s\n' %(codeCopyright))
+    foutLog.write('%s\n' %(codeAuthors))
+    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    
+    # Output file information to log file
+    print('Reading: %s' %os.path.join(dirin,fnamein))
+    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
+    if InputFormat == 'SCE':
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['datetimestr', 'Demand', 'CustomerID'],
+                          dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+    
+        print('Total number of interval records read: %d' %df1['Demand'].size)
+        foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
+    
+        print('Processing time records...')
+        foutLog.write('Processing time records\n')
+        dstr = df1['datetimestr'].str.split(':').str[0]
+        hstr = df1['datetimestr'].str.split(':').str[1]
+        mstr = df1['datetimestr'].str.split(':').str[2]
+        temp = dstr + ' ' + hstr + ':' + mstr
+        df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
+        
+    else:
+        
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'NormDmnd'])
+        foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
+        df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+        
+    # moved this line of code to before CustomerID is set to the index
+    UniqueIDs = df1['CustomerID'].unique().tolist() 
+    
+    df1 = df1.sort_values(by=['CustomerID', 'datetime'])
+    df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+
+    if considerCIDs != '':
+        print('Reading group IDs from: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading group IDs: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = list(set(considerIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+    else:
+        considerIDs = list(set(UniqueIDs))
+        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+
+    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
+    print('Number of customer IDs after consider/ignore: %d' %len(UniqueIDs))
+    
+    df1['NormDmnd'] = 0.0 # Add column of normalized demand to enable setting it with slice index later
+    df2 = df1.loc[df1['CustomerID'].isin(UniqueIDs)]   
+    df2pivot = pd.pivot_table(df2, values=[ 'Demand',  'NormDmnd'], index= ['datetime'], columns=None, aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    df2count = pd.pivot_table(df2, values=[ 'Demand',  'NormDmnd'], index= ['datetime'], columns=None, aggfunc=len, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+    df3 = pd.DataFrame(df2pivot.to_records())    
+    df3c = pd.DataFrame(df2count.to_records()) 
+
+    df3['Demand'] = df3['Demand'] / df3c['Demand']
+    
+    idList =  ",".join(UniqueIDs)
+    print("Normalizing group that includes " + idList)
+    
+    if normalizeBy=='month':
+        print("Normalizing demand in each month")
+        # normalize by average demand for each month
+        for m in range(1,13,1):
+            month =  df3.datetime.dt.month
+            relevant = (month==m) 
+            dAvg = df3.loc[relevant,'Demand'].mean()
+            dMin = df3.loc[relevant,'Demand'].min()
+            dMax = df3.loc[relevant,'Demand'].max()
+            df3.loc[relevant,'NormDmnd'] = df3.loc[relevant,'Demand'].copy()/dAvg 
+                
+    elif normalizeBy=='day':
+        print("Normalizing demand in each day")
+        # normalize by average demand over each day
+        for m in range(1,13,1):
+            month =  df3.datetime.dt.month
+            day = df3.datetime.dt.day
+            days = list(set(df3.loc[(month==m), "datetime" ].dt.day))
+            for d in days:
+                relevant = (month==m) & (day==d)
+                dAvg = df3.loc[relevant,'Demand'].mean()
+                dMin = df3.loc[relevant,'Demand'].min()
+                dMax = df3.loc[relevant,'Demand'].max()
+                df3.loc[relevant,'NormDmnd'] = df3.loc[relevant,'Demand'].copy()/dAvg 
+             
+    else:
+        print("Normalizing demand in entire data set")
+        # normalize by average demand over entire dataset
+#        deltat = df3.index[-1]-df3.index[0]
+#        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
+        dAvg = df3['Demand'].mean()
+        dMin = df3['Demand'].min()
+        dMax = df3['Demand'].max()
+        foutLog.write('maxDemand: %.2f\n' %dMax)
+        foutLog.write('avgDemand: %.2f\n' %dAvg)
+        foutLog.write('minDemand: %.2f\n' %dMin)
+        df3['NormDmnd'] = df3['Demand'] /dAvg
+        
+        # assign groupName as CustomerID
+        cid = np.asarray([groupName for i in range(0,len(df3),1)])
+        df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
+         
+#        foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))
+#        foutLog.write('Time records end on: %s\n' %df2.index[-1].strftime('%Y-%m-%d %H:%M'))
+        
+    # assign groupName as CustomerID
+    cid =np.asarray([groupName for i in range(0,len(df3),1)])
+    df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
+ 
+    # write to data file and to log
+    print('Writing: %s' %os.path.join(dirout,fnameout))
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    print('Finished')
+
+    return
+
+
 if __name__ == "__main__":
     ReviewLoads(dirin='input/', fnamein='synthetic2.csv',
                 dirout='output/', fnameout='synthetic2.summary.csv',

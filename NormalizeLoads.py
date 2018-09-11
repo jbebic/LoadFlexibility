@@ -290,8 +290,8 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
         
     else:
         
-        df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'NormDmnd'])
-        foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
+        df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'Demand'])
+        foutLog.write('Number of interval records read: %d\n' %df1['Demand'].size)
         df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
         
     # moved this line of code to before CustomerID is set to the index
@@ -313,6 +313,7 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = list(set(considerIDs))
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
     else:
         considerIDs = list(set(UniqueIDs))

@@ -531,7 +531,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                       usecols = [0, 1, 2], 
                       names=['CustomerID', 'datetimestr', 'Demand'],
                       dtype={'CustomerID':np.str, 'datetimestr':np.str, 'Demand':np.float})
-    
+
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
     # df1.set_index(['CustomerID', 'datetime'], inplace=True)
     # df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
@@ -749,16 +749,17 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
 
     # only consider customers within UniqueID
     df_summary = df1.loc[UniqueIDs]
-    
+#    TotalDemandCharge =  np.asarray([ float(i) for i in df_summary["DemandCharge"] ]) +   np.asarray([ float(i) for i in df_summary["FacilityCharge"] ])
+#    df_summary= df_summary.assign(TotalDemandCharge = pd.Series( TotalDemandCharge,index=df_summary.index))
+
     # deal with the data format of the demand and total charge
     totalEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName] ])
     totalCharge = np.asarray([ float(i) for i in df_summary[chargeColumnName] ])
-    
     # assign back to df_summary
     df_summary = df_summary.assign(Energy=pd.Series(totalEnergy,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
-
+    
     # ignore customers paying an average of $0/kWh, that is an error
     df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]
     
@@ -772,6 +773,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     
     # solve for transitions between quartiles of energy demand
     qD = np.percentile(totalEnergy, energyPercentiles)
+    print(qD)
     
     N = len(qD) - 2
     qB = []

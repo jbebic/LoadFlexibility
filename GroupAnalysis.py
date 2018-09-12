@@ -9,13 +9,13 @@ import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
 from datetime import date
-from pytz import timezone
+#from pytz import timezone
 import os # operating system interface
-import string
-import random
+#import string
+#import random
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
-import matplotlib.pylab as pl
+#import matplotlib.pylab as pl
 from SupportFunctions import getData, findUniqueIDs, createLog, logTime
 
 #%% Version and copyright info to record on the log file
@@ -78,17 +78,18 @@ def PlotGroup(dirin='./', fnamein='IntervalData.normalized.csv', considerCIDs=''
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # load data from file, find initial list of unique IDs. Update log file
-    df1, UniqueIDs, foutLog = getData(dirin=dirin, fnamein=fnamein, foutLog=foutLog, varName='NormDmnd')
+    df1, UniqueIDs, foutLog = getData(dirin=dirin, fnamein=fnamein, foutLog=foutLog) #, varName='NormDmnd')
 
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
     UniqueIDs, foutLog = findUniqueIDs(dirin=dirin, UniqueIDs=UniqueIDs, considerCIDs=considerCIDs, foutLog=foutLog)
-
+    df1 = df1.loc[df1['CustomerID'].isin(UniqueIDs)]
+    
     # load grouped data from file, find initial list of unique IDs. Update log file
-    dfgroup, groupUniqueIDs, foutLog = getData(dirin=dirin, fnamein=fnameGroup,  foutLog=foutLog, varName='NormDmnd')
+    dfgroup, groupUniqueIDs, foutLog = getData(dirin=dirin, fnamein=fnameGroup,  foutLog=foutLog)#, varName='NormDmnd')
     
     # open pdf for figures
     print("Opening plot files")
-    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
+    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
     
     # iterate over UniqueIDs to create figure for each in the pdf
     customer = df1.CustomerID
@@ -106,7 +107,6 @@ def PlotGroup(dirin='./', fnamein='IntervalData.normalized.csv', considerCIDs=''
             
             for cID in UniqueIDs: 
                 relevant =  (customer==cID) & (month==m) & (day==d)
-#                print(m,d,cID, len(relevant))
                 ax0 = addLoadCurveByDay(ax0, df1.loc[relevant], lw=0.5, c='b', ls='--')
                 
             relevant =  (groupMonth==m) & (groupDay==d)

@@ -254,7 +254,7 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='NormalizeGroup.log', 
                    InputFormat = 'ISO', groupName='group',
-                   normalizeBy="year"):
+                   normalize=True, normalizeBy="day"):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -331,50 +331,51 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
 
     df3['Demand'] = df3['Demand'] / df3c['Demand']
     
-    idList =  ",".join(UniqueIDs)
-    print("Normalizing group that includes " + idList)
-    
-    if normalizeBy=='month':
-        print("Normalizing demand in each month")
-        # normalize by average demand for each month
-        for m in range(1,13,1):
-            month =  df3.datetime.dt.month
-            relevant = (month==m) 
-            dAvg = df3.loc[relevant,'Demand'].mean()
-            dMin = df3.loc[relevant,'Demand'].min()
-            dMax = df3.loc[relevant,'Demand'].max()
-            df3.loc[relevant,'NormDmnd'] = df3.loc[relevant,'Demand'].copy()/dAvg 
-                
-    elif normalizeBy=='day':
-        print("Normalizing demand in each day")
-        # normalize by average demand over each day
-        for m in range(1,13,1):
-            month =  df3.datetime.dt.month
-            day = df3.datetime.dt.day
-            days = list(set(df3.loc[(month==m), "datetime" ].dt.day))
-            for d in days:
-                relevant = (month==m) & (day==d)
+    if normalize: 
+        idList =  ",".join(UniqueIDs)
+        print("Normalizing group that includes " + idList)
+        
+        if normalizeBy=='month':
+            print("Normalizing demand in each month")
+            # normalize by average demand for each month
+            for m in range(1,13,1):
+                month =  df3.datetime.dt.month
+                relevant = (month==m) 
                 dAvg = df3.loc[relevant,'Demand'].mean()
                 dMin = df3.loc[relevant,'Demand'].min()
                 dMax = df3.loc[relevant,'Demand'].max()
                 df3.loc[relevant,'NormDmnd'] = df3.loc[relevant,'Demand'].copy()/dAvg 
-             
-    else:
-        print("Normalizing demand in entire data set")
-        # normalize by average demand over entire dataset
-#        deltat = df3.index[-1]-df3.index[0]
-#        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
-        dAvg = df3['Demand'].mean()
-        dMin = df3['Demand'].min()
-        dMax = df3['Demand'].max()
-        foutLog.write('maxDemand: %.2f\n' %dMax)
-        foutLog.write('avgDemand: %.2f\n' %dAvg)
-        foutLog.write('minDemand: %.2f\n' %dMin)
-        df3['NormDmnd'] = df3['Demand'] /dAvg
+                    
+        elif normalizeBy=='day':
+            print("Normalizing demand in each day")
+            # normalize by average demand over each day
+            for m in range(1,13,1):
+                month =  df3.datetime.dt.month
+                day = df3.datetime.dt.day
+                days = list(set(df3.loc[(month==m), "datetime" ].dt.day))
+                for d in days:
+                    relevant = (month==m) & (day==d)
+                    dAvg = df3.loc[relevant,'Demand'].mean()
+                    dMin = df3.loc[relevant,'Demand'].min()
+                    dMax = df3.loc[relevant,'Demand'].max()
+                    df3.loc[relevant,'NormDmnd'] = df3.loc[relevant,'Demand'].copy()/dAvg 
+                 
+        else:
+            print("Normalizing demand in entire data set")
+            # normalize by average demand over entire dataset
+    #        deltat = df3.index[-1]-df3.index[0]
+    #        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
+            dAvg = df3['Demand'].mean()
+            dMin = df3['Demand'].min()
+            dMax = df3['Demand'].max()
+            foutLog.write('maxDemand: %.2f\n' %dMax)
+            foutLog.write('avgDemand: %.2f\n' %dAvg)
+            foutLog.write('minDemand: %.2f\n' %dMin)
+            df3['NormDmnd'] = df3['Demand'] /dAvg
         
-        # assign groupName as CustomerID
-        cid = np.asarray([groupName for i in range(0,len(df3),1)])
-        df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
+#        # assign groupName as CustomerID
+#        cid = np.asarray([groupName for i in range(0,len(df3),1)])
+#        df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
          
 #        foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))
 #        foutLog.write('Time records end on: %s\n' %df2.index[-1].strftime('%Y-%m-%d %H:%M'))

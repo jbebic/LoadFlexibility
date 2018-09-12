@@ -19,8 +19,7 @@ def logTime(foutLog, logMsg, tbase):
     foutLog.write('%s%s\n' %(logMsg, str(codeTnow)))
     codeTdelta = codeTnow - tbase
     foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
-
-
+    
 # create log  "
 def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart): # Capture start time of code execution and open log file
     
@@ -36,7 +35,7 @@ def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLo
     return foutLog
 
 # load data and unique IDs "
-def getData(dirin, fnamein, foutLog): # Capture start time of code execution and open log file    
+def getData(dirin, fnamein, foutLog, varName='NormDmnd'): # Capture start time of code execution and open log file    
 
     # Output information to log file
     print("Reading input file")
@@ -44,8 +43,8 @@ def getData(dirin, fnamein, foutLog): # Capture start time of code execution and
     df1 = pd.read_csv(os.path.join(dirin,fnamein), 
                       header = 0, 
                       usecols = [1, 2, 0], 
-                      names=['CustomerID', 'datetimestr', 'NormDmnd']) # add dtype conversions
-    foutLog.write('Number of interval records read: %d\n' %df1['NormDmnd'].size)
+                      names=['CustomerID', 'datetimestr', varName]) # add dtype conversions
+    foutLog.write('Number of interval records read: %d\n' %df1[varName].size)
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
     df1.set_index(['datetime'], inplace=True)
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
@@ -100,4 +99,13 @@ def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
     return UniqueIDs, foutLog
+
+
+def reduceDataFile(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='',
+                   dirout='./', fnameout='IntervalData.normalized.csv', 
+                   dirlog='./', fnameLog='reduceDataFile.log'):
+    
+    
+    
+    return
 

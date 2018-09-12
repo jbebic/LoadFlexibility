@@ -185,7 +185,6 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
                                   'tzinfob'     :tzTransInfo[11:-2:2],  'tzinfoe'   :tzTransInfo[12:-1:2]})
     df2['year']=pd.DatetimeIndex(df2['DSTbeginsUTC']).year.values
     df2.set_index('year', inplace=True)
-
     
     #%% Output header information to log file
     print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
@@ -531,7 +530,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                       usecols = [0, 1, 2], 
                       names=['CustomerID', 'datetimestr', 'Demand'],
                       dtype={'CustomerID':np.str, 'datetimestr':np.str, 'Demand':np.float})
-    
+
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
     # df1.set_index(['CustomerID', 'datetime'], inplace=True)
     # df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
@@ -686,6 +685,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
 
 def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='',
                      dirout='./', fnameout='groups.csv',
+                     dirplot='./',
                      dirlog='./', fnameLog='CalculateGroups.log',
                      energyPercentiles = [0, 25, 50, 75, 100], 
                      ratePercentiles = [0,10, 100],
@@ -749,16 +749,15 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
 
     # only consider customers within UniqueID
     df_summary = df1.loc[UniqueIDs]
-    
+
     # deal with the data format of the demand and total charge
     totalEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName] ])
     totalCharge = np.asarray([ float(i) for i in df_summary[chargeColumnName] ])
-    
     # assign back to df_summary
     df_summary = df_summary.assign(Energy=pd.Series(totalEnergy,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
-
+    
     # ignore customers paying an average of $0/kWh, that is an error
     df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]
     
@@ -895,15 +894,18 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
         # Plot Annual Energy vs Rate of bill
         fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
-        ax.set_title('Entire Year')
         if chargeType=="Energy":
             ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
+            ax.set_title("Entire Year - Energy Charges Only")
+        elif chargeType=="Demand":
+            ax.set_xlabel('Demand Only Average Cost [₵/kWh]') 
+            ax.set_title("Entire Year - Demand Charges Only")
+        elif chargeType=="Facility":
+            ax.set_xlabel('Facility Only Average Cost [₵/kWh]') 
+            ax.set_title("Entire Year - Facility Charges Only")
         else:
-            if chargeType=="Demand":
-                ax.set_xlabel('Demand Only Average Cost [₵/kWh]') 
-            else:
-                ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
-        ax.set_ylabel('Total Energy [' + unitEnergy + ']')
+            ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
+            ax.set_title("Entire Year - All Charges")
         
         colorsV = ['blue', 'limegreen','gold', 'red']
         if N>3:
@@ -938,18 +940,19 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         for mNo in [1,2,3,4,5,6,7,8,9,10,11,12]:
             
             fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
-            if np.isreal(mNo):
-                ax.set_title(date(2016, mNo,1).strftime('%B'))
-            else:
-                ax.set_title( mNo)
-                
+               
             if chargeType=="Energy":
                 ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Energy Charges Only")
+            elif chargeType=="Demand":
+                ax.set_xlabel('Demand Only Average Cost [₵/kWh]') 
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Demand Charges Only")
+            elif chargeType=="Facility":
+                ax.set_xlabel('Facility Only Average Cost [₵/kWh]') 
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Facility Charges Only")
             else:
-                if chargeType=="Demand":
-                    ax.set_xlabel('Demand Only Average Cost [₵/kWh]') 
-                else:
-                    ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
+                ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - All Charges")
             ax.set_ylabel('Total Energy [' + unitEnergy + ']')
            
             for n in range(0,N+1,1):
@@ -967,8 +970,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             plt.close() # Closes fig to clean up memory
             
         # save figures to pdf file
-        print('Writing: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
-        foutLog.write('\n\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.pdf')))
+        print('Writing: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))
+        foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))
         pltPdf1.close()
         
     logTime(foutLog, '\n\nRunFinished at: ', codeTstart)

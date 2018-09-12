@@ -112,7 +112,8 @@ def PlotBillingData(dirin='./', fnamein='IntervalData.billing.csv', ignoreCIDs='
                           dtype={'CustomerID':np.str})
 
         ignoreIDs = df9['CustomerID'].tolist()
-
+        ignoreIDs = [x.replace(" ", "") for x in ignoreIDs]
+        
     if considerCIDs != '':
         print('Reading: %s' %os.path.join(dirin,considerCIDs))
         foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
@@ -123,6 +124,7 @@ def PlotBillingData(dirin='./', fnamein='IntervalData.billing.csv', ignoreCIDs='
                           names=['CustomerID'],
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
     else:

@@ -108,23 +108,62 @@ def addLoadCurveByDay(ax0, df, lw=1, c='b', ls='-'):
     
     return ax0
 
-def addLoadCurveByMonth(ax0, df, lw=1, c='b', ls='-'):
+
+def addLoadDelta(ax0, df, lw=1, c='b', ls='-'):
         
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_ylabel('Load [pu]')
     ax0.set_xlabel('Hour of the Day [h]')
     ax0.set_xlim([0,df.shape[0]])
-#    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
-#    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
     ax0.set_yticks([-0.5, -0.4, -0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0])  
     ax0.set_yticklabels([-0.5, -0.4,-0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0])  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-                   
+    y = np.cumsum(df['NormDmnd'])/4
+    y = y - np.min(y)
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls, label='Normalized Demand [pu]', lw=lw, c=c)
-    ax0.plot(np.arange(df.shape[0]), np.cumsum(df['NormDmnd'])/4, ls, lw=lw*2, c='r')
+    ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='r')
     
     return ax0
+
+def addLoadCurve(ax0, df, lw=1, c='b', ls='-', label=''):
+        
+    df = df.sort_values(by='datetime', ascending=True)
+    ax0.set_ylabel('Load [pu]')
+    ax0.set_xlabel('Hour of the Day [h]')
+    ax0.set_xlim([0,df.shape[0]])
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    ax0.set_yticks([-0.5, -0.4, -0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0,1.1, 1.2, 1.3, 1.4, 1.5])  
+    ax0.set_yticklabels([-0.5, -0.4, -0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0,1.1, 1.2, 1.3, 1.4, 1.5])  
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+                   
+    ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=lw, c=c, label=label)
+#    ax0.plot(np.arange(df.shape[0]), np.cumsum(df['NormDmnd'])/4, ls, lw=lw*2, c='r')
+    
+    return ax0
+
+
+#def addLoadCurveByMonth(ax0, df, lw=1, c='b', ls='-'):
+#        
+#    df = df.sort_values(by='datetime', ascending=True)
+#    ax0.set_ylabel('Load [pu]')
+#    ax0.set_xlabel('Hour of the Day [h]')
+#    ax0.set_xlim([0,df.shape[0]])
+##    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+##    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+#    ax0.set_yticks([-0.5, -0.4, -0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0])  
+#    ax0.set_yticklabels([-0.5, -0.4,-0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0])  
+#    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+#    ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+#                   
+#    ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls, label='Normalized Demand [pu]', lw=lw, c=c)
+#    ax0.plot(np.arange(df.shape[0]), np.cumsum(df['NormDmnd'])/4, ls, lw=lw*2, c='r')
+#    
+#    return ax0
 
 def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv', 
                   dirout='./', fnameout='delta.csv',
@@ -496,5 +535,75 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
     # finish log with run time
     codeTfinish = datetime.now()
     logTime(foutLog, '\nRunFinished at: ', codeTfinish)
+    
+    return
+
+def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv', 
+                  dirout='./', fnameout='delta.csv',
+                  dirlog='./', fnameLog='CompareLoads.log',
+                  plotDeltas=False):
+       
+    # load time-series data 
+    df1 = pd.read_csv(os.path.join(dirin,fnameinL), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['CustomerID', 'datetimestr', 'NormDmnd'])  
+    df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+    df1.set_index(['datetime'], inplace=True)
+    df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+    df1.sort_index(inplace=True) # sort on datetime
+    
+    df2 = pd.read_csv(os.path.join(dirin,fnameino), 
+                          header = 0, 
+                          usecols = [0, 1, 2], 
+                          names=['CustomerID', 'datetimestr', 'NormDmnd']) 
+    df2['datetime'] = pd.to_datetime(df2['datetimestr'], format='%Y-%m-%d %H:%M')
+    df2.set_index(['datetime'], inplace=True)
+    df2.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+    df2.sort_index(inplace=True) # sort on datetime
+
+    # open pdf for figures
+    print("Opening plot files")
+    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
+    
+    df3 = df2.copy()
+    df3['NormDmnd'] = df1['NormDmnd'] - df2['NormDmnd']
+    
+    # iterate over UniqueIDs to create figure for each in the pdf
+    month = df1.index.month
+    day = df1.index.day
+    for m in range(1, 13,1):
+        print ('Processing Month %d of %d' %( m,12))
+        days = list(set(df1.loc[(month==m)].index.day))
+        
+        for d in days:
+            fig, ax = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
+            fig.suptitle( fnameinL + " / " + fnameino  + " / " +  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
+            
+            ax0=ax[0]
+#            ax0.set_title(  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
+            relevant =  (month==m) & (day==d)
+            ax0 = addLoadCurve(ax0, df1.loc[relevant], c='k', lw=2, label='leaders')
+            ax0 = addLoadCurve(ax0, df2.loc[relevant], c='b', lw=2, label='others')
+            ax0.set_ylim([0.5,1.5])
+            ax0.legend()
+            
+            ax1=ax[1]
+#            ax0.set_title(  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
+            relevant =  (month==m) & (day==d)
+            ax1 = addLoadDelta(ax1, df3.loc[relevant])
+            ax1.set_ylim([-0.5,1.0])
+#            ax1.legend()
+            
+            pltPdf1.savefig() 
+            plt.close()   
+                
+    
+    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
+    pltPdf1.close()
+
+    # finish log with run time
+#    codeTfinish = datetime.now()
+#    logTime(foutLog, '\nRunFinished at: ', codeTfinish)
     
     return

@@ -7,11 +7,13 @@ Created on Mon May 28 09:28:36 2018
 
 import numpy as np
 
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups, CalculateBilling
+from GroupAnalysis import PlotGroup, DeltaLoads, PlotDelta
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
-from NormalizeLoads import ReviewLoads, NormalizeLoads
+from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps
+from PlotBilling import PlotBillingData
 
 fnamebase = 'synthetic2'
 Ngroups = 10
@@ -33,11 +35,10 @@ if False:
                    writeOutput = True)
 
 #%% AnonymizeCIDs
-if False:
+if True:
     AnonymizeCIDs(dirin='private/', fnamein=fnamebase + '.csv', 
                   dirout='private/', fnameout=fnamebase + '.A.csv', fnameKeys=fnamebase + '.lookup.csv',
-                  dirlog='private/', fnameLog='AnonymizeCIDs.log',
-                  IDlen=6)
+                  dirlog='private/', fnameLog='AnonymizeCIDs.log')#,IDlen=6)
 
 #%% Manual steps:
 #  1) Validate that the CustomerIDs have been anonymized: open the csv file in 
@@ -62,16 +63,70 @@ if False:
 #  1) Open  
 
 #%% Calculate Billing
-if True:
-    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs=fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
+if False:
+    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', writeDataFile=True, considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
                    dirout='output/', fnameout=fnamebase + '.A.billing.csv',
                    dirlog='output/')
-
+#%% Plot Billing
+if False:
+    PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', considerCIDs = 'purelyBundledCustomers.csv',#fnamebase + '.g1c.csv',
+                   dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
+                   dirlog='plots/')
+#%% Grouping
+if False:
+    CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                   plotGroups = True, chargeType='Total', energyPercentiles = [10, 30, 50, 70, 90],
+                   dirout='plots/', fnameout=fnamebase + '.Total.A.groups.csv',
+                   dirlog='plots/')
+    CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                   plotGroups = True, chargeType='Energy', energyPercentiles = [10, 30, 50, 70, 90],
+                   dirout='plots/', fnameout=fnamebase + '.Energy.A.groups.csv',
+                   dirlog='plots/')   
+    CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                   plotGroups = True, chargeType='Demand', energyPercentiles = [10, 30, 50, 70, 90],
+                   dirout='plots/', fnameout=fnamebase + '.Demand.A.groups.csv',
+                   dirlog='plots/')   
 #%% Normalize profiles
 if False:
     NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs=fnamebase + '.A.ignore.csv',
                    dirout='output/', fnameout=fnamebase + '.A.normalized.csv',
                    dirlog='output/')
+#%% Normalize profiles
+if False:
+    for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o'] :
+        NormalizeGroup(dirin='input/', fnamein=fnamebase + '.A.csv', considerCIDs = groupName+ '.synthetic2.Energy.A.groups.csv',
+                   dirout='output/', fnameout=fnamebase + '.' + groupName + '.energyOnly.A.normalized.csv',
+                   groupName = groupName,
+                   dirlog='output/')
+if False:
+    for n in [1,2,3,4]:
+        
+        groupL = 'g' + str(n) + 'L'
+        groupo = 'g' + str(n) + 'o'
+        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
+    
+        DeltaLoads(dirin='output/', # outputs
+                   fnameinL=fnamebase + '.' + groupL + '.A.normalized.csv',
+                   fnameino=fnamebase + '.' + groupo + '.A.normalized.csv',
+                   dirout='output/', # outputs 
+                   fnameout=fnameout,
+                   dirlog='output/' # outputs
+                   ) 
+        
+        PlotDelta(dirin='output/',  # outputs
+                  fnamein=fnameout, 
+                  dirout='output/', # plots
+                  fnameout=fnameout.replace('.csv', '.pdf'),
+                  dirlog='output/' # outputs
+                  )  
+if False:
+    groupName = 'g1L'
+    PlotGroup(dirin='output/', 
+                  fnamein= fnamebase+'.A.normalized.csv',
+                  considerCIDs ='g1L.synthetic2.Total.A.groups.csv',
+                  fnameGroup = fnamebase + '.g1L.A.normalized.csv',
+                  dirout='output/', fnameout=fnamebase+'.GroupPlots.' + groupName + ".pdf",
+                  dirlog='output/')    
 
 #%% Normalize profiles
 if False:
@@ -81,7 +136,7 @@ if False:
 
     
 #%% Plot duration curves
-if True:
+if False:
     PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
                        byMonthFlag=True,
                        dirout='plots/', fnameout=fnamebase + '.A.duration.pdf',

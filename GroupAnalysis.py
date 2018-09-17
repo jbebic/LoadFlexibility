@@ -108,7 +108,6 @@ def addLoadCurveByDay(ax0, df, lw=1, c='b', ls='-'):
     
     return ax0
 
-
 def addLoadDelta(ax0, df, lw=1, c='b', ls='-'):
         
     df = df.sort_values(by='datetime', ascending=True)
@@ -123,8 +122,8 @@ def addLoadDelta(ax0, df, lw=1, c='b', ls='-'):
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     y = np.cumsum(df['NormDmnd'])/4
     y = y - np.min(y)
-    ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls, label='Normalized Demand [pu]', lw=lw, c=c)
-    ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='r')
+    ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls, label='Shifted Load [pu]', lw=lw, c=c)
+    ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='r', label='Shifted Energy [pu-h]')
     
     return ax0
 
@@ -142,10 +141,8 @@ def addLoadCurve(ax0, df, lw=1, c='b', ls='-', label=''):
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
                    
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=lw, c=c, label=label)
-#    ax0.plot(np.arange(df.shape[0]), np.cumsum(df['NormDmnd'])/4, ls, lw=lw*2, c='r')
     
     return ax0
-
 
 #def addLoadCurveByMonth(ax0, df, lw=1, c='b', ls='-'):
 #        
@@ -583,8 +580,8 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
             ax0=ax[0]
 #            ax0.set_title(  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
             relevant =  (month==m) & (day==d)
-            ax0 = addLoadCurve(ax0, df1.loc[relevant], c='k', lw=2, label='leaders')
-            ax0 = addLoadCurve(ax0, df2.loc[relevant], c='b', lw=2, label='others')
+            ax0 = addLoadCurve(ax0, df1.loc[relevant], c='k', lw=1, label='leaders')
+            ax0 = addLoadCurve(ax0, df2.loc[relevant], c='b', lw=1, label='others')
             ax0.set_ylim([0.5,1.5])
             ax0.legend()
             
@@ -593,7 +590,7 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
             relevant =  (month==m) & (day==d)
             ax1 = addLoadDelta(ax1, df3.loc[relevant])
             ax1.set_ylim([-0.5,1.0])
-#            ax1.legend()
+            ax1.legend()
             
             pltPdf1.savefig() 
             plt.close()   

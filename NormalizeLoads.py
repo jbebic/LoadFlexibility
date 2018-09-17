@@ -390,13 +390,13 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
             df3['NormDmnd'] = df3['AvgDemand'].copy() 
             
     # assign groupName as CustomerID
-    cid =np.asarray([groupName for i in range(0,len(df3),1)])
+    cid = np.asarray([groupName for i in range(0,len(df3),1)])
     df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
  
     # write to data file and to log
     print('Writing: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
+    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd', 'AvgDemand', 'Demand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
 

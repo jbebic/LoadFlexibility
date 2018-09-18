@@ -443,7 +443,7 @@ def AssignRatePeriods_TOUGS3B(df):
     # When a holidays falls on Sunday, the following Monday is recognized as an off-peak period)
         
     df['DayType'] = 'wd' # weekday
-    df.loc[df['datetime'].dt.dayofweek > 5, 'DayType'] = 'we' # weekend
+    df.loc[df['datetime'].dt.dayofweek >= 5, 'DayType'] = 'we' # weekend
     # New Year's Day
     if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
@@ -691,7 +691,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                      ratePercentiles = [0,10, 100],
                      plotGroups=False, 
                      chargeType="Total", 
-                     ignore1515=False):
+                     ignore1515=False, matchGroupLength=False):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -822,6 +822,13 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                 qb = np.percentile( chargePerUnit, ratePerc) 
                 leaders = list(group.loc[ (group['ChargePerUnitYear']<=qb[1]) ].index)            
                 others = list(group.loc[ (group['ChargePerUnitYear']>qb[1]) ].index)
+            
+         # make both groups the same length  
+        if matchGroupLength:
+            if len(others)>len(leaders):
+                others = others[:len(leaders)]
+            elif len(leaders)>len(others):
+                leaders = leaders[:len(others)]
             
         # find max individual share of the group of leaders
         leadersMaxD = np.max(group.loc[leaders, 'Energy'])

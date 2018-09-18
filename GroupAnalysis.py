@@ -24,6 +24,66 @@ codeVersion = '1.0'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Irene Berry, GE Global Research\n"
 
+
+def asignDayType(df):
+    
+    df['Season'] = 'w'
+    df.loc[(df.index.month > 5) & (df.index.month < 10), 'Season'] = 's'
+    
+    # Holidays: 
+    #   Jan 1 (New Year's Day)
+    #   3rd Monday in February (Presidents' Day)
+    #   July 4 (Independence Day)
+    #   1st Monday in September (Labor Day)
+    #   Nov 11 (Veterans Day)
+    #   4th Thursday in November (Thanksgiving Day)
+    #   Dec 25 (Christmas)
+    # When a holidays falls on Sunday, the following Monday is recognized as an off-peak period)
+        
+    df['DayType'] = 'wd' # weekday
+    df.loc[df.index.dayofweek >= 5, 'DayType'] = 'we' # weekend
+    # New Year's Day
+    if (df[(df.index.month == 1) & (df.index.day == 1)].index[0].dayofweek == 6):
+        df.loc[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+        df.loc[(df.index.month == 1) & (df.index.day == 2), 'DayType'] = 'o'
+    else:
+        df.loc[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+
+    # Presidents' Day: 3rd Monday in February
+    df.loc[(df.index.month == 2) & (df.index.dayofweek == 0) &
+           (15 <= df.index.day) & (df.index.day <= 21), 'DayType'] = 'h'
+    
+    # Independence Day    
+    if (df[(df.index.month == 7) & (df.index.day == 4)].index[0].dayofweek == 6):
+        df.loc[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+        df.loc[(df.index.month == 7) & (df.index.day == 5), 'DayType'] = 'o'
+    else:
+        df.loc[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+    
+    # Labor Day: 1st Monday in September
+    df.loc[(df.index.month == 9) & (df.index.dayofweek == 0) & 
+           (1 <= df.index.day) & (df.index.day <= 7), 'DayType'] = 'h'
+
+    # Veterans Day
+    if (df[(df.index.month == 11) & (df.index.day == 11)].index[0].dayofweek == 6):
+        df.loc[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+        df.loc[(df.index.month == 11) & (df.index.day == 12), 'DayType'] = 'o'
+    else:
+        df.loc[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+
+    # Thanksgiving Day: 4th Thursday in November
+    df.loc[(df.index.month == 11) & (df.index.dayofweek == 3) &
+           (22 <= df.index.day) & (df.index.day <= 28), 'DayType'] = 'h'
+
+    # Christmas Day
+    if (df[(df.index.month == 12) & (df.index.day == 25)].index[0].dayofweek == 6):
+        df.loc[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'
+        df.loc[(df.index.month == 12) & (df.index.day == 26), 'DayType'] = 'o'
+    else:
+        df.loc[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'    
+    
+    return df
+
 def addLoadCurveByDayEO(ax0, df, lw=1, c='b', ls='-',a=1.0):
         
     df = df.sort_values(by='datetime', ascending=True)
@@ -455,6 +515,8 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
     else:
         UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, ignoreCIDs, considerCIDs, foutLog)
     
+    df1 = asignDayType(df1)
+    
     # open pdf for figures
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
@@ -479,14 +541,24 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
             ax0.set_title( "Energy" )  
             for d in days:
                 relevant =  (customer==cID) & (month==m) & (day==d)
-                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(i), a=0.1)
+                if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='b', a=0.1)
+                else:
+                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='r', a=0.1)
+                
+#                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(i), a=0.1)
             ax0.set_ylim([-1.0,1.0])
             ax0.set_ylabel('Shifted Energy [p.u.h]')
             ax1 = ax[1]
             ax1.set_title( "Load Duration")  
             for d in days:
                 relevant =  (customer==cID) & (month==m) & (day==d)
-                ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c=cmap(i), a=0.1)
+                if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c='b', a=0.1)
+                else:
+                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c='r', a=0.1)
+
+#                ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c=cmap(i), a=0.1)
                 i+=1
             ax1.set_ylim([-0.3,0.3])
             ax1.set_ylabel('Shifted Load [p.u.]')
@@ -511,14 +583,24 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
             ax0.set_title( "Energy" )  
             for d in days:
                 relevant =  (customer==cID) & (month==m) & (day==d)
-                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(d), a=0.5)
+                if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='b', a=0.5)
+                else:
+                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='r', a=0.5)
+
+#                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(d), a=0.5)
             ax0.set_ylim([-1.0,1.0])
             ax0.set_ylabel('Shifted Energy [p.u.h]')
             ax1 = ax[1]
             ax1.set_title( "Load Duration")  
             for d in days:
                 relevant =  (customer==cID) & (month==m) & (day==d)
-                ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c=cmap(d), a=0.5)
+                if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c='b', a=0.5)
+                else:
+                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c='r', a=0.5)
+
+#                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c=cmap(d), a=0.5)
             ax1.set_ylim([-0.3,0.3])
             ax1.set_ylabel('Shifted Load [p.u.]')
             pltPdf1.savefig() 
@@ -559,12 +641,14 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     df2.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     df2.sort_index(inplace=True) # sort on datetime
 
+    
     # open pdf for figures
     print("Opening plot files")
     pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
     
     df3 = df2.copy()
     df3['NormDmnd'] = df1['NormDmnd'] - df2['NormDmnd']
+    df1 = asignDayType(df1)
     
     # iterate over UniqueIDs to create figure for each in the pdf
     month = df1.index.month
@@ -575,11 +659,12 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
         
         for d in days:
             fig, ax = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
-            fig.suptitle( fnameinL + " / " + fnameino  + " / " +  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
             
             ax0=ax[0]
 #            ax0.set_title(  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
             relevant =  (month==m) & (day==d)
+            
+            fig.suptitle( fnameinL + " / " +  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
             ax0 = addLoadCurve(ax0, df1.loc[relevant], c='k', lw=1, label='leaders')
             ax0 = addLoadCurve(ax0, df2.loc[relevant], c='b', lw=1, label='others')
             ax0.set_ylim([0.5,1.5])

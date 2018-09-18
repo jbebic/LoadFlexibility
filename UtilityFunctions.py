@@ -693,6 +693,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                      chargeType="Total", 
                      ignore1515=False, matchGroupLength=False):
     
+    if dirplot=='./':
+        dirplot = dirout
+    
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')

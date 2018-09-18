@@ -259,11 +259,15 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
     return
 
 
-def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
+def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', 
+                   dirconsider='./', considerCIDs='',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='NormalizeGroup.log', 
                    InputFormat = 'ISO', groupName='group',
                    normalize=True, normalizeBy="day"):
+    
+    if dirconsider=='./':
+        dirconsider = dirin  
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -312,9 +316,9 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv', considerCIDs='',
     foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
 
     if considerCIDs != '':
-        print('Reading group IDs from: %s' %os.path.join(dirin,considerCIDs))
-        foutLog.write('Reading group IDs: %s\n' %os.path.join(dirin,considerCIDs))
-        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+        print('Reading group IDs from: %s' %os.path.join(dirconsider,considerCIDs))
+        foutLog.write('Reading group IDs: %s\n' %os.path.join(dirconsider,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirconsider,considerCIDs), 
                           header = 0, 
                           usecols = [0],
                           comment = '#',

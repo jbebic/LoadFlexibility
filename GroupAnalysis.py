@@ -170,7 +170,7 @@ def addLoadDelta(ax0, df, lw=1, c='b', ls='-'):
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_yticks([-3.0, -2.75, -2.5, -2.25, -2.0, -1.75, -1.5, -1.0, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0])  
+    ax0.set_yticks([-3.0,  -2.5, -2.0,  -1.5, -1.0,  -0.5,  0,  0.5, 1.0,  1.5,  2.0, 2.5,  3.0])  
     ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
     y = np.cumsum(df['NormDmnd'])/4
@@ -189,11 +189,9 @@ def addLoadCurve(ax0, df, lw=1, c='b', ls='-', label=''):
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_yticks([-0.4, -0.3,  -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0,1.1, 1.2, 1.3, 1.4,])  
-    ax0.set_yticklabels([ -0.4, -0.3, -0.2, -.1, 0,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1.0,1.1, 1.2, 1.3, 1.4])  
+    ax0.set_yticks([-3.0, -2.75, -2.5, -2.25, -2.0, -1.75, -1.5, -1.0, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0])  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-                   
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=2, c=c, label=label)
     
     return ax0
@@ -543,7 +541,7 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
                     ax0, ymax = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='purple', a=0.1)
 #                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(i), a=0.1)
                     yMax  = np.max([yMax, ymax])
-            yMax = np.round(yMax)
+            yMax = np.ceil(yMax)
             ax0.set_ylim([-yMax,yMax])
             ax0.set_ylabel('Shifted Energy [p.u.h]')
             ax1 = ax[1]
@@ -582,9 +580,9 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
             for d in days:
                 relevant =  (customer==cID) & (month==m) & (day==d)
                 if df1.loc[relevant, 'DayType'][0] in ['we','h']:
-                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='gray', a=0.2)
+                    ax0,ymax = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='gray', a=0.2)
                 else:
-                    ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='purple', a=0.5)
+                    ax0,ymax = addLoadCurveByDayEO(ax0, df1.loc[relevant], c='purple', a=0.5)
 
 #                ax0 = addLoadCurveByDayEO(ax0, df1.loc[relevant], c=cmap(d), a=0.5)
             ax0.set_ylim([-yMax,yMax])
@@ -599,7 +597,7 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', c
                     ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c='steelblue', a=0.5)
 
 #                    ax1 = addDurationCurveByDay(ax1, df1.loc[relevant], c=cmap(d), a=0.5)
-            ax1.set_ylim([-1.0,1.0])
+            ax1.set_ylim([-0.5,0.5])
             ax1.set_ylabel('Shifted Load [p.u.]')
             pltPdf1.savefig() 
             plt.close()   

@@ -671,7 +671,7 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
             ax1=ax[1]
 #            ax0.set_title(  date(2016, m,1).strftime('%B')  + "/" + str(int(d)))   
             relevant =  (month==m) & (day==d)
-            ax1 = addLoadDelta(ax1, df3.loc[relevant])
+            ax1,ymax = addLoadDelta(ax1, df3.loc[relevant])
             ax1.set_ylim([-0.3,3.0])
             ax1.legend()
             

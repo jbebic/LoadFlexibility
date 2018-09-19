@@ -665,7 +665,7 @@ def PlotLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
             fig.suptitle( fnameinL + " / " +  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
             ax0 = addLoadCurve(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
             ax0 = addLoadCurve(ax0, df2.loc[relevant], c='k', lw=1, label='others')
-            ax0.set_ylim([0.4,1.6])
+            ax0.set_ylim([0.0,2.0])
             ax0.legend()
             
             ax1=ax[1]

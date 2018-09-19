@@ -919,7 +919,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             ms = 5
                     
         # Plot Annual Energy vs Rate of bill
-        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,7))
         if chargeType=="Energy":
             ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
             ax.set_title("Entire Year - Energy Charges Only")
@@ -952,6 +952,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         ylim = ax.get_ylim()
         for n in range(0,len(qD),1):
             ax.plot([xlim[0], xlim[1]], [qD[n]*scaleEnergy,  qD[n]*scaleEnergy], '-',lw=0.5, color="#999999" )
+                    
         for n in range(0,N+1,1):
             ax.plot([ qB[n], qB[n]], [qD[n]*scaleEnergy,  qD[n+1]*scaleEnergy], '-',lw=0.5,color="#999999" )
         ax.plot([xlim[0], xlim[1]], [np.max(qD)*scaleEnergy,  np.max(qD)*scaleEnergy], '-',lw=0.5, color="#999999" )
@@ -969,23 +970,28 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         # Plot for all 12 months of the year
         for mNo in [1,2,3,4,5,6,7,8,9,10,11,12]:
             
-            fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+            fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,7))
                
             if chargeType=="Energy":
                 ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - Energy Charges Only")
+                
             elif chargeType=="Demand":
                 ax.set_xlabel('Demand Only Average Cost [₵/kWh]') 
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - Demand Charges Only")
+                
             elif chargeType=="Facility":
                 ax.set_xlabel('Facility Only Average Cost [₵/kWh]') 
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - Facility Charges Only")
+                
             elif chargeType=="TotalDemand":
                 ax.set_xlabel('Total Demand Only Average Cost [₵/kWh]') 
-                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Total Demand Charges Only")                
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Total Demand Charges Only")   
+                
             else:
                 ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - All Charges")
+                
             ax.set_ylabel('Total Energy [' + unitEnergy + ']')
            
             for n in range(0,N+1,1):
@@ -1002,16 +1008,12 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             pltPdf1.savefig() # Saves fig to pdf
             plt.close() # Closes fig to clean up memory
             
-            
         # Plot Demand vs Energy Components of Bill
-        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,7))
 #        if chargeType=="Energy":
         ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
         ax.set_ylabel('Demand Only Average Cost [₵/kWh]') 
         ax.set_title("Entire Year - Demand vs Energy Cost")
-#        else:
-#            ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
-#            ax.set_title("Entire Year - All Charges")
         
         colorsV = ['blue', 'limegreen','gold', 'red']
         if N>3:
@@ -1026,8 +1028,6 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-#        for n in range(0,len(qD),1):
-#            ax.plot([xlim[0], xlim[1]], [qD[n]*scaleEnergy,  qD[n]*scaleEnergy], '-',lw=0.5, color="#999999" )
         
         if chargeType=="Energy":
             for n in range(0,N+1,1):
@@ -1035,10 +1035,6 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         elif chargeType=="TotalDemand":
             for n in range(0,N+1,1):
                 ax.plot([xlim[0], xlim[1]], [ qB[n], qB[n]],  '-',lw=0.5, color=colorsV[n] )
-        
-#        for n in range(0,N+1,1):
-#            ax.plot( [ qB[n], qB[n]], '-',lw=0.5, color=colorsV[n] )
-##        ax.plot([xlim[0], xlim[1]], [np.max(qD)*scaleEnergy,  np.max(qD)*scaleEnergy], '-',lw=0.5, color="#999999" )
                 
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
@@ -1048,9 +1044,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         ax.legend(labels=['G1', 'G2', 'G3', 'G4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
         
         pltPdf1.savefig() # Saves fig to pdf
-        plt.close() # Closes fig to clean up memory
-            
-        
+        plt.close() # Closes fig to clean up memory       
         
         # save figures to pdf file
         print('Writing: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))

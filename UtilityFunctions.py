@@ -935,7 +935,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         else:
             ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
             ax.set_title("Entire Year - All Charges")
-        
+            
+        ax.set_ylabel('Total Energy [' + unitEnergy + ']')
         colorsV = ['blue', 'limegreen','gold', 'red']
         if N>3:
             colorsV = pl.cm.jet(np.linspace(0,1,N+1))

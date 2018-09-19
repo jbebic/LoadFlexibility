@@ -752,15 +752,27 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
 
     # only consider customers within UniqueID
     df_summary = df1.loc[UniqueIDs]
+    
+    totalDemandCharge = np.asarray([ float(i) for i in df_summary["DemandCharge"] ]) +  np.asarray([ float(i) for i in df_summary["FacilityCharge"] ])
+    df_summary= df_summary.assign(TotalDemandCharge =pd.Series(totalDemandCharge,index=df_summary.index))
+
+    for mNo in range(1,13,1):
+        mtotalDemandCharge = np.asarray([ float(i) for i in df_summary["DemandCharge." + str(mNo)] ]) +  np.asarray([ float(i) for i in df_summary["FacilityCharge." + str(mNo)] ])
+        df_summary["TotalDemandCharge." + str(mNo)] = pd.Series(mtotalDemandCharge,index=df_summary.index)
 
     # deal with the data format of the demand and total charge
     totalEnergy = np.asarray([ float(i) for i in df_summary[energyColumnName] ])
+    energyCharge = np.asarray([ float(i) for i in df_summary["EnergyCharge"] ])
+    demandCharge = np.asarray([ float(i) for i in df_summary["TotalDemandCharge"] ])
     totalCharge = np.asarray([ float(i) for i in df_summary[chargeColumnName] ])
+    
     # assign back to df_summary
     df_summary = df_summary.assign(Energy=pd.Series(totalEnergy,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
     df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
-    
+    df_summary= df_summary.assign(EnergyChargePerUnitYear =pd.Series(100 * energyCharge/totalEnergy,index=df_summary.index))
+    df_summary= df_summary.assign(DemandChargePerUnitYear =pd.Series(100 * demandCharge/totalEnergy,index=df_summary.index))
+
     # ignore customers paying an average of $0/kWh, that is an error
     df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]
     
@@ -843,18 +855,25 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         othersTotalD = np.sum(group.loc[others, 'Energy'])
         maxShareO = othersMaxD/othersTotalD  * 100   
         
+        scaleEnergy = 1/1000
+        unitEnergy = 'MWh'
+        
+        
         # write to file, if 1515 is passed
         if ((len(leaders)>=15) and (maxShareL<=15) and (len(others)>=15)  and (maxShareL<=15) )  or (ignore1515):
             Leaders[n] = leaders
             Others[n]  = others
             qB.append( qb[1] )
             # print/log compliance to 15/15
+            print("\nGroup " + str(n+1) + ": annual demand between " + str(round(qD[n]*scaleEnergy,1)) + " & " +  str(round(qD[n+1]*scaleEnergy,1)) + " MWh")
+            foutLog.write("\n\nGroup " + str(n+1) + ": annual demand between " + str(round(qD[n]*scaleEnergy,1)) + " & " +  str(round(qD[n+1]*scaleEnergy,1)) + " MWh")
             if (len(leaders)>=15) and (maxShareL<=15) and (len(others)>=15)  and (maxShareL<=15) :
-                print("\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
-                foutLog.write("\n\nGroup " + str(n+1) + " -- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                print("-- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                foutLog.write("\n-- Passed 15/15 splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
             else:
-                print("\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
-                foutLog.write("\n\nGroup " + str(n+1) + " -- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                print("** IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+                foutLog.write("\n-- IGNORING 15/15 while splitting into leaders/others at " + str(int( ratePerc[1] ) )+ "%")
+
             # print/log stats on leaders / others groups
             foutLog.write("\n  " + str(int(len(Leaders[n]))) + " Leaders with a max share of " + str(int(maxShareL)) + "%")# 
             foutLog.write("\n  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
@@ -898,10 +917,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         else:
             ew = 1
             ms = 5
-            
-        scaleEnergy = 1/1000
-        unitEnergy = 'MWh'
-        
+                    
         # Plot Annual Energy vs Rate of bill
         fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
         if chargeType=="Energy":
@@ -913,6 +929,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         elif chargeType=="Facility":
             ax.set_xlabel('Facility Only Average Cost [₵/kWh]') 
             ax.set_title("Entire Year - Facility Charges Only")
+        elif chargeType=="TotalDemand":
+            ax.set_xlabel('Total Demand Only Average Cost [₵/kWh]') 
+            ax.set_title("Entire Year - Total Demand Charges Only")
         else:
             ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
             ax.set_title("Entire Year - All Charges")
@@ -941,7 +960,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
         chartBox = ax.get_position()
         ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
-        ax.legend(labels=['Q1', 'Q2', 'Q3', 'Q4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+        ax.legend(labels=['G1', 'G2', 'G3', 'G4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
         
         pltPdf1.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
@@ -960,6 +979,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             elif chargeType=="Facility":
                 ax.set_xlabel('Facility Only Average Cost [₵/kWh]') 
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - Facility Charges Only")
+            elif chargeType=="TotalDemand":
+                ax.set_xlabel('Total Demand Only Average Cost [₵/kWh]') 
+                ax.set_title(date(2016, mNo,1).strftime('%B') + " - Total Demand Charges Only")                
             else:
                 ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
                 ax.set_title(date(2016, mNo,1).strftime('%B') + " - All Charges")
@@ -975,10 +997,60 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
-            ax.legend(labels=['Q1', 'Q2', 'Q3', 'Q4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+            ax.legend(labels=['G1', 'G2', 'G3', 'G4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
             pltPdf1.savefig() # Saves fig to pdf
             plt.close() # Closes fig to clean up memory
             
+            
+        # Plot Demand vs Energy Components of Bill
+        fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(8,6))
+#        if chargeType=="Energy":
+        ax.set_xlabel('Energy Only Average Cost [₵/kWh]') 
+        ax.set_ylabel('Demand Only Average Cost [₵/kWh]') 
+        ax.set_title("Entire Year - Demand vs Energy Cost")
+#        else:
+#            ax.set_xlabel('Total Bill Average Cost [₵/kWh]')
+#            ax.set_title("Entire Year - All Charges")
+        
+        colorsV = ['blue', 'limegreen','gold', 'red']
+        if N>3:
+            colorsV = pl.cm.jet(np.linspace(0,1,N+1))
+        
+        for n in range(0,N+1,1):
+            ax.plot(df_summary.loc[Leaders[n],'EnergyChargePerUnitYear' ], df_summary.loc[Leaders[n],'DemandChargePerUnitYear' ], '^', color=colorsV[n], ms=ms, label="G" + str(n))        
+        
+        for n in range(0,N+1,1):
+            ax.plot(df_summary.loc[Others[n],'EnergyChargePerUnitYear'], df_summary.loc[Others[n],'DemandChargePerUnitYear' ], 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
+        ax.plot(df_summary.loc[Excluded,'EnergyChargePerUnitYear'], df_summary.loc[Excluded,'DemandChargePerUnitYear' ], 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+        
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+#        for n in range(0,len(qD),1):
+#            ax.plot([xlim[0], xlim[1]], [qD[n]*scaleEnergy,  qD[n]*scaleEnergy], '-',lw=0.5, color="#999999" )
+        
+        if chargeType=="Energy":
+            for n in range(0,N+1,1):
+                ax.plot([ qB[n], qB[n]], [ylim[0], ylim[1]], '-',lw=0.5, color=colorsV[n] )
+        elif chargeType=="TotalDemand":
+            for n in range(0,N+1,1):
+                ax.plot([xlim[0], xlim[1]], [ qB[n], qB[n]],  '-',lw=0.5, color=colorsV[n] )
+        
+#        for n in range(0,N+1,1):
+#            ax.plot( [ qB[n], qB[n]], '-',lw=0.5, color=colorsV[n] )
+##        ax.plot([xlim[0], xlim[1]], [np.max(qD)*scaleEnergy,  np.max(qD)*scaleEnergy], '-',lw=0.5, color="#999999" )
+                
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        
+        chartBox = ax.get_position()
+        ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
+        ax.legend(labels=['G1', 'G2', 'G3', 'G4'], loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4)
+        
+        pltPdf1.savefig() # Saves fig to pdf
+        plt.close() # Closes fig to clean up memory
+            
+        
+        
         # save figures to pdf file
         print('Writing: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))
         foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))

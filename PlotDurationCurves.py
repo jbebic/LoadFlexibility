@@ -230,14 +230,18 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     # iterate over UniqueIDs to create figure for each in the pdf
     i = 1
     for cID in UniqueIDs: 
-        print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
         i += 1
         df2 = df1[df1['CustomerID']==cID]
-        if byMonthFlag:
-            outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID)
-        else:
-            outputDurationCurve(pltPdf1, df2, fnamein, cID)
-            
+        print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
+        try:
+            if byMonthFlag:
+                outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID)
+            else:
+                outputDurationCurve(pltPdf1, df2, fnamein, cID)
+        except:
+            foutLog.write("\n*** Unable to create duration plot for %s " %cID )
+            print("*** Unable to create duration plot for %s " %cID)
+    
     # Closing plot files
     print("Closing plot files")
     pltPdf1.close()

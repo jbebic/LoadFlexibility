@@ -8,10 +8,7 @@ Created on Wed Sep 12 09:39:16 2018
 import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
-#from datetime import date
 import os # operating system interface
-#import matplotlib.pyplot as plt # plotting 
-#import matplotlib.backends.backend_pdf as dpdf # pdf output
 
 #%% Function Definitions
 
@@ -92,6 +89,7 @@ def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
                           dtype={'CustomerID':np.str})
         considerIDs = df9['CustomerID'].tolist()
         considerIDs = [x.replace(" ", "") for x in considerIDs]
+        
         considerIDs = list(set(considerIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
     else:
@@ -106,8 +104,6 @@ def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
 def reduceDataFile(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
                    dirlog='./', fnameLog='reduceDataFile.log'):
-    
-    
     
     return
 

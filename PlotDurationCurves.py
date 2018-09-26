@@ -146,7 +146,8 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, ignoreCIDs, considerCIDs, foutLog)
     
     # open pdf for figures
-    print("Opening plot files")
+    print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))
+    foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
     
     # iterate over UniqueIDs to create figure for each in the pdf

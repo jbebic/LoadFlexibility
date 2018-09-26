@@ -13,6 +13,8 @@ import os # operating system interface
 #import matplotlib.pyplot as plt # plotting 
 #import matplotlib.backends.backend_pdf as dpdf # pdf output
 
+#%% Function Definitions
+
 # Time logging "
 def logTime(foutLog, logMsg, tbase):
     codeTnow = datetime.now()
@@ -60,6 +62,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd'): # Capture start time o
 
     return df1, UniqueIDs, foutLog
 
+
 # Apply ignore and consider to uniqueID "
 def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
 
@@ -77,7 +80,6 @@ def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
 
         ignoreIDs = df9['CustomerID'].tolist()
         ignoreIDs = [x.replace(" ", "") for x in ignoreIDs]
-
 
     if considerCIDs != '':
         print('Reading: %s' %os.path.join(dirin,considerCIDs))

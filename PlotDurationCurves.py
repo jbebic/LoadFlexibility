@@ -15,7 +15,7 @@ from datetime import date
 import os # operating system interface
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
-from SupportingFunctions import getData, logTime, createLog, findUniqueIDs
+from SupportFunctions import getData, logTime, createLog, findUniqueIDs
 
 
 #%%  Version and copyright info to record on the log file
@@ -143,7 +143,7 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     # load data from file, find initial list of unique IDs. Update log file
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
-    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, ignoreCIDs, considerCIDs, foutLog)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
     
     # open pdf for figures
     print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))
@@ -195,7 +195,7 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     # load data from file, find initial list of unique IDs. Update log file
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
-    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, ignoreCIDs, considerCIDs, foutLog)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
 
     df1a = df1[df1['CustomerID'].isin(UniqueIDs)]
 

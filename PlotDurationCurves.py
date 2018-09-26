@@ -113,11 +113,13 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     ax0.set_aspect('auto')
  
     UniqueIDs = df['CustomerID'].unique()
-
+    i = 1
     for cID in UniqueIDs:
-        df1 = df[df['CustomerID']==cID]
-        df2 = df1.sort_values('NormDmnd', ascending=False)
+        print ('Processing %s (%d of %d) ' %(cID, i, len(UniqueIDs)))
+        i +=1
         try:
+            df1 = df[df['CustomerID']==cID]
+            df2 = df1.sort_values('NormDmnd', ascending=False)
             ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID)
         except:
             print("*** Unable to create duration plot for %s " %cID)

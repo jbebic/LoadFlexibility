@@ -39,27 +39,31 @@ def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLo
 
     return foutLog
 
-def getData(dirin, fnamein, foutLog, varName='NormDmnd'): # Capture start time of code execution and open log file    
+def getData(dirin, fnamein, foutLog, varName='NormDmnd', datetimeIndex=True): # Capture start time of code execution and open log file    
     """ Retrieves data from specified folder and csv file, where format is [CustomerID, datetime, varName] """
     
     # Output information to log file
-    print("Reading input file")
+    print("Reading input file " + fnamein)
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
     df1 = pd.read_csv(os.path.join(dirin,fnamein), 
                       header = 0, 
                       usecols = [1, 2, 0], 
                       names=['CustomerID', 'datetimestr', varName]) # add dtype conversions
+    
     foutLog.write('Number of interval records read: %d\n' %df1[varName].size)
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
-    df1.set_index(['datetime'], inplace=True)
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
-    df1.sort_index(inplace=True) # sort on datetime
+    
+    # if selected, set the datetime as the index and sort
+    if datetimeIndex:
+        df1.set_index(['datetime'], inplace=True)
+        df1.sort_index(inplace=True) # sort on datetime
         
-    # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
-    foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
-    foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
-    deltat = df1.index[-1]-df1.index[0]
-    foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
+        # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
+        foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
+        foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
+        deltat = df1.index[-1]-df1.index[0]
+        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
 
     UniqueIDs = df1['CustomerID'].unique().tolist()
 

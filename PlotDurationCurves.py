@@ -15,8 +15,9 @@ from datetime import date
 import os # operating system interface
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
-from SupportFunctions import getData, logTime, createLog, findUniqueIDs
 
+#%% Importing modules
+from SupportFunctions import getData, logTime, createLog, findUniqueIDs
 
 #%%  Version and copyright info to record on the log file
 codeName = 'PlotDurationCurves.py'
@@ -25,8 +26,8 @@ codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Res
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 #%% Function Definitions
-# individual ID: create duration curve for entire year "
 def outputDurationCurve(pltPdf, df, fnamein, cid):
+    """ creates duration curve for entire year for one customer"""
     
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
                               figsize=(8,6),
@@ -58,6 +59,7 @@ def outputDurationCurve(pltPdf, df, fnamein, cid):
 
 # individual ID: create duration curve for entire year, one month after another "
 def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
+    """ creates duration curve for entire year for one customer, showing monthly segments """
     
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
                               figsize=(8,6),
@@ -93,9 +95,12 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
 
 # family: create group of duration curves "
 def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
+    """ Creates one figure with an annual duration curve for each customer """
+    
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
                               figsize=(8,6),
                               sharex=True)
+    
     fig.suptitle(title) # This titles the figure
 
     ymin = 0.0
@@ -109,7 +114,6 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     ax0.set_xticks(np.linspace(0, 8760*4, num=5).tolist())
     ax0.set_xticklabels(np.linspace(0, 8760, num=5, dtype=np.int16).tolist())
     ax0.set_xlabel('Hour')
-
     ax0.set_aspect('auto')
  
     UniqueIDs = df['CustomerID'].unique()
@@ -124,7 +128,6 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
         except:
             print("*** Unable to create duration plot for %s " %cID)
     
-    
     if skipLegend:
         legend = ax0.legend() # plt.legend()
         legend.remove()
@@ -133,12 +136,12 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     plt.close() # Closes fig to clean up memory
     return
 
-# plot duration curves - with or without monthly segments "
 def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='plots/', fnameout='DurationCurves.pdf', 
                  dirlog='./', fnameLog='PlotDurationCurves.log',
                  byMonthFlag = False):
-
+    
+    """ Create pdf with one page per customer showing annual duration curve, with or without monthly segments """
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
@@ -177,20 +180,13 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     
     return
 
-# create family of duration curves "
 def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', ignoreCIDs='', considerCIDs='',
                                dirout='./', fnameout='DurationCurvesFamily.pdf', 
                                dirlog='./', fnameLog='PlotFamilyOfDurationCurves.log',
                                skipPlots = False,
                                skipLegend = True):
     
-    # Version and copyright info to record on the log file
-    codeName = 'PlotFamilyOfDurationCurves.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
-
+    """ Create pdf with one page showing a plot with a duration curve for each customer """
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
@@ -198,7 +194,6 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
-
     df1a = df1[df1['CustomerID'].isin(UniqueIDs)]
 
     # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)

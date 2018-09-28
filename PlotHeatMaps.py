@@ -16,13 +16,12 @@ Heatmaps and daily wisker plots of normalized loads
 #%% Importing all the necessary Python packages
 import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
-
 from datetime import datetime # time stamps
 import os # operating system interface
-
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 
+#%% Importing modules
 from SupportFunctions import getData, logTime, createLog, findUniqueIDs
 
 #%% Version and copyright info to record on the log file
@@ -32,8 +31,10 @@ codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Res
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 
-#%%
+#%% Function Definitions
 def outputLoadHeatmap1h(pltPdf, df1, title):
+    """ creates an annual heatmap with daily bar charts for a single customer"""
+    
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,
                               figsize=(8,6),
                               sharex=True)
@@ -76,12 +77,13 @@ def outputLoadHeatmap1h(pltPdf, df1, title):
     plt.close() # Closes fig to clean up memory
     return
 
-#%%
 def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='./', fnameout='HeatMaps.pdf', 
                  dirlog='./', fnameLog='PlotHeatMaps.log',
                  skipPlots = False):
- 
+    
+    """ Create pdf with one page per customer showing heat map of demand and daily bar charts """
+
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)

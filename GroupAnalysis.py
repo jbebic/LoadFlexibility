@@ -32,7 +32,8 @@ def plotDailyDeltas(ax0, df, lw=1, c='b', ls='-'):
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_yticks([-4.0, -3.5, -3.0,  -2.5, -2.0,  -1.5, -1.0,  -0.5,  0,  0.5, 1.0,  1.5,  2.0, 2.5,  3.0, 3.5, 4.0])  
+    y = [yy for yy in range(-40, 41,1)]
+    ax0.set_yticks(y)  
     ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
     y = np.cumsum(df['NormDmnd'])/4
@@ -42,7 +43,7 @@ def plotDailyDeltas(ax0, df, lw=1, c='b', ls='-'):
     
     return ax0, np.max(y)
 
-def plotDailyLoad(ax0, df, lw=1, c='b', ls='-', label=''):
+def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     
     """ adds specific day's load curve to axis """
     df = df.sort_values(by='datetime', ascending=True)
@@ -51,7 +52,8 @@ def plotDailyLoad(ax0, df, lw=1, c='b', ls='-', label=''):
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_yticks([-5.0, -4.5, -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5,  1.0,  1.5,  2.0,  2.5,  3.0, 3.5, 4.0, 4.5, 5.0])  
+    y = [yy for yy in range(-40, 41,1)]
+    ax0.set_yticks(y )  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=2, c=c, label=label)
@@ -67,7 +69,8 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_yticks([-5.0, -4.5, -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5,  1.0,  1.5,  2.0,  2.5,  3.0, 3.5, 4.0, 4.5, 5.0])  
+    y = [yy for yy in range(-40, 41,1)]
+    ax0.set_yticks(y )  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     y = np.cumsum(df['NormDmnd'])/4
@@ -228,14 +231,13 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'Demand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
 
     # finish log with run time
-    codeTfinish = datetime.now()
-    logTime(foutLog, '\nRunFinished at: ', codeTfinish)
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
 
 def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv', 
                  dirout='plots/', fnameout='DurationCurves.pdf', 
-                 dirlog='./', fnameLog='PlotDelta.log'):
+                 dirlog='./', fnameLog='PlotDeltaSummary.log'):
     
     """Creates pdf with 13 pages: 1 page summary of entire year followed by monthly. Each page shows shifted energy & duration curves """
     
@@ -277,7 +279,7 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
 
 def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
                   dirout='./', fnameout='delta.csv',
-                  dirlog='./', fnameLog='PlotGroupLoads.log'):
+                  dirlog='./', fnameLog='PlotDeltaByDay.log'):
     
     """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
     
@@ -319,6 +321,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             y = np.cumsum(df3.loc[relevant,'NormDmnd'])/4
             ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
     
+    ymaxDelta = np.ceil( ymaxDelta * 2 ) / 2.0
     # iterate over each month of the year
     for m in range(1, 13,1):
         print('Plotting daily loads & deltas for %s' %(date(2016, m,1).strftime('%B')))
@@ -336,8 +339,8 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             
             # plot loads of leaders & others 
             ax0=ax[0]
-            ax0 = plotDailyLoad(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
-            ax0 = plotDailyLoad(ax0, df2.loc[relevant], c='k', lw=1, label='others')
+            ax0 = plotDailyLoads(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
+            ax0 = plotDailyLoads(ax0, df2.loc[relevant], c='k', lw=1, label='others')
             ax0.set_ylim([0.0,ymax])
             ax0.legend()
             

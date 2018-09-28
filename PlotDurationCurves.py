@@ -179,8 +179,7 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
         except:
             foutLog.write("\n*** Unable to create duration plot for %s " %cID )
             print("*** Unable to create duration plot for %s " %cID)
-    
-    
+            
     # Closing plot files
     print("Closing plot files")
     pltPdf1.close()

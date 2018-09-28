@@ -18,7 +18,7 @@ from SupportFunctions import getData, logTime, createLog,  assignDayType #findUn
 
 #%% Version and copyright info to record on the log file
 codeName = 'GroupAnalysis.py'
-codeVersion = '1.2'
+codeVersion = '1.3'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Irene Berry, GE Global Research\n"
 
@@ -233,7 +233,7 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     
     return
 
-def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv', 
+def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv', 
                  dirout='plots/', fnameout='DurationCurves.pdf', 
                  dirlog='./', fnameLog='PlotDelta.log'):
     
@@ -271,12 +271,11 @@ def PlotPage(dirin='./', fnamein='IntervalData.normalized.csv',
     pltPdf1.close()
 
     # finish log with run time
-    codeTfinish = datetime.now()
-    logTime(foutLog, '\nRunFinished at: ', codeTfinish)
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
 
-def PlotLoads(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
+def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
                   dirout='./', fnameout='delta.csv',
                   dirlog='./', fnameLog='PlotGroupLoads.log'):
     
@@ -356,7 +355,6 @@ def PlotLoads(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     pltPdf1.close()
 
     # finish log with run time
-    codeTfinish = datetime.now()
-    logTime(foutLog, '\nRunFinished at: ', codeTfinish)
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return

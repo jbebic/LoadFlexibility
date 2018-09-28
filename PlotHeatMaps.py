@@ -102,6 +102,7 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
 
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     i = 1
+    figN = 0
     for cID in UniqueIDs:
         print ('Processing %s (%d of %d) ' %(cID, i, len(UniqueIDs)))
         i += 1
@@ -110,11 +111,15 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
             df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
             df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
             outputLoadHeatmap1h(pltPdf1, df3, fnamein+'/'+cID)
+            figN += 1
         except:
             foutLog.write("\n*** Unable to create heatmap for %s " %cID )
             print("*** Unable to create heatmap for %s " %cID)
+            
+    foutLog.write('Number of customer IDs for which figures were generated: %d\n' % figN)
+    print('Number of customer IDs for which figures were generated: ' + str( figN))
 
-    #%% Closing plot files
+    # Closing plot files
     print('Closing plot files')
     foutLog.write('Closing plot files\n')
     pltPdf1.close()

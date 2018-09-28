@@ -23,7 +23,8 @@ def logTime(foutLog, logMsg, tbase):
     codeTnow = datetime.now()
     foutLog.write('%s%s\n' %(logMsg, str(codeTnow)))
     codeTdelta = codeTnow - tbase
-    foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
+    foutLog.write('Time delta since start: %.3f seconds \n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
+    foutLog.write('Time delta since start: %.3f hours or \n' %((codeTdelta.hours+codeTdelta.minutes/60)))
     
 def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart): # Capture start time of code execution and open log file
     """ creates log file and writes code version information """

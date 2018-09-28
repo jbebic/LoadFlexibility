@@ -26,7 +26,7 @@ codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Res
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 #%% Function Definitions
-def outputDurationCurve(pltPdf, df, fnamein, cid, ymax=2.0):
+def outputDurationCurve(pltPdf, df, fnamein, cid):
     """ creates duration curve for entire year for one customer"""
     
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
@@ -36,7 +36,7 @@ def outputDurationCurve(pltPdf, df, fnamein, cid, ymax=2.0):
     fig.suptitle(fnamein + "/" + cid) # This titles the figure
 
     ymin = 0.0
-#    ymax = df['NormDmnd'].max()
+    ymax = np.ceil(df1['NormDmnd'].max()*2)/2   
     
     ax0.set_title('Normalized Load')
     ax0.set_ylim([ymin,ymax])
@@ -58,7 +58,7 @@ def outputDurationCurve(pltPdf, df, fnamein, cid, ymax=2.0):
     return
 
 # individual ID: create duration curve for entire year, one month after another "
-def outputDurationCurveByMonth(pltPdf, df, fnamein, cid, ymax=2.0):
+def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
     """ creates duration curve for entire year for one customer, showing monthly segments """
     
     fig, (ax0) = plt.subplots(nrows=1, ncols=1,
@@ -68,6 +68,7 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid, ymax=2.0):
     fig.suptitle(fnamein + "/" + cid)
 
     ymin = 0.0
+    ymax = np.ceil(df1['NormDmnd'].max()*2)/2    
     
     df = df.assign(month=pd.Series(np.asarray( df.index.month ), index=df.index))
     df = df.assign(monthInverse=pd.Series(12 - np.asarray( df.index.month ), index=df.index))
@@ -159,8 +160,6 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
     
-    # find ymax of entire set
-    ymax = np.ceil(df1['NormDmnd'].max()*2)/2
 
     # iterate over UniqueIDs to create figure for each in the pdf
     figN = 0
@@ -171,10 +170,10 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
         df2 = df1[df1['CustomerID']==cID]
         try:
             if byMonthFlag:
-                outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID, ymax)
+                outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID)
                 figN += 1
             else:
-                outputDurationCurve(pltPdf1, df2, fnamein, cID, ymax)
+                outputDurationCurve(pltPdf1, df2, fnamein, cID)
                 figN += 1
         except:
             foutLog.write("\n*** Unable to create duration plot for %s " %cID )
@@ -184,12 +183,11 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     print("Closing plot files")
     pltPdf1.close()
     
-    foutLog.write('Number of customer IDs for which figures were generated: %d\n' % figN)
+    foutLog.write('\nNumber of customer IDs for which figures were generated: %d\n' % figN)
     print('Number of customer IDs for which figures were generated: ' + str( figN))
 
     # finish log with run time
-    codeTfinish = datetime.now()
-    logTime(foutLog, '\nRunFinished at: ', codeTfinish)
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
 

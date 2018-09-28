@@ -36,8 +36,8 @@ def outputDurationCurve(pltPdf, df, fnamein, cid):
     fig.suptitle(fnamein + "/" + cid) # This titles the figure
 
     ymin = 0.0
-    ymax = np.ceil(df1['NormDmnd'].max()*2)/2   
-    
+    ymax = np.ceil(df['NormDmnd'].max()*2)/2  
+ 
     ax0.set_title('Normalized Load')
     ax0.set_ylim([ymin,ymax])
     ax0.set_ylabel('Load [pu]')
@@ -68,7 +68,7 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid):
     fig.suptitle(fnamein + "/" + cid)
 
     ymin = 0.0
-    ymax = np.ceil(df1['NormDmnd'].max()*2)/2    
+    ymax = np.ceil(df['NormDmnd'].max()*2)/2    
     
     df = df.assign(month=pd.Series(np.asarray( df.index.month ), index=df.index))
     df = df.assign(monthInverse=pd.Series(12 - np.asarray( df.index.month ), index=df.index))
@@ -134,6 +134,7 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory
+    
     return
 
 def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
@@ -201,8 +202,10 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
     # load data from file, find initial list of unique IDs. Update log file
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
+    
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
     df1a = df1[df1['CustomerID'].isin(UniqueIDs)]

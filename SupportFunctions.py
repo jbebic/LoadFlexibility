@@ -74,7 +74,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', datetimeIndex=True): # 
 def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
     """ applys considerCIDs and ignoreCIDs to calculate list of UniqueIDS in the data"""
 
-    if considerCIDs!='' and ignoreCIDs!='':
+    if considerCIDs!='' or ignoreCIDs!='':
 
         foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
         ignoreIDs = []

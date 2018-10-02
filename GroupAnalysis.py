@@ -81,7 +81,7 @@ def formatShiftedEnergy(ax0):
     
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-    ax0.set_ylabel('Shifted Energy [puh]')
+    ax0.set_ylabel('Shifted Energy [MWh]')
     ax0.set_xlabel('Hour of the Day')
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])
     return

@@ -60,6 +60,22 @@ def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     
     return ax0
 
+def plotHistogram(ax2, dailyEnergy, yMax):
+    
+    ax2.hist(dailyEnergy,bins='auto', color='purple', lw=0)   
+    ax2.set_xlabel('Shifted Energy [MWh]')
+    ax2.set_ylabel('Weekdays')
+    if yMax<20:
+        yt = [yy for yy in range(-40, 41,1)]
+        ax2.set_xticks(yt )  
+    else:
+        yt = [yy for yy in range(-10000, 10000,250)]
+        ax2.set_xticks(yt ) 
+    ax2.set_xlim([0,yMax])  
+    
+    return ax2
+
+
 def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     
     """ adds specific day's shifted energy to axis """
@@ -79,7 +95,7 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
         yt = [yy for yy in range(-40, 41,1)]
         ax0.set_yticks(yt )  
     else:
-        yt = [yy for yy in range(-5000, 5000,250)]
+        yt = [yy for yy in range(-10000, 10000,250)]
         ax0.set_yticks(yt ) 
     
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw, c=c, alpha=a)
@@ -100,6 +116,7 @@ def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     df1 = df.copy()
     charge = df1.loc[df1['NormDmnd']>0]
     discharge = df1.loc[df1['NormDmnd']<0]      
+    
     charge = charge.sort_values('NormDmnd', ascending=False)
     discharge = discharge.sort_values('NormDmnd', ascending=True)
     
@@ -120,9 +137,15 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     """ create page summary for specific month & add to pdf """
     
     # initialize figure
-    fig, ax = plt.subplots(nrows=1, ncols=2,figsize=(8,6),sharex=False)
-    plt.subplots_adjust(wspace=0.3)
+    #fig, ax = plt.subplots(nrows=1, ncols=2,figsize=(8,6),sharex=False)
+    #ax1 = ax[1]
+    #ax0 = ax[0]
+    fig = plt.figure(figsize=(8,6))
     fig.suptitle(fnamein + " / entire year" )  
+    plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+    ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
+    ax1 = plt.subplot2grid((2, 2), (0, 1), rowspan=2, fig=fig)
+    ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
     
     # initialize variables
     month = df1.index.month
@@ -131,13 +154,12 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     yMax = 0
     yMaxD = 1.0
     # iterate over each month
+    dailyEnergy = []
     for m in range(1, 13,1):
         days = list(set(df1.loc[(month==m)].index.day))
         
         # plot shifted energy
-        ax0 = ax[0]
         ax0.set_title( "Energy" ) 
-        
         # iterate for each day in month
         for d in days:
             relevant = (month==m) & (day==d)
@@ -146,18 +168,16 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
             else:
                 ax0, ymax = plotShiftedEnergy(ax0, df1.loc[relevant], c='purple', a=0.1)
                 yMax  = np.max([yMax, ymax])
-                
+                dailyEnergy.append(ymax)
         yMax = np.ceil(yMax)
-        ax0.set_ylim([-yMax,yMax])
+        ax0.set_ylim([0,yMax])
         if normalized:
             ax0.set_ylabel('Shifted Energy [p.u.h]')
         else:
-            ax0.set_ylabel('Shifted Energy [MWh]')
+            ax0.set_ylabel('Shifted Energy [kWh]')
             
         # plot load duration
-        ax1 = ax[1]
         ax1.set_title( "Load Duration")
-        
         # iterate for each day in month
         for d in days:
             relevant = (month==m) & (day==d)
@@ -169,9 +189,11 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
         if normalized:
             ax1.set_ylabel('Shifted Load [p.u.]')
         else:
-            ax1.set_ylabel('Shifted Load [MW]')
+            ax1.set_ylabel('Shifted Load [kW]')
         ax1.set_ylim([-yMaxD , yMaxD ])
-            
+        
+    ax2 = plotHistogram(ax2, dailyEnergy, yMax) 
+      
     # save to pdf
     pltPdf1.savefig() 
     plt.close() 
@@ -188,29 +210,41 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
     for m in range(1, 13,1):
         days = list(set(df1.loc[(month==m)].index.day))
         
+#        # initialize figure
+#        fig, ax = plt.subplots(nrows=1, ncols=2,figsize=(8,6),sharex=False)
+#        plt.subplots_adjust(wspace=0.3)
+        
         # initialize figure
-        fig, ax = plt.subplots(nrows=1, ncols=2,figsize=(8,6),sharex=False)
-        plt.subplots_adjust(wspace=0.3)
+        #fig, ax = plt.subplots(nrows=1, ncols=2,figsize=(8,6),sharex=False)
+        #ax1 = ax[1]
+        #ax0 = ax[0]
+        fig = plt.figure(figsize=(8,6))
+        fig.suptitle(fnamein + " / entire year" )  
+        plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+        ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
+        ax1 = plt.subplot2grid((2, 2), (0, 1), rowspan=2, fig=fig) 
+        ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
         fig.suptitle(fnamein  + " / " + date(2016, m,1).strftime('%B') )   
         
         # plot shifted energy
-        ax0 = ax[0]
         ax0.set_title( "Energy" )  
         
         # iterate for each day of the month
+        dailyEnergy = []
         for d in days:
             relevant =  (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 ax0,ymax0 = plotShiftedEnergy(ax0, df1.loc[relevant], c='gray', a=0.2)
             else:
                 ax0,ymax0 = plotShiftedEnergy(ax0, df1.loc[relevant], c='purple', a=0.5)
-        ax0.set_ylim([-yMaxE,yMaxE])
+                dailyEnergy.append(ymax0)
+                
+        ax0.set_ylim([0,yMaxE])
         if normalized:
             ax0.set_ylabel('Shifted Energy [p.u.h]')
         else:
-            ax0.set_ylabel('Shifted Energy [MWh]')
+            ax0.set_ylabel('Shifted Energy [kWh]')
         # plot load-duration
-        ax1 = ax[1]
         ax1.set_title( "Load Duration")  
         
         
@@ -225,7 +259,13 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         if normalized:
             ax1.set_ylabel('Shifted Load [p.u.]')
         else:
-            ax1.set_ylabel('Shifted Load [MW]')
+            ax1.set_ylabel('Shifted Load [kW]')
+            
+        ax2 = plotHistogram(ax2, dailyEnergy, yMaxE) 
+        if normalized:
+            ax0.set_xlabel('Shifted Energy [p.u.h]')
+        else:
+            ax0.set_xlabel('Shifted Energy [kWh]')
             
         # save figure to pdf
         pltPdf1.savefig() 
@@ -253,7 +293,7 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     # calculate delta
     df3 = df2.copy()
     df3['NormDelta'] = df1['NormDmnd'] - df2['NormDmnd']
-    df3['AbsDelta']  = df3['NormDelta'] * df2['DailyAverage']
+    df3['AbsDelta']  = df3['NormDelta'] *  df2['DailyAverage'] 
     
     # asign cid as CustomerID
     cid = np.asarray([ dataName for i in range(0,len(df3),1)])

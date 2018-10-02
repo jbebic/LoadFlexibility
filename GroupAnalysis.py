@@ -177,7 +177,7 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
         if normalized:
             ax0.set_ylabel('Shifted Energy [p.u.h]')
         else:
-            ax0.set_ylabel('Shifted Energy [kWh]')
+            ax0.set_ylabel('Shifted Energy [MWh]')
             
         # plot load duration
         ax1.set_title( "Load Duration")
@@ -192,7 +192,7 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
         if normalized:
             ax1.set_ylabel('Shifted Load [p.u.]')
         else:
-            ax1.set_ylabel('Shifted Load [kW]')
+            ax1.set_ylabel('Shifted Load [MW]')
         ax1.set_ylim([-yMaxD , yMaxD ])
         
     ax2 = plotHistogram(ax2, dailyEnergy, yMax) 
@@ -246,7 +246,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         if normalized:
             ax0.set_ylabel('Shifted Energy [p.u.h]')
         else:
-            ax0.set_ylabel('Shifted Energy [kWh]')
+            ax0.set_ylabel('Shifted Energy [MWh]')
         # plot load-duration
         ax1.set_title( "Load Duration")  
         
@@ -262,13 +262,13 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         if normalized:
             ax1.set_ylabel('Shifted Load [p.u.]')
         else:
-            ax1.set_ylabel('Shifted Load [kW]')
+            ax1.set_ylabel('Shifted Load [MW]')
             
         ax2 = plotHistogram(ax2, dailyEnergy, yMaxE) 
         if normalized:
             ax0.set_xlabel('Shifted Energy [p.u.h]')
         else:
-            ax0.set_xlabel('Shifted Energy [kWh]')
+            ax0.set_xlabel('Shifted Energy [MWh]')
             
         # save figure to pdf
         pltPdf1.savefig() 

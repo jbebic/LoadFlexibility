@@ -65,11 +65,11 @@ def plotHistogram(ax2, dailyEnergy, yMax):
     ax2.hist(dailyEnergy,bins='auto', color='purple', lw=0)   
     ax2.set_xlabel('Shifted Energy [MWh]')
     ax2.set_ylabel('Weekdays')
-    if yMax<20:
-        yt = [yy for yy in range(-40, 41,1)]
-        ax2.set_xticks(yt )  
-    else:
-        pass
+#    if yMax<20:
+#        yt = [yy for yy in range(-40, 41,1)]
+#        ax2.set_xticks(yt )  
+#    else:
+#        pass
 #        yt = [yy for yy in range(-10000, 10000,250)]
 #        ax2.set_xticks(yt ) 
     ax2.set_xlim([0,yMax])  
@@ -77,31 +77,30 @@ def plotHistogram(ax2, dailyEnergy, yMax):
     return ax2
 
 
+def formatShiftedEnergy(ax0):
+    
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+    ax0.set_ylabel('Shifted Energy [puh]')
+    ax0.set_xlabel('Hour of the Day')
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])
+    return
+
 def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     
     """ adds specific day's shifted energy to axis """
-    df = df.sort_values(by='datetime', ascending=True)
-    ax0.set_ylabel('Shifted Energy [puh]')
-    ax0.set_xlabel('Hour of the Day')
-    ax0.set_xlim([0,df.shape[0]])
-    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
-    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
-    ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-                   
+    df = df.sort_values(by='datetime', ascending=True)                  
     y = np.cumsum(df['NormDmnd'])
     y = y - np.min(y)
-    
-    if np.max(y)<20:
-        yt = [yy for yy in range(-40, 41,1)]
-        ax0.set_yticks(yt )  
-    else:
-        pass
-#        yt = [yy for yy in range(-10000, 10000,250)]
-#        ax0.set_yticks(yt ) 
-    
+#    if np.max(y)<10:
+#        yt = [yy for yy in range(-40, 41,1)]
+#        ax0.set_yticks(yt )  
+#    else:
+#        pass    
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw, c=c, alpha=a)
-    
+    ax0.set_xlim([0,df.shape[0]])
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+
     return ax0, np.max(y)
 
 def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
@@ -196,7 +195,8 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
         ax1.set_ylim([-yMaxD , yMaxD ])
         
     ax2 = plotHistogram(ax2, dailyEnergy, yMax) 
-      
+    formatShiftedEnergy(ax0)
+    
     # save to pdf
     pltPdf1.savefig() 
     plt.close() 
@@ -250,7 +250,6 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         # plot load-duration
         ax1.set_title( "Load Duration")  
         
-        
         # iterate for each day of the month
         for d in days:
             relevant =  (month==m) & (day==d)
@@ -265,11 +264,14 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
             ax1.set_ylabel('Shifted Load [MW]')
             
         ax2 = plotHistogram(ax2, dailyEnergy, yMaxE) 
+        
         if normalized:
             ax0.set_xlabel('Shifted Energy [p.u.h]')
         else:
             ax0.set_xlabel('Shifted Energy [MWh]')
             
+        formatShiftedEnergy(ax0)
+        
         # save figure to pdf
         pltPdf1.savefig() 
         plt.close()  
@@ -400,6 +402,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
         for d in days:
             relevant = (month==m) & (day==d)
             y = np.cumsum(df3.loc[relevant,'NormDmnd'])/4
+            y = y - np.min(y)
             ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
     ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
     
@@ -429,7 +432,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             ax1=ax[1]
             ax1,temp = plotDailyDeltas(ax1, df3.loc[relevant])
             ax1.set_ylim([yminDelta,ymaxDelta])
-            ax1.legend()
+            ax1.legend(loc=1)
             
             # add to pdf
             pltPdf1.savefig() 

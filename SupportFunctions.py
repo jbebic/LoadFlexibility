@@ -40,18 +40,25 @@ def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLo
 
     return foutLog
 
-def getData(dirin, fnamein, foutLog, varName='NormDmnd', datetimeIndex=True): # Capture start time of code execution and open log file    
+def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], datetimeIndex=True): # Capture start time of code execution and open log file    
     """ Retrieves data from specified folder and csv file, where format is [CustomerID, datetime, varName] """
-    
+
+    if isinstance(varName, list):
+        columnNames = ['CustomerID', 'datetimestr']
+        for temp in varName:
+            columnNames.append(temp)
+    else:
+        columnNames = ['CustomerID', 'datetimestr', varName]
+        
     # Output information to log file
     print("Reading input file " + fnamein)
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
     df1 = pd.read_csv(os.path.join(dirin,fnamein), 
                       header = 0, 
-                      usecols = [1, 2, 0], 
-                      names=['CustomerID', 'datetimestr', varName]) # add dtype conversions
+                      usecols = usecols, 
+                      names=columnNames) # add dtype conversions
     
-    foutLog.write('Number of interval records read: %d\n' %df1[varName].size)
+    foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     

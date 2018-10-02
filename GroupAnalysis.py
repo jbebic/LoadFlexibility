@@ -69,8 +69,9 @@ def plotHistogram(ax2, dailyEnergy, yMax):
         yt = [yy for yy in range(-40, 41,1)]
         ax2.set_xticks(yt )  
     else:
-        yt = [yy for yy in range(-10000, 10000,250)]
-        ax2.set_xticks(yt ) 
+        pass
+#        yt = [yy for yy in range(-10000, 10000,250)]
+#        ax2.set_xticks(yt ) 
     ax2.set_xlim([0,yMax])  
     
     return ax2
@@ -88,15 +89,16 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
                    
-    y = np.cumsum(df['NormDmnd'])/4
+    y = np.cumsum(df['NormDmnd'])
     y = y - np.min(y)
     
     if np.max(y)<20:
         yt = [yy for yy in range(-40, 41,1)]
         ax0.set_yticks(yt )  
     else:
-        yt = [yy for yy in range(-10000, 10000,250)]
-        ax0.set_yticks(yt ) 
+        pass
+#        yt = [yy for yy in range(-10000, 10000,250)]
+#        ax0.set_yticks(yt ) 
     
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw, c=c, alpha=a)
     
@@ -120,14 +122,15 @@ def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     charge = charge.sort_values('NormDmnd', ascending=False)
     discharge = discharge.sort_values('NormDmnd', ascending=True)
     
-    ax0.step(np.arange(charge.shape[0]), charge['NormDmnd'] ,  ls, lw=lw, c=c, alpha=a)
-    ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'],  ls, lw=lw, c=c, alpha=a)
+    ax0.step(np.arange(charge.shape[0]), charge['NormDmnd'] * 4.0 ,  ls, lw=lw, c=c, alpha=a)
+    ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'] * 4.0,  ls, lw=lw, c=c, alpha=a)
     
-    ymax = np.max([ np.max(abs(charge['NormDmnd'])) , np.max(abs(discharge['NormDmnd'])) ])
-    if ymax<1.5:
-        ax0.set_yticks([-1, -0.8, -0.6,  -0.4, -0.2,  0, 0.2, 0.4, 0.6,  0.8, 1.0])  
-    else:
-        ax0.set_yticks([x for x in range(-1000, 1000, 25)])  
+    ymax = np.max([ np.max(abs(charge['NormDmnd'])) * 4.0 , np.max(abs(discharge['NormDmnd'])) * 4.0 ])
+#    if ymax<3.0:
+#        ax0.set_yticks([-2.0, -0.8, -0.6,  -0.4, -0.2,  0, 0.2, 0.4, 0.6,  0.8, 1.0])  
+#    else:
+#        pass
+#        ax0.set_yticks([x for x in range(-1000, 1000, 25)])  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     

@@ -64,14 +64,7 @@ def plotHistogram(ax2, dailyEnergy, yMax):
     
     ax2.hist(dailyEnergy,bins='auto', color='purple', lw=0)   
     ax2.set_xlabel('Shifted Energy [MWh]')
-    ax2.set_ylabel('Weekdays')
-#    if yMax<20:
-#        yt = [yy for yy in range(-40, 41,1)]
-#        ax2.set_xticks(yt )  
-#    else:
-#        pass
-#        yt = [yy for yy in range(-10000, 10000,250)]
-#        ax2.set_xticks(yt ) 
+    ax2.set_ylabel('Number of Days')
     ax2.set_xlim([0,yMax])  
     
     return ax2
@@ -84,6 +77,7 @@ def formatShiftedEnergy(ax0):
     ax0.set_ylabel('Shifted Energy [MWh]')
     ax0.set_xlabel('Hour of the Day')
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])
+    
     return
 
 def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
@@ -91,12 +85,7 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     """ adds specific day's shifted energy to axis """
     df = df.sort_values(by='datetime', ascending=True)                  
     y = np.cumsum(df['NormDmnd'])
-    y = y - np.min(y)
-#    if np.max(y)<10:
-#        yt = [yy for yy in range(-40, 41,1)]
-#        ax0.set_yticks(yt )  
-#    else:
-#        pass    
+    y = y - np.min(y)  
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw, c=c, alpha=a)
     ax0.set_xlim([0,df.shape[0]])
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
@@ -107,7 +96,6 @@ def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     """ adds specific day's duration curve to axis """
     df = df.sort_values(by='datetime', ascending=True)
-    ax0.set_ylabel('Load Delta [pu]')
     ax0.set_xlabel('Duration [h]')
     x = [x for x in range(0,int(df.shape[0])+int(df.shape[0]/(24/4)), int(df.shape[0]/(24/4)))]
     ax0.set_xticks(x)
@@ -125,11 +113,6 @@ def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'] * 4.0,  ls, lw=lw, c=c, alpha=a)
     
     ymax = np.max([ np.max(abs(charge['NormDmnd'])) * 4.0 , np.max(abs(discharge['NormDmnd'])) * 4.0 ])
-#    if ymax<3.0:
-#        ax0.set_yticks([-2.0, -0.8, -0.6,  -0.4, -0.2,  0, 0.2, 0.4, 0.6,  0.8, 1.0])  
-#    else:
-#        pass
-#        ax0.set_yticks([x for x in range(-1000, 1000, 25)])  
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     
@@ -155,6 +138,7 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     ymax = 0
     yMax = 0
     yMaxD = 1.0
+    
     # iterate over each month
     dailyEnergy = []
     for m in range(1, 13,1):
@@ -247,6 +231,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
             ax0.set_ylabel('Shifted Energy [p.u.h]')
         else:
             ax0.set_ylabel('Shifted Energy [MWh]')
+            
         # plot load-duration
         ax1.set_title( "Load Duration")  
         
@@ -298,7 +283,7 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     # calculate delta
     df3 = df2.copy()
     df3['NormDelta'] = df1['NormDmnd'] - df2['NormDmnd']
-    df3['AbsDelta']  = df3['NormDelta'] *  df2['DailyAverage'] 
+    df3['AbsDelta']  = df3['NormDelta'] * ( df2['DailyAverage']  )
     
     # asign cid as CustomerID
     cid = np.asarray([ dataName for i in range(0,len(df3),1)])

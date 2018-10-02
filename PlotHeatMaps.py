@@ -37,11 +37,13 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     
     df2 = df1[df1['CustomerID']==cid]
     
-    fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
+    fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=False)
     fig.suptitle(title) # This titles the figure
+    plt.subplots_adjust(wspace=0.3,hspace=0.3 )   
     
     ax0.set_title('Load [pu]') 
     ax0.set_ylabel('Hour')
+    ax0.set_xlabel('Day of Year')
     ax0.set_xlim([0,365])
     ax0.set_ylim([0,96])
     ax0.set_yticks(np.linspace(0, 96, num=4).tolist())
@@ -57,10 +59,9 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
         ax1.set_xticks(np.arange(0, 52, step=5).tolist())
     else:
         ax1.set_xlabel('Day')
-        ax1.set_title('Daily box-plots')
+#        ax1.set_title('Daily box-plots')
         ax1.set_xlim([0,365])
         ax1.set_xticks(np.arange(0, 365, step=50).tolist())
-
     
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers

@@ -32,51 +32,64 @@ codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 
 #%% Function Definitions
-def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog):
+def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     """ creates an annual heatmap with daily bar charts for a single customer"""
     
-    df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
-    df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
     df2 = df1[df1['CustomerID']==cid]
-        
+    
     fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
     fig.suptitle(title) # This titles the figure
     
-    
     ax0.set_title('Load [pu]') 
+    ax0.set_ylabel('Hour')
     ax0.set_xlim([0,365])
     ax0.set_ylim([0,96])
     ax0.set_yticks(np.linspace(0, 96, num=4).tolist())
     ax0.set_yticklabels(np.linspace(0, 24, num=4, dtype=np.int16).tolist())
-    ax0.set_aspect('auto')
-    ax0.set_ylabel('Hour')
-    
+    ax0.set_yticklabels(['0', '6', '12', '18', '24'])        
+
     cmin = 0.0
-    ax1.set_title('Daily box-plots')
     ax1.set_ylabel('Demand')
-    ax1.set_aspect('auto')
-    ax1.set_xlabel('Day')
-    ax1.set_xlim([0,365])
-    ax1.set_xticks(np.arange(0, 365, step=50).tolist())
+    if weeklyBox:
+        ax1.set_xlabel('Week')
+        ax1.set_title('Weekly box-plots')
+        ax1.set_xlim([0,52])
+        ax1.set_xticks(np.arange(0, 52, step=5).tolist())
+    else:
+        ax1.set_xlabel('Day')
+        ax1.set_title('Daily box-plots')
+        ax1.set_xlim([0,365])
+        ax1.set_xticks(np.arange(0, 365, step=50).tolist())
+
+    
+    df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
+    df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
+    df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
+    
+    df2 = df2.assign(week =pd.Series(df2.index.week,index=df2.index))
+    
+    if weeklyBox:
+        weeklyData = []
+        for wk in list(set(df2['week'])):    
+            weeklyData.append(df2.loc[df2['week']==wk,'NormDmnd'].values)
         
     try:
         
-        df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
-        cmax = np.ceil(df3.max().max()*5)/5
+        cmax = np.ceil( df3.max().max() * 4 ) / 4
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap='viridis', 
                                               origin='lower', 
                                               vmin = cmin, 
                                               vmax = cmax)
         
-        temp  = df3.values
-        # temp1 = temp[:,~np.isnan(temp).any(axis=0)] # eliminates the whole day with NaNs
-        # temp[np.isnan(temp)] = -0.001 # replaces the NaNs with negative epsilon to hide from the chart
-        temp[np.isnan(temp)] = -np.inf # replaces the NaNs with negative infinity to elimiante from the chart
-        
-        ax1.boxplot(temp, manage_xticks = False)
+        if weeklyBox:
+            ax1.boxplot(weeklyData, manage_xticks = False)
+        else:
+            ax1.boxplot(df3.values, manage_xticks = False)
+            
         ax1.set_ylim([0,cmax]) 
-        
+        ax0.set_aspect('auto')
+        ax1.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0,ax1])
         
         pltPdf.savefig() # Saves fig to pdf
@@ -96,76 +109,11 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog):
     
     return successFlag
 
-def outputLoadHeatmap1h(pltPdf, df1, title):
-    """ creates an annual heatmap with daily bar charts for a single customer"""
-    
-    try:
-        fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
-    
-        fig.suptitle(title) # This titles the figure
-    
-        cmin = 0.
-        cmax = df1.max().max()
-        ax0.set_title('Load [pu]')
-        im0 = ax0.imshow(df1.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap='viridis', 
-                                              origin='lower', 
-                                              vmin = cmin, 
-                                              vmax = cmax)
-        fig.close()
-        
-        fig, (ax0, ax1) = plt.subplots(nrows=2, ncols=1,
-                                  figsize=(8,6),
-                                  sharex=True)
-    
-        fig.suptitle(title) # This titles the figure
-    
-        cmin = 0.
-        cmax = df1.max().max()
-        ax0.set_title('Load [pu]')
-        im0 = ax0.imshow(df1.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap='viridis', 
-                                              origin='lower', 
-                                              vmin = cmin, 
-                                              vmax = cmax)
-        ax0.set_xlim([0,365])
-        ax0.set_ylim([0,96])
-        ax0.set_yticks(np.linspace(0, 96, num=4).tolist())
-        ax0.set_yticklabels(np.linspace(0, 24, num=4, dtype=np.int16).tolist())
-        ax0.set_aspect('auto')
-        ax0.set_ylabel('Hour')
-    
-        ax1.set_title('Daily box-plots')
-        ax1.set_ylim([0,cmax]) # ax1.set_ylim([0,24])
-        ax1.set_ylabel('Demand')
-        ax1.set_aspect('auto')
-        
-        temp  = df1.values
-        # temp1 = temp[:,~np.isnan(temp).any(axis=0)] # eliminates the whole day with NaNs
-        # temp[np.isnan(temp)] = -0.001 # replaces the NaNs with negative epsilon to hide from the chart
-        temp[np.isnan(temp)] = -np.inf # replaces the NaNs with negative infinity to elimiante from the chart
-        ax1.boxplot(temp, manage_xticks = False)
-
-        ax1.set_xlabel('Day')
-        ax1.set_xlim([0,365])
-        ax1.set_xticks(np.arange(0, 365, step=50).tolist())
-        fig.colorbar(im0, ax=[ax0,ax1])
-    except:
-        try:
-            plt.close() # Closes fig to clean up memory
-        except:
-            pass
-    
-    pltPdf.savefig() # Saves fig to pdf
-    plt.close() # Closes fig to clean up memory
-    return
-
 def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='./', fnameout='HeatMaps.pdf', 
                  dirlog='./', fnameLog='PlotHeatMaps.log',
-                 skipPlots = False):
-    
-    """ Create pdf with one page per customer showing heat map of demand and daily bar charts """
+                 weeklyBox = True):    
+    """ Create pdf with one page per customer showing heat map of demand and weekly (or daily) box plots """
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -188,7 +136,7 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
     for cID in UniqueIDs:
         print ('Processing %s (%d of %d) ' %(cID, i, len(UniqueIDs)))
         i += 1
-        successFlag = outputLoadHeatmap(pltPdf1, df1,  fnamein+'/'+cID, cID, foutLog)
+        successFlag = outputLoadHeatmap(pltPdf1, df1,  fnamein+'/'+cID, cID, foutLog, weeklyBox=weeklyBox)
         if successFlag:
             figN += 1
             

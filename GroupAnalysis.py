@@ -60,10 +60,13 @@ def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     
     return ax0
 
-def plotHistogram(ax2, dailyEnergy, yMax):
-    
-    ax2.hist(dailyEnergy,bins='auto', color='purple', lw=0)   
-    ax2.set_xlabel('Shifted Energy [MWh]')
+def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
+
+    y = np.asarray(shiftedEnergy)/np.asarray(dailyEnergy)*100
+    yMax = np.ceil(np.max(y))
+    ax2.hist(y,bins='auto', color='purple', lw=0, alpha=0.5)   
+#    ax2.hist(shiftedEnergy,bins='auto', color='purple', lw=0)   
+    ax2.set_xlabel('Shiftable Energy [% of Daily Energy]')
     ax2.set_ylabel('Number of Days')
     ax2.set_xlim([0,yMax])  
     
@@ -74,7 +77,7 @@ def formatShiftedEnergy(ax0):
     
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-    ax0.set_ylabel('Shifted Energy [MWh]')
+    ax0.set_ylabel('Shiftable Energy [MWh]')
     ax0.set_xlabel('Hour of the Day')
     ax0.set_xticklabels([str(x) for x in range(0, 28,4)])
     
@@ -92,7 +95,7 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
 
     return ax0, np.max(y)
 
-def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
+def plotDeltaDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     """ adds specific day's duration curve to axis """
     df = df.sort_values(by='datetime', ascending=True)
@@ -118,6 +121,30 @@ def plotDailyDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     return ax0, ymax
 
+
+def plotLoadDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
+    
+    """ adds specific day's duration curve to axis """
+    df = df.sort_values(by='datetime', ascending=True)
+    ax0.set_xlabel('Duration [h]')
+    x = [x for x in range(0,int(df.shape[0])+int(df.shape[0]/(24/4)), int(df.shape[0]/(24/4)))]
+    ax0.set_xticks(x)
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    ax0.set_xlim([0,  int(df.shape[0]*24/24) ])   
+       
+    df1 = df.copy()
+    df1 = df1.sort_values('Others', ascending=False)
+    ax0.step(np.arange(df1.shape[0]), df1['Others'] * 4.0,  ls, lw=lw, c=c, alpha=a)
+    
+    e = np.sum( df1['Others'].values)
+    ymax = np.max([  np.max(abs(df1['Others'])) * 4.0 ])
+    if np.isnan(ymax) or np.isinf(ymax):
+        ymax = 0.0
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+    
+    return ax0, ymax, e
+
 def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     """ create page summary for specific month & add to pdf """
     
@@ -129,8 +156,9 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     fig.suptitle(fnamein + " / entire year" )  
     plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
     ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
-    ax1 = plt.subplot2grid((2, 2), (0, 1), rowspan=2, fig=fig)
+    ax1 = plt.subplot2grid((2, 2), (0, 1),  fig=fig)
     ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
+    ax3 = plt.subplot2grid((2, 2), (1, 1),  fig=fig)
     
     # initialize variables
     month = df1.index.month
@@ -138,9 +166,11 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     ymax = 0
     yMax = 0
     yMaxD = 1.0
+    yMaxP = 0.0
     
     # iterate over each month
     dailyEnergy = []
+    shiftedEnergy = []
     for m in range(1, 13,1):
         days = list(set(df1.loc[(month==m)].index.day))
         
@@ -154,40 +184,62 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
             else:
                 ax0, ymax = plotShiftedEnergy(ax0, df1.loc[relevant], c='purple', a=0.1)
                 yMax  = np.max([yMax, ymax])
-                dailyEnergy.append(ymax)
+                shiftedEnergy.append(ymax)
         yMax = np.ceil(yMax)
         ax0.set_ylim([0,yMax])
         if normalized:
-            ax0.set_ylabel('Shifted Energy [p.u.h]')
+            ax0.set_ylabel('Shiftable Energy [p.u.h]')
         else:
-            ax0.set_ylabel('Shifted Energy [MWh]')
+            ax0.set_ylabel('Shiftable Energy [MWh]')
             
-        # plot load duration
-        ax1.set_title( "Load Duration")
+            
+            
+        # plot load-duration
+        ax1.set_title( "Load")
         # iterate for each day in month
         for d in days:
             relevant = (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 pass
             else:
-                ax1, ymax = plotDailyDuration(ax1, df1.loc[relevant], c='steelblue', a=0.1) 
+                ax1, ymax = plotDeltaDuration(ax1, df1.loc[relevant], c='steelblue', a=0.1) 
                 yMaxD = np.max([yMaxD , ymax])
         if normalized:
-            ax1.set_ylabel('Shifted Load [p.u.]')
+            ax1.set_ylabel('Shiftable Load [p.u.]')
         else:
-            ax1.set_ylabel('Shifted Load [MW]')
+            ax1.set_ylabel('Shiftable Load [MW]')
         ax1.set_ylim([-yMaxD , yMaxD ])
         
-    ax2 = plotHistogram(ax2, dailyEnergy, yMax) 
+        
+        # plot duration curve
+        # iterate for each day in month
+        for d in days:
+            relevant = (month==m) & (day==d)
+            if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                pass
+            else:
+                ax3, ymax, emax = plotLoadDuration(ax3, df1.loc[relevant], c='steelblue', a=0.1) 
+                yMaxP = np.max([yMaxP , ymax])
+                dailyEnergy.append(emax)
+        if normalized:
+            ax3.set_ylabel('Load [p.u.]')
+        else:
+            ax3.set_ylabel('Load [MW]')
+        ax3.set_ylim([0.0, yMaxP ])        
+        
+    # plot histogram
+    ax2 = plotHistogram(ax2, dailyEnergy, shiftedEnergy) 
+    xmax = ax2.get_xlim()
+    yMaxH = xmax[1]
     formatShiftedEnergy(ax0)
     
     # save to pdf
     pltPdf1.savefig() 
     plt.close() 
         
-    return pltPdf1, yMax, yMaxD
+    return pltPdf1, yMax, yMaxD, yMaxP, yMaxH
 
-def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
+def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, normalized=False):
     """ create page summary for specific month & add to pdf"""
     
     month = df1.index.month
@@ -209,8 +261,9 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         fig.suptitle(fnamein + " / entire year" )  
         plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
         ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
-        ax1 = plt.subplot2grid((2, 2), (0, 1), rowspan=2, fig=fig) 
+        ax1 = plt.subplot2grid((2, 2), (0, 1),  fig=fig)
         ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
+        ax3 = plt.subplot2grid((2, 2), (1, 1),  fig=fig)
         fig.suptitle(fnamein  + " / " + date(2016, m,1).strftime('%B') )   
         
         # plot shifted energy
@@ -218,13 +271,14 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         
         # iterate for each day of the month
         dailyEnergy = []
+        shiftedEnergy = []
         for d in days:
             relevant =  (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 ax0,ymax0 = plotShiftedEnergy(ax0, df1.loc[relevant], c='gray', a=0.2)
             else:
                 ax0,ymax0 = plotShiftedEnergy(ax0, df1.loc[relevant], c='purple', a=0.5)
-                dailyEnergy.append(ymax0)
+                shiftedEnergy.append(ymax0)
                 
         ax0.set_ylim([0,yMaxE])
         if normalized:
@@ -239,17 +293,34 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized=False):
         for d in days:
             relevant =  (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
-                ax1, ymax1 = plotDailyDuration(ax1, df1.loc[relevant], c='gray', a=0.2)
+                ax1, ymax1 = plotDeltaDuration(ax1, df1.loc[relevant], c='gray', a=0.2)
             else:
-                ax1, ymax1 = plotDailyDuration(ax1, df1.loc[relevant], c='steelblue', a=0.5)
+                ax1, ymax1 = plotDeltaDuration(ax1, df1.loc[relevant], c='steelblue', a=0.5)
         ax1.set_ylim([-yMaxD, yMaxD])
         if normalized:
             ax1.set_ylabel('Shifted Load [p.u.]')
         else:
             ax1.set_ylabel('Shifted Load [MW]')
             
-        ax2 = plotHistogram(ax2, dailyEnergy, yMaxE) 
+            
+       # plot duration curve
+        # iterate for each day in month
+        for d in days:
+            relevant = (month==m) & (day==d)
+            if df1.loc[relevant, 'DayType'][0] in ['we','h']:
+                pass
+            else:
+                ax3, ymax2, emax = plotLoadDuration(ax3, df1.loc[relevant], c='steelblue', a=0.1) 
+                dailyEnergy.append(emax)
+        if normalized:
+            ax3.set_ylabel('Load [p.u.]')
+        else:
+            ax3.set_ylabel('Load [MW]')
+        ax3.set_ylim([0.0, yMaxP ])        
         
+        # plot histogram
+        ax2 = plotHistogram(ax2, dailyEnergy, shiftedEnergy)             
+        ax2.set_xlim([0.0, yMaxH ])        
         if normalized:
             ax0.set_xlabel('Shifted Energy [p.u.h]')
         else:
@@ -284,6 +355,7 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     df3 = df2.copy()
     df3['NormDelta'] = df1['NormDmnd'] - df2['NormDmnd']
     df3['AbsDelta']  = df3['NormDelta'] * ( df2['DailyAverage']  )
+    df3['Leaders'] = df1['Demand']
     
     # asign cid as CustomerID
     cid = np.asarray([ dataName for i in range(0,len(df3),1)])
@@ -292,7 +364,7 @@ def DeltaLoads(dirin='./', fnameinL='IntervalData.csv',   fnameino='groups.csv',
     # write to file
     print('Writing output file: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDelta','AbsDelta'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
+    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDelta','AbsDelta', 'Leaders', 'Demand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
 
     # finish log with run time
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
@@ -314,13 +386,13 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     
     # load data from file, find initial list of unique IDs. Update log file
     if normalized:
-        df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, usecols=[0,1,2])
+        df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog,  varName=['NormDmnd', 'AbsDemand', 'Leaders', 'Others'], usecols=[0,1,2])
     else:
-        df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, usecols=[0,1,3])
+        df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName=[ 'NormDmnd', 'Leaders', 'Others'], usecols=[0,1,3, 4, 5])
     
     # add season & day type
     df1 = assignDayType(df1)
-    
+
     # open pdf for figures
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
@@ -328,12 +400,12 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     # create annual summary of shifted energy & load duration
     foutLog.write("Creating annual figure" )
     print("Creating annual figure" )
-    pltPdf1, yMaxE, yMaxD = annualSummaryPage(pltPdf1, df1, fnamein, normalized)
+    pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH = annualSummaryPage(pltPdf1, df1, fnamein, normalized)
     
     # create monthly summaries of shifted energy & load duration
     foutLog.write("Creating monthly figures" )
     print("Creating monthly figures" )
-    pltPdf1 = monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, normalized)  
+    pltPdf1 = monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, normalized)  
     
     # Closing plot files
     print('Writing output file: %s' %os.path.join(os.path.join(dirout, fnameout)))
@@ -344,6 +416,9 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
+
+
+
 
 def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
                   dirout='./', fnameout='delta.csv',

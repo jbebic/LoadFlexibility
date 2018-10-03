@@ -69,7 +69,9 @@ def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     ax2.set_xlabel('Shiftable Energy [% of Daily Energy]')
     ax2.set_ylabel('Number of Days')
     ax2.set_xlim([0,yMax])  
-    
+    ax2.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+    ax2.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+                   
     return ax2
 
 

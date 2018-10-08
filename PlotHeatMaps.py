@@ -65,7 +65,6 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
-    df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
     
     df2 = df2.assign(week =pd.Series(df2.index.week,index=df2.index))
     
@@ -75,7 +74,7 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
             weeklyData.append(df2.loc[df2['week']==wk,'NormDmnd'].values)
         
     try:
-        
+        df3 = df2.pivot(index='hour', columns='day', values='NormDmnd') 
         cmax = np.ceil( df3.max().max() * 4 ) / 4
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap='viridis', 

@@ -20,19 +20,16 @@ import matplotlib.pyplot as plt # plotting
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 import matplotlib.pylab as pl
 
+#%% Importing modules
+from SupportFunctions import getData, logTime, createLog #, findUniqueIDs
+
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
-codeVersion = '1.2'
+codeVersion = '1.4'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 # %% Function definitions
-# Time logging
-def logTime(foutLog, logMsg, tbase):
-    codeTnow = datetime.now()
-    foutLog.write('%s%s\n' %(logMsg, str(codeTnow)))
-    codeTdelta = codeTnow - tbase
-    foutLog.write('Time delta since start: %.3f seconds\n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
 
 def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
            dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
@@ -47,21 +44,28 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    # load data from file, find initial list of unique IDs. Update log file
+    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
+    # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
+#    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
+    
+    
+    
     foutKeys = open(os.path.join(dirout, fnameKeys), 'w')
+#
+#    #%% Output header information to log file
+#    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
+#    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
+#    foutLog.write('%s\n' %(codeCopyright))
+#    foutLog.write('%s\n' %(codeAuthors))
+#    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
 
-    #%% Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+#    #%% Output file information to log file
+#    print('Reading: %s' %os.path.join(dirin,fnamein))
+#    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
 
-    #%% Output file information to log file
-    print('Reading: %s' %os.path.join(dirin,fnamein))
-    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-
-    df1 = pd.read_csv(os.path.join(dirin,fnamein))
+#    df1 = pd.read_csv(os.path.join(dirin,fnamein))
     foutLog.write('Read %d records\n' %df1.shape[0])
     df1['aCID'] = ''
 
@@ -415,7 +419,6 @@ def SplitToGroups(ngroups,
         i1 = i2
         i2 = i1+nidspg
         i2 = min(i2, len(UniqueIDs))
-        # print(cIDgroup)
         df1 = pd.DataFrame(cIDgroup, columns=['CustomerID'])
         df1.to_csv(os.path.join(dirout,foutbase+'.g'+str(gid)+'c.csv'), index=False)
         gid += 1
@@ -424,13 +427,16 @@ def SplitToGroups(ngroups,
     
     return
 
-def AssignRatePeriods_TOUGS3B(df):
+def AssignRatePeriods(df, df2):
     
-    # https://www.sce.com/NR/sc3/tm2/pdf/CE281.pdf
-    # Summer: [June 1 00:00AM, Sep 30, 23:45]
-    # Winter: complement
-    df['Season'] = 'w'
-    df.loc[(df['datetime'].dt.month > 5) & (df['datetime'].dt.month < 10), 'Season'] = 's'
+    rate = df2.copy()
+    rate = rate.set_index('RatePeriod')
+            
+    # day of the week
+    dayTypes = np.asarray(['wd', 'we'])
+    daysOfWeek = [5, 7 ]
+    bins = np.digitize(df['datetime'].dt.dayofweek, bins=daysOfWeek)
+    df['DayType'] =dayTypes[bins]    
     
     # Holidays: 
     #   Jan 1 (New Year's Day)
@@ -442,8 +448,6 @@ def AssignRatePeriods_TOUGS3B(df):
     #   Dec 25 (Christmas)
     # When a holidays falls on Sunday, the following Monday is recognized as an off-peak period)
         
-    df['DayType'] = 'wd' # weekday
-    df.loc[df['datetime'].dt.dayofweek >= 5, 'DayType'] = 'we' # weekend
     # New Year's Day
     if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
         df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
@@ -484,27 +488,53 @@ def AssignRatePeriods_TOUGS3B(df):
     else:
         df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
 
-    # Weekdays and non-holidays
+    # Weekdays and non-holidays, example from TOU-GS3-B
     # Summer on peak  = 1 (12pm to 6pm)
     #        mid peak = 2 (8am-12pm, 6pm - 11pm)
     #        off peak = 3 (all other hours)
     #             cpp = 4 (2pm-6pm) # provision only, not used in TOU GS3 Option B
     # Winter mid peak = 5 (8am - 9pm)
     #        off peak = 6 (all other hours)
-    df.loc[df['Season'] == 's', 'RatePeriod'] = 3
-    df.loc[(12 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 18) & (df['Season'] == 's'), 'RatePeriod'] = 1
-    df.loc[( 8 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 12) & (df['Season'] == 's'), 'RatePeriod'] = 2
-    df.loc[(18 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 23) & (df['Season'] == 's'), 'RatePeriod'] = 2
-    df.loc[df['Season'] == 'w', 'RatePeriod'] = 6
-    df.loc[( 8 <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < 21) & (df['Season'] == 'w'), 'RatePeriod'] = 5
+    
+    for i in rate.index:
+        
+        if rate.loc[i, 'AllOtherHours']:
+            if rate.loc[i, 'MonthStop'] > rate.loc[i, 'MonthStart']:
+                months = (rate.loc[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month <= rate.loc[i, 'MonthStop'])
+            else:
+                months = (rate.loc[i, 'MonthStop'] >= df['datetime'].dt.month) | (df['datetime'].dt.month >= rate.loc[i, 'MonthStart'])
+            df.loc[months, 'RatePeriod'] = i       
+    
+    for i in rate.index:
+        
+        if not(rate.loc[i, 'AllOtherHours']):
+            
+            if rate.loc[i, 'MonthStop'] > rate.loc[i, 'MonthStart']:
+                months = (rate.loc[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month <= rate.loc[i, 'MonthStop'])
+            else:
+                months = (rate.loc[i, 'MonthStop'] >= df['datetime'].dt.month) | (df['datetime'].dt.month >= rate.loc[i, 'MonthStart'])
+            
+            if rate.loc[i, 'WeekDaysOnly']:
+                days = (df['DayType'] == 'wd')
+            else:
+                days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
+            
+            if rate.loc[i, 'HourStop'] > rate.loc[i, 'HourStart']:
+                hours = (rate.loc[i, 'HourStart'] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour <= rate.loc[i, 'HourStop'])
+            else:
+                hours = (rate.loc[i, 'HourStop'] >= df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate.loc[i, 'HourStart']) 
+            
+            df.loc[ hours & days & months, 'RatePeriod'] = i
+        
     
     return df
 
-def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', ratein='TOU-GS3-B.csv',
+def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
+                     ratein='TOU-GS3-B.csv',
                      dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
                      writeDataFile=False, writeSummaryFile=True, 
-                     demandUnit='Wh'):
+                     demandUnit='Wh', writeRatePeriod=False):
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
@@ -557,22 +587,29 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         df1['Demand']  = df1['Demand'] * scale    
 
     print('Assigning rate periods')
-    df1['Season'] = ''
+#    df1['Season'] = ''
     df1['DayType'] = ''
     df1['RatePeriod'] = np.nan
-    df1 = AssignRatePeriods_TOUGS3B(df1)
+    
     df2 = pd.read_csv(os.path.join(dirin,ratein),
                       header = 0,
-                      usecols = [0, 1, 2], 
+                      usecols = [0,1,2,3,4,5,6,7,8,9,10], 
                       comment = '#',
-                      names = ['RatePeriod', 'EnergyCost', 'DemandCost'],
-                      dtype = {'RatePeriod':np.int8, 'EnergyCost':np.float, 'DemandCost':np.float})
-    df3 = pd.merge(df1, df2, how='left', on=['RatePeriod'])
+                      names = ['RatePeriod', 'Season', 'RateName',  'AllOtherHours', 'WeekDaysOnly','EnergyCost', 'DemandCost', 'HourStart','HourStop', 'MonthStart', 'MonthStop'],
+                      dtype = {'RatePeriod':np.int8, 'Season': str, 'RateName': str,  'AllOtherHours':bool,'WeekDaysOnly': bool,'EnergyCost':np.float, 'DemandCost':np.float, 'HourStart':np.int8, 'HourStop': np.int8,  "MonthStart": np.int8 , "MonthStop": np.int8 })
+    
+    df1 = AssignRatePeriods(df1, df2)
+    df3 = pd.merge(df1, df2[['RatePeriod', 'Season', 'RateName', 'EnergyCost', 'DemandCost']], how='left', on=['RatePeriod'])
     df3['EnergyCharge'] = 0
     df3['DemandCharge'] = 0
     df3['FacilityCharge'] = 0
     df3['TotalCharge'] = 0
-
+    
+    if writeRatePeriod:
+        print('Writing: %s' %os.path.join(dirout,'ratePeriods.csv'))
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,'ratePeriods.csv'))
+        df3.to_csv(os.path.join(dirout,'ratePeriods.csv'),index=False) 
+        
     print('Processing...')
     UniqueIDs = df1['CustomerID'].unique().tolist()
     foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
@@ -614,36 +651,45 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     for cid in UniqueIDs:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
+        
         # Calculate energy charge for every interval
         df3.loc[df3['CustomerID'] == cid, 'EnergyCharge'] = df3[df3['CustomerID'] == cid]['Demand'] * df3[df3['CustomerID'] == cid]['EnergyCost']
+        
         # Calculate demand charges, based on the peak Demand in the relevant RatePeriod
         dix = df3.columns.get_loc('DemandCharge')
         fix = df3.columns.get_loc('FacilityCharge')
         for mNo in (np.arange(0, 12, 1)+1):
+            
             df4.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other months
             df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand']]
+            
             if df4[df4['RatePeriod'] == 1].shape[0] > 0:
                 idxmax = df4[df4['RatePeriod'] == 1]['Demand'].idxmax()
-                df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
+                df3.at[idxmax, dix] = df3.at[idxmax,'Demand'] * df3.at[idxmax,'DemandCost'] * 4.
+                
             if df4[df4['RatePeriod'] == 2].shape[0] > 0:
                 idxmax = df4[df4['RatePeriod'] == 2]['Demand'].idxmax()
-                df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
+                df3.at[idxmax, dix] = df3.at[idxmax,'Demand'] * df3.at[idxmax,'DemandCost'] * 4.
+                
             # Winter demand charges are zero in TOU-GS-3-B rate, so the following 6 lines of code are unnecessary for TOU-GS-3-B
             if df4[df4['RatePeriod'] == 4].shape[0] > 0:
                 idxmax = df4[df4['RatePeriod'] == 4]['Demand'].idxmax()
-                df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
+                df3.at[idxmax, dix] = df3.at[idxmax,'Demand'] * df3.at[idxmax,'DemandCost'] * 4.
+                
             if df4[df4['RatePeriod'] == 5].shape[0] > 0:
-                idxmax = df4[df4['RatePeriod'] == 5]['Demand'].idxmax()
-                df3.iloc[idxmax, dix] = df3.iloc[idxmax]['Demand'] * df3.iloc[idxmax]['DemandCost'] * 4.
+                idxmax = int(df4[df4['RatePeriod'] == 5]['Demand'].idxmax())
+                df3.at[idxmax, dix] = df3.at[idxmax,'Demand'] * df3.at[idxmax,'DemandCost'] * 4.
+                
             # Adding facilities related demand charge
             temp1= df2[df2['RatePeriod']==0]['DemandCost'].values[0] # Facility charge
             if df4.shape[0] > 0:
                 idxmax = df4['Demand'].idxmax()
-                df3.iloc[idxmax, fix] = df3.iloc[idxmax]['Demand'] * temp1 * 4.
+                df3.at[idxmax, fix] = df3.at[idxmax,'Demand'] * temp1 * 4.
             
         # Sum the energy and demand charges into total cost for each interval
         df3.loc[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge'] + df3[df3['CustomerID'] == cid]['FacilityCharge']
-               
+        #df3.loc[df3['CustomerID'] == cid, 'TotalDemandCharge'] =  df3[df3['CustomerID'] == cid]['DemandCharge'] + df3[df3['CustomerID'] == cid]['FacilityCharge']
+
     # Write data file with charges for each time period  
     if writeDataFile:       
         print('Writing: %s' %os.path.join(dirout,fnameout))
@@ -666,11 +712,9 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         inputArray = np.asarray(['entire year' for i in dfy['datetime'].dt.month])
         dfy = dfy.assign(month=pd.Series( inputArray , index=dfy.index))
 		
-#        dfp = pd.pivot_table(dfy, values=['Demand'], index= ['CustomerID'], columns=['month'], aggfunc=np.max, fill_value=0.0, margins=False, dropna=True, margins_name='All')  
         dfy = pd.pivot_table(dfy, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         dfm = pd.pivot_table(dfm, values=['Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge'], index= ['CustomerID'], columns=['month'], aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
         df_summary = pd.merge(dfy, dfm,  left_index=True, right_index=True)
-#        df_summary['PeakDemand', 'entire year'] = np.asarray(dfp['Demand']['entire year'].values*4)
         
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
         print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
@@ -769,9 +813,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     # assign back to df_summary
     df_summary = df_summary.assign(Energy=pd.Series(totalEnergy,index=df_summary.index))
     df_summary = df_summary.assign(TotalCharge =pd.Series(totalCharge,index=df_summary.index))
-    df_summary= df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
-    df_summary= df_summary.assign(EnergyChargePerUnitYear =pd.Series(100 * energyCharge/totalEnergy,index=df_summary.index))
-    df_summary= df_summary.assign(DemandChargePerUnitYear =pd.Series(100 * demandCharge/totalEnergy,index=df_summary.index))
+    df_summary = df_summary.assign(ChargePerUnitYear =pd.Series(100 * totalCharge/totalEnergy,index=df_summary.index))
+    df_summary = df_summary.assign(EnergyChargePerUnitYear =pd.Series(100 * energyCharge/totalEnergy,index=df_summary.index))
+    df_summary = df_summary.assign(DemandChargePerUnitYear =pd.Series(100 * demandCharge/totalEnergy,index=df_summary.index))
 
     # ignore customers paying an average of $0/kWh, that is an error
     df_summary = df_summary.loc[df_summary['ChargePerUnitYear']>0]

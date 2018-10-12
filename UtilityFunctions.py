@@ -593,11 +593,11 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     
     df2 = pd.read_csv(os.path.join(dirin,ratein),
                       header = 0,
-                      usecols = [0,1,2,3,4,5,6,7,8,9,10], 
+                      usecols = [0,1,2,3,4,5,6,7,8,9], 
                       comment = '#',
-                      names = ['RatePeriod', 'Season', 'RateName',  'AllOtherHours', 'WeekDaysOnly','EnergyCost', 'DemandCost', 'HourStart','HourStop', 'MonthStart', 'MonthStop'],
-                      dtype = {'RatePeriod':np.int8, 'Season': str, 'RateName': str,  'AllOtherHours':bool,'WeekDaysOnly': bool,'EnergyCost':np.float, 'DemandCost':np.float, 'HourStart':np.int8, 'HourStop': np.int8,  "MonthStart": np.int8 , "MonthStop": np.int8 })
-    
+                      names = [ 'Season', 'RateName',  'AllOtherHours', 'WeekDaysOnly','EnergyCost', 'DemandCost', 'HourStart','HourStop', 'MonthStart', 'MonthStop'],
+                      dtype = { 'Season': str, 'RateName': str,  'AllOtherHours':bool,'WeekDaysOnly': bool,'EnergyCost':np.float, 'DemandCost':np.float, 'HourStart':np.int8, 'HourStop': np.int8,  "MonthStart": np.int8 , "MonthStop": np.int8 })
+    df2['RatePeriod'] = df2.index
     df1 = AssignRatePeriods(df1, df2)
     df3 = pd.merge(df1, df2[['RatePeriod', 'Season', 'RateName', 'EnergyCost', 'DemandCost']], how='left', on=['RatePeriod'])
     df3['EnergyCharge'] = 0

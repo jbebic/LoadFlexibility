@@ -605,10 +605,6 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df3['FacilityCharge'] = 0
     df3['TotalCharge'] = 0
     
-    if writeRatePeriod:
-        print('Writing: %s' %os.path.join(dirout,'ratePeriods.csv'))
-        foutLog.write('Writing: %s\n' %os.path.join(dirout,'ratePeriods.csv'))
-        df3.to_csv(os.path.join(dirout,'ratePeriods.csv'),index=False) 
         
     print('Processing...')
     UniqueIDs = df1['CustomerID'].unique().tolist()
@@ -643,6 +639,13 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     else:
         considerIDs = list(set(UniqueIDs)-set(ignoreIDs))
         UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
+        
+    if writeRatePeriod:
+        print('Writing: %s' %os.path.join(dirout,'ratePeriods.csv'))
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,'ratePeriods.csv'))
+        df3.loc[df3['CustomerID'] == UniqueIDs[0], ['datetime', 'DayType', 'RatePeriod', 'Season', 'RateName', 'EnergyCost', 'DemandCost']].to_csv(os.path.join(dirout,'ratePeriods.csv'),index=False) 
+
+
 
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     

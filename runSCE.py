@@ -4,11 +4,8 @@ Created on Mon May 28 09:28:36 2018
 
 @author: jbebic
 """
-
-import numpy as np
-
 from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, SplitToGroups, CalculateBilling, CalculateGroups
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
@@ -16,7 +13,9 @@ from PlotHeatMaps import PlotHeatMaps
 from PlotBilling import PlotBillingData
 
 fnamebase = 'largeOfficesAll' # Name your input files here
-ratefile = 'TOU-GS3-B.csv'
+ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
+ignoreCIDs_forGrouping = '' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
+
 #%% Create profiles
 if False:
     GenerateSyntheticProfiles(10, # number of profiles to create
@@ -71,26 +70,31 @@ if True:
 
 #%% Calculate Billing
 if True:
-    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', writeDataFile=True, ratein = ratefile, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
+    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
+                    dirrate = 'tou_data', ratein = ratefile, 
                    dirout='output/', fnameout=fnamebase + '.A.billing.csv',
-                   dirlog='output/')
+                   dirlog='output/', writeDataFile=True)
+    
 #%% Plot Billing
 if True:
     PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', #considerCIDs = 'purelyBundledCustomers.csv',#fnamebase + '.g1c.csv',
                    dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
                    dirlog='plots/')
+    
 #%% Grouping
-if True:
+if True: # by energy component of bill
+    CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
+                   plotGroups = True, chargeType='Energy', energyPercentiles = [10, 30, 50, 70, 90],
+                   dirout='output/', fnameout=fnamebase + '.Energy.A.groups.csv',
+                   dirlog='plots/', dirplot='plots/') 
+    
+if False: # by Total Bill
     CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
                    plotGroups = True, chargeType='Total', energyPercentiles = [10, 30, 50, 70, 90],
                    dirout='output/', fnameout=fnamebase + '.Total.A.groups.csv', 
                    dirlog='plots/', dirplot='plots/')
-if True:
-    CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
-                   plotGroups = True, chargeType='Energy', energyPercentiles = [10, 30, 50, 70, 90],
-                   dirout='output/', fnameout=fnamebase + '.Energy.A.groups.csv',
-                   dirlog='plots/', dirplot='plots/')   
-if True:   
+    
+if False: # by demand component of bill   
     CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
                    plotGroups = True, chargeType='Demand', energyPercentiles = [10, 30, 50, 70, 90],
                    dirout='output/', fnameout=fnamebase + '.Demand.A.groups.csv',

@@ -927,12 +927,12 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         
-        if chargeType=="Energy":
-            for n in range(0,N+1,1):
-                ax.plot([ qB[n], qB[n]], [ylim[0], ylim[1]], '-',lw=0.5, color=colorsV[n] )
-        elif chargeType=="TotalDemand":
-            for n in range(0,N+1,1):
-                ax.plot([xlim[0], xlim[1]], [ qB[n], qB[n]],  '-',lw=0.5, color=colorsV[n] )
+#        if chargeType=="Energy":
+#            for n in range(0,N+1,1):
+#                ax.plot([ qB[n], qB[n]], [ylim[0], ylim[1]], '-',lw=0.5, color=colorsV[n] )
+#        elif chargeType=="TotalDemand":
+#            for n in range(0,N+1,1):
+#                ax.plot([xlim[0], xlim[1]], [ qB[n], qB[n]],  '-',lw=0.5, color=colorsV[n] )
                 
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)

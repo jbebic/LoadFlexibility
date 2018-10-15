@@ -479,7 +479,7 @@ def AssignRatePeriods(df, df2):
     return df    
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
-                     ratein='TOU-GS3-B.csv',
+                     dirrate  = './', ratein='TOU-GS3-B.csv',
                      dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
                      writeDataFile=False, writeSummaryFile=True, 
@@ -523,7 +523,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df1['DayType'] = ''
     df1['RatePeriod'] = np.nan
      
-    df2 = readTOURates(dirin, ratein)
+    df2 = readTOURates(dirrate, ratein)
     df1 = AssignRatePeriods(df1, df2)
     
     # merge data & rate period info

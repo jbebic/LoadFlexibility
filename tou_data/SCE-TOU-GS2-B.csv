@@ -1,0 +1,7 @@
+Season,RateName,AllOtherHours,WeekDaysOnly,DeliveryCost,GenerationCost,EnergyCost,DemandCost,FacilityCost,HourStart,HourStop_UpTo_NotIncluding,MonthStart,MonthStop_UpTo_NotIncluding
+s,On-peak,FALSE,TRUE,0.02267,0.10004,0.12271,19.61,15.89,12,18,6,10
+s,Mid-Peak,FALSE,TRUE,0.02267,0.05764,0.08031,3.83,15.89,8,12,6,10
+s,Mid-Peak,FALSE,TRUE,0.02267,0.05764,0.08031,3.83,15.89,18,23,6,10
+s,Off-Peak,TRUE,FALSE,0.02267,0.10004,0.12271,0,15.89,0,0,6,10
+w,Mid-Peak,FALSE,TRUE,0.02267,0.05388,0.07655,0,15.89,8,21,10,6
+w,Off-Peak,TRUE,FALSE,0.02267,0.04238,0.06505,0,15.89,0,0,10,6

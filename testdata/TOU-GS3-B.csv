@@ -1,7 +1,0 @@
-Season,RateName,AllOtherHours,WeekDaysOnly,EnergyCost,DemandCost,HourStart_Inclusive,HourStop_Inclusive,MonthStart_Inclusive,MonthStop_Inclusive
-s,Off-Peak,TRUE,FALSE,0.04961,0,1,24,6,9
-s,Mid-Peak,FALSE,TRUE,0.06585,2.98,8,11,6,9
-s,On-peak,FALSE,TRUE,0.09822,15.14,12,17,6,9
-s,Mid-Peak,FALSE,TRUE,0.06585,2.98,18,22,6,9
-w,Off-Peak,TRUE,FALSE,0.05384,0,1,24,10,5
-w,Mid-Peak,FALSE,TRUE,0.06209,0,8,20,10,5

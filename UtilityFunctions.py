@@ -441,8 +441,8 @@ def AssignRatePeriods(df, df2):
     
     # initialize default rates for "AllOtherHours"
     for i in rate.index:
-        
         if rate.loc[i, 'AllOtherHours']:
+            print('...Reading rate ' + str(i) + ', ' + rate.loc[i, 'RateName'])
             # relevent months of the year
             if rate.loc[i, 'MonthStop'] > rate.loc[i, 'MonthStart']:
                 months = (rate.loc[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate.loc[i, 'MonthStop'])
@@ -455,6 +455,7 @@ def AssignRatePeriods(df, df2):
         
         if not(rate.loc[i, 'AllOtherHours']):
             
+            print('...Reading rate ' + str(i) + ', ' + rate.loc[i, 'RateName'])
             # relevent months of the year
             if rate.loc[i, 'MonthStop'] > rate.loc[i, 'MonthStart']:
                 months = (rate.loc[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate.loc[i, 'MonthStop'])
@@ -519,11 +520,12 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         print("Converting Demand from " + demandUnit + " to kWh using scaling factor of " +  str(scale))
         df1['Demand']  = df1['Demand'] * scale    
 
-    print('Assigning rate periods')
     df1['DayType'] = ''
     df1['RatePeriod'] = np.nan
-     
+    print('reading TOU rates...')
     df2 = readTOURates(dirrate, ratein)
+    
+    print('Assigning rate periods...')
     df1 = AssignRatePeriods(df1, df2)
     
     # merge data & rate period info

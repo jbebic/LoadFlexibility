@@ -551,7 +551,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     print('Processing...')
     df4 = pd.DataFrame(index=np.arange(0, 31*24, 0.25), columns=np.arange(0,4))
     i = 1
-    for cid in UniqueIDs[:10]:
+    for cid in UniqueIDs:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         

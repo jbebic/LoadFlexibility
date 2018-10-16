@@ -138,92 +138,94 @@ def assignDayType(df, datetimeIndex=True):
     if  datetimeIndex:
     
         df['DayType'] = 'wd' # weekday
-        df.loc[df.index.dayofweek >= 5, 'DayType'] = 'we' # weekend
+        df.at[df.index.dayofweek >= 5, 'DayType'] = 'we' # weekend
         
         # New Year's Day
         if (df[(df.index.month == 1) & (df.index.day == 1)].index[0].dayofweek == 6):
-            df.loc[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
-            df.loc[(df.index.month == 1) & (df.index.day == 2), 'DayType'] = 'o'
+            df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+            df.at[(df.index.month == 1) & (df.index.day == 2), 'DayType'] = 'o'
         else:
-            df.loc[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+            df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
     
         # Presidents' Day: 3rd Monday in February
-        df.loc[(df.index.month == 2) & (df.index.dayofweek == 0) &
+        df.at[(df.index.month == 2) & (df.index.dayofweek == 0) &
                (15 <= df.index.day) & (df.index.day <= 21), 'DayType'] = 'h'
         
         # Independence Day    
         if (df[(df.index.month == 7) & (df.index.day == 4)].index[0].dayofweek == 6):
-            df.loc[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
-            df.loc[(df.index.month == 7) & (df.index.day == 5), 'DayType'] = 'o'
+            df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+            df.at[(df.index.month == 7) & (df.index.day == 5), 'DayType'] = 'o'
         else:
-            df.loc[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+            df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
         
         # Labor Day: 1st Monday in September
-        df.loc[(df.index.month == 9) & (df.index.dayofweek == 0) & 
+        df.at[(df.index.month == 9) & (df.index.dayofweek == 0) & 
                (1 <= df.index.day) & (df.index.day <= 7), 'DayType'] = 'h'
     
         # Veterans Day
         if (df[(df.index.month == 11) & (df.index.day == 11)].index[0].dayofweek == 6):
-            df.loc[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
-            df.loc[(df.index.month == 11) & (df.index.day == 12), 'DayType'] = 'o'
+            df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+            df.at[(df.index.month == 11) & (df.index.day == 12), 'DayType'] = 'o'
         else:
-            df.loc[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+            df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
     
         # Thanksgiving Day: 4th Thursday in November
-        df.loc[(df.index.month == 11) & (df.index.dayofweek == 3) &
+        df.at[(df.index.month == 11) & (df.index.dayofweek == 3) &
                (22 <= df.index.day) & (df.index.day <= 28), 'DayType'] = 'h'
     
         # Christmas Day
         if (df[(df.index.month == 12) & (df.index.day == 25)].index[0].dayofweek == 6):
-            df.loc[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'
-            df.loc[(df.index.month == 12) & (df.index.day == 26), 'DayType'] = 'o'
+            df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'
+            df.at[(df.index.month == 12) & (df.index.day == 26), 'DayType'] = 'o'
         else:
-            df.loc[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'  
+            df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'  
             
     else:
         
+        print('...Writing day type to dataframe')
+        
         df['DayType'] = 'wd' # weekday
-        df.loc[df['datetime'].dt.dayofweek >= 5, 'DayType'] = 'we' # weekend
+        df.at[df['datetime'].dt.dayofweek >= 5, 'DayType'] = 'we' # weekend
         
         # New Year's Day
         if (df[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1)]['datetime'].dt.values.iloc[0].dayofweek == 6):
-            df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
-            df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 2), 'DayType'] = 'o'
+            df.at[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 2), 'DayType'] = 'o'
         else:
-            df.loc[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 1) & (df['datetime'].dt.day == 1), 'DayType'] = 'h'
     
         # Presidents' Day: 3rd Monday in February
-        df.loc[(df['datetime'].dt.month == 2) & (df['datetime'].dt.dayofweek == 0) &
+        df.at[(df['datetime'].dt.month == 2) & (df['datetime'].dt.dayofweek == 0) &
                (15 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 21), 'DayType'] = 'h'
         
         # Independence Day    
         if (df[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4)]['datetime'].dt.values.iloc[0].dayofweek == 6):
-            df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
-            df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
+            df.at[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 5), 'DayType'] = 'o'
         else:
-            df.loc[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 7) & (df['datetime'].dt.day == 4), 'DayType'] = 'h'
         
         # Labor Day: 1st Monday in September
-        df.loc[(df['datetime'].dt.month == 9) & (df['datetime'].dt.dayofweek == 0) & 
+        df.at[(df['datetime'].dt.month == 9) & (df['datetime'].dt.dayofweek == 0) & 
                (1 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 7), 'DayType'] = 'h'
     
         # Veterans Day
         if (df[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11)]['datetime'].dt.values.iloc[0].dayofweek == 6):
-            df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
-            df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 12), 'DayType'] = 'o'
+            df.at[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 12), 'DayType'] = 'o'
         else:
-            df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 11) & (df['datetime'].dt.day == 11), 'DayType'] = 'h'
     
         # Thanksgiving Day: 4th Thursday in November
-        df.loc[(df['datetime'].dt.month == 11) & (df['datetime'].dt.dayofweek == 3) &
+        df.at[(df['datetime'].dt.month == 11) & (df['datetime'].dt.dayofweek == 3) &
                (22 <= df['datetime'].dt.day) & (df['datetime'].dt.day <= 28), 'DayType'] = 'h'
     
         # Christmas Day
         if (df[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25)]['datetime'].dt.values.iloc[0].dayofweek == 6):
-            df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
-            df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 26), 'DayType'] = 'o'
+            df.at[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'
+            df.at[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 26), 'DayType'] = 'o'
         else:
-            df.loc[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'          
+            df.at[(df['datetime'].dt.month == 12) & (df['datetime'].dt.day == 25), 'DayType'] = 'h'          
             
     return df
 

@@ -14,6 +14,7 @@ from datetime import datetime # time stamps
 from datetime import date
 from pytz import timezone
 import os # operating system interface
+#import csv
 import string
 import random
 import matplotlib.pyplot as plt # plotting 
@@ -41,7 +42,15 @@ def readTOURates(dirin, ratein):
                       dtype = { 'Season': str, 'RateName': str,  'AllOtherHours':bool,'WeekDaysOnly': bool,'DeliveryCost':np.float,'GenerationCost':np.float, 'EnergyCost':np.float, 'DemandCost':np.float, 'FacilityCost':np.float, 'HourStart':np.int8, 'HourStop': np.int8,  "MonthStart": np.int8 , "MonthStop": np.int8 })
     df2['RatePeriod'] = df2.index
     
-    return df2
+    data = df2.to_dict('series')
+    
+#    f = open(os.path.join(dirin,ratein))
+#    reader = csv.DictReader(f) 
+#    data = []
+#    for row in reader:
+#        data.append(row)
+    
+    return data
 
 def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
            dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
@@ -433,51 +442,49 @@ def SplitToGroups(ngroups,
     
     return
 
-def AssignRatePeriods(df, df2):
+def AssignRatePeriods(df, rate):
     
     df = assignDayType(df, datetimeIndex=False)
-    rate = df2.copy()
-    rate = rate.set_index('RatePeriod')    
+#    rate = df2.copy()
+#    rate = rate.set_index('RatePeriod')    
     
     # initialize default rates for "AllOtherHours"
-    for i in rate.index:
-        if rate.at[i, 'AllOtherHours']:
-            print('...Reading rate ' + str(i) + ', ' + rate.at[i, 'RateName'])
+    for r in rate['RatePeriod']:
+        if rate['AllOtherHours'][r]:
             # relevent months of the year
-            if rate.at[i, 'MonthStop'] > rate.at[i, 'MonthStart']:
-                months = (rate.at[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate.at[i, 'MonthStop'])
+            if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
             else:
-                months = (rate.at[i, 'MonthStop'] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate.at[i, 'MonthStart'])
-            df.at[months, 'RatePeriod'] = i  
+                months = (rate[ 'MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate['MonthStart'][r])
+            df.at[months, 'RatePeriod'] = r  
             
     # assign other rate periods
-    for i in rate.index:
+    for r in rate['RatePeriod']:
         
-        if not(rate.at[i, 'AllOtherHours']):
+        if not(rate['AllOtherHours'][r]):
             
-            print('...Reading rate ' + str(i) + ', ' + rate.at[i, 'RateName'])
             # relevent months of the year
-            if rate.at[i, 'MonthStop'] > rate.at[i, 'MonthStart']:
-                months = (rate.at[i, 'MonthStart'] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate.at[i, 'MonthStop'])
+            if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
             else:
-                months = (rate.at[i, 'MonthStop'] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate.at[i, 'MonthStart'])
+                months = (rate['MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate[ 'MonthStart'][r])
             
             # relevent days of the year
-            if rate.at[i, 'WeekDaysOnly']:
+            if rate['WeekDaysOnly'][r]:
                 days = (df['DayType'] == 'wd')
             else:
                 days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
             
             # relevent hours of the year
-            if rate.at[i, 'HourStop'] > rate.at[i, 'HourStart']:
-                hours = (rate.at[i, 'HourStart'] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < rate.at[i, 'HourStop'])
+            if rate[ 'HourStop'][r] > rate['HourStart'][r]:
+                hours = (rate['HourStart'][r] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < rate[ 'HourStop'][r])
             else:
-                hours = (rate.at[i, 'HourStop'] > df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate.at[i, 'HourStart']) 
+                hours = (rate['HourStop'][r] > df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate['HourStart'][r]) 
             
-            df.at[ hours & days & months, 'RatePeriod'] = i
+            df.at[ hours & days & months, 'RatePeriod'] = r
         
     
-    return df    
+    return df  
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
                      dirrate  = './', ratein='TOU-GS3-B.csv',
@@ -522,14 +529,14 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
 
     df1['DayType'] = ''
     df1['RatePeriod'] = np.nan
+    
     print('reading TOU rates...')
-    df2 = readTOURates(dirrate, ratein)
+    rates = readTOURates(dirrate, ratein)
     
     print('Assigning rate periods...')
-    df1 = AssignRatePeriods(df1, df2)
-    
+    df3 = AssignRatePeriods(df1, rates)
+
     # merge data & rate period info
-    df3 = pd.merge(df1, df2[['RatePeriod', 'Season', 'RateName', 'EnergyCost', 'DemandCost', 'FacilityCost']], how='left', on=['RatePeriod'])
     df3['EnergyCharge'] = 0.0
     df3['DemandCharge'] = 0.0
     df3['FacilityCharge'] = 0.0
@@ -540,39 +547,38 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         foutLog.write('Writing: %s\n' %os.path.join(dirout,'ratePeriods.csv'))
         df3.loc[df3['CustomerID'] == UniqueIDs[0], ['datetime', 'DayType', 'RatePeriod', 'Season', 'RateName', 'EnergyCost', 'DemandCost', 'FacilityCost']].to_csv(os.path.join(dirout,'ratePeriods.csv'),index=False) 
 
-
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     print('Processing...')
     df4 = pd.DataFrame(index=np.arange(0, 31*24, 0.25), columns=np.arange(0,4))
     i = 1
-    for cid in UniqueIDs:
+    for cid in UniqueIDs[:10]:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
-        
-        # Calculate energy charge for every interval
-        df3.loc[df3['CustomerID'] == cid, 'EnergyCharge'] = df3[df3['CustomerID'] == cid]['Demand'] * df3[df3['CustomerID'] == cid]['EnergyCost']
         
         # Calculate demand charges, based on the peak Demand in the relevant RatePeriod
         for mNo in (np.arange(0, 12, 1)+1):
             
             df4.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other months
-            df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand', 'FacilityCost']]
+            df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand']]
             
             # adding demand charges for this month
             ratesThisMonth = list(set(df4['RatePeriod']))
             for r in ratesThisMonth:
-                if df2.loc[r, 'DemandCost']> 0:
+                if rates['DemandCost'][r]> 0:
                     idxmax = df4[df4['RatePeriod'] == r]['Demand'].idxmax()
-                    df3.at[idxmax, 'DemandCharge'] = df3.at[idxmax,'Demand'] * df3.at[idxmax,'DemandCost'] * 4.
+                    df3.at[idxmax, 'DemandCharge'] = df3.at[idxmax,'Demand'] * rates['DemandCost'][r] * 4.
             
             # Adding facilities related demand charge
-            temp1= np.mean(df4['FacilityCost'].values) # Facility charge
+            temp1 = rates['FacilityCost'][0] # Facility charge
             if df4.shape[0] > 0:
                 idxmax = df4['Demand'].idxmax()
                 df3.at[idxmax, 'FacilityCharge'] = df3.at[idxmax,'Demand'] * temp1 * 4.
             
-        # Sum the energy and demand charges into total cost for each interval
-        df3.at[df3['CustomerID'] == cid, 'TotalCharge'] = df3[df3['CustomerID'] == cid]['EnergyCharge'] + df3[df3['CustomerID'] == cid]['DemandCharge'] + df3[df3['CustomerID'] == cid]['FacilityCharge']
+    # Sum the energy and demand charges into total cost for each interval
+    # Calculate energy charge for every interval
+    energyCost = [rates['EnergyCost'][r] for r in df3['RatePeriod'].values]
+    df3['EnergyCharge'] = df3['Demand'] * energyCost 
+    df3['TotalCharge'] = df3['DemandCharge'] + df3['FacilityCharge'] + df3['EnergyCharge']
     
     # Write data file with charges for each time period  
     if writeDataFile:       

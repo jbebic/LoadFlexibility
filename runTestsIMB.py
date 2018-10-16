@@ -9,13 +9,13 @@ from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from NormalizeLoads import ReviewLoads, NormalizeLoads, NormalizeGroup
 from PlotHeatMaps import PlotHeatMaps
-from GroupAnalysis import DeltaLoads,  PlotDelta
+from GroupAnalysis import DeltaLoads,  PlotDeltaByDay, PlotDeltaSummary
 
-fnamebase = 'synthetic30'
+fnamebase = 'synthetic10'
 
 #%% Create profiles
 if False:
-    GenerateSyntheticProfiles(30, # number of profiles to create
+    GenerateSyntheticProfiles(10, # number of profiles to create
                               '2017-01-01 00:00', '2017-12-31 23:45', # date range
                               IDlen=6, meMean=200, htllr=2.0, # ID length, monthly energy mean, high to low load ratio (peak day / low day)
                               dirout='testdata/', fnameout = fnamebase + '.csv', 
@@ -80,12 +80,12 @@ if False:
                      dirout='testdata/', fnameout=fnamebase+'.billing.csv',
                      fnameoutsummary ='summary.' + fnamebase + '.billing.csv',
                      dirlog='testdata/',
-                     demandUnit='Wh',
+                     demandUnit='Wh',dirrate='tou_data/',ratein='SCE-TOU-GS2-B.csv',
                      writeDataFile=False,
                      writeSummaryFile=True)   
     
 #%% Group Customers
-if False:
+if True:
     CalculateGroups(dirin='testdata/', # outputs
                     fnamein="summary." + fnamebase+'.billing.csv',
                      dirout='testdata/', # outputs
@@ -108,7 +108,7 @@ if False:
                        groupName=groupName)
         
 #%% Compare Normalized Groups
-if True:
+if False:
     for n in [1,2,3,4]:
         
         groupL = 'g' + str(n) + 'L'

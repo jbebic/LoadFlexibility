@@ -12,9 +12,12 @@ from datetime import date
 import os # operating system interface
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
+import random
+from copy import copy as copy
 
 #%% Importing supporting modules
 from SupportFunctions import getData, logTime, createLog,  assignDayType #findUniqueIDs,
+from UtilityFunctions import AssignRatePeriods, readTOURates
 
 #%% Version and copyright info to record on the log file
 codeName = 'GroupAnalysis.py'
@@ -42,6 +45,65 @@ def plotDailyDeltas(ax0, df, lw=1, c='b', ls='-'):
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='purple', label='Energy [pu-h]')
     
     return ax0, np.max(y)
+
+
+# %% Function definitions
+def plotDailyDeltaEnergy(ax0, df, lw=1, c='b', ls='-'):
+    
+    """ adds specific day's power & energy deltas to axis """
+    df = df.sort_values(by='datetime', ascending=True)
+    ax0.set_ylabel('Delta in Energy')
+    ax0.set_xlabel('Hour of the Day [h]')
+    ax0.set_xlim([0,df.shape[0]])
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    y = [yy for yy in range(-40, 41,1)]
+    ax0.set_yticks(y)  
+    ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
+    y = np.cumsum(df['NormDmnd'])/4
+    y = y - np.min(y)
+#    ax0.fill_between(np.arange(df.shape[0]), 0,  df['NormDmnd'],  label='Load [pu]')      
+    ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='purple', label='Energy [pu-h]')
+    
+    return ax0, np.max(y)
+
+
+def plotDailyDeltaLoad(ax0, df, lw=1, c='b', ls='-'):
+    
+    """ adds specific day's power & energy deltas to axis """
+    df = df.sort_values(by='datetime', ascending=True)
+    ax0.set_ylabel('Delta in Loads')
+    ax0.set_xlabel('Hour of the Day [h]')
+    ax0.set_xlim([0,df.shape[0]])
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    y = [yy for yy in range(-40, 41,1)]
+    ax0.set_yticks(y)  
+    ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
+#    y = np.cumsum(df['NormDmnd'])/4
+#    y = y - np.min(y)
+    ax0.fill_between(np.arange(df.shape[0]), 0,  df['NormDmnd'],  label='Load [pu]')      
+#    ax0.plot(np.arange(df.shape[0]),   df['NormDmnd'],  label='Load [pu]')      
+#    
+    return ax0, np.max(y)
+
+
+
+def plotDailyRate(ax0, df, lw=1, c='b', ls='-'):
+    
+    """ adds specific day's power & energy deltas to axis """
+    df = df.sort_values(by='datetime', ascending=True)
+    ax0.set_ylabel('Energy Cost [$/kWh]')
+    ax0.set_xlabel('Hour of the Day [h]')
+    ax0.set_xlim([0,df.shape[0]])
+    ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
+    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
+    ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
+    ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
+    ax0.plot(np.arange(df.shape[0]),   df['EnergyCost'],  label='Load [pu]')      
+    return ax0, np.max(df['EnergyCost'])
 
 def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     
@@ -423,6 +485,7 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
 
 
 def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
+                   dirrate = './', ratein='SCE-TOU-GS3-B.csv', 
                   dirout='./', fnameout='delta.csv',
                   dirlog='./', fnameLog='PlotDeltaByDay.log'):
     
@@ -439,8 +502,11 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     df2, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd')
 
     # assign season & day type
-    df1 = assignDayType(df1)
-    df2 = assignDayType(df2)
+    print('reading TOU rates...')
+    rate = readTOURates(dirrate, ratein)
+
+    df1 = AssignRatePeriods(df1, rate, addRate=True, datetimeIndex=True)
+    df2 = AssignRatePeriods(df2, rate, addRate=True, datetimeIndex=True)
     
     month = df1.index.month
     day = df1.index.day
@@ -458,7 +524,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
 
     # find min / max for delta figure
     ymaxDelta = 1.0
-    yminDelta = np.floor( np.min(df3['NormDmnd'])*2)/2
+#    yminDelta = np.floor( np.min(df3['NormDmnd'])*2)/2
     for m in range(1, 13,1):
         days = list(set(df1.loc[(month==m)].index.day))  
         for d in days:
@@ -469,7 +535,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
     
     # iterate over each month of the year
-    for m in range(1, 13,1):
+    for m in [2, 6,]: #range(1, 13,1):
         print('Plotting daily loads & deltas for %s' %(date(2016, m,1).strftime('%B')))
         
         # iterate over each day of the month
@@ -480,9 +546,9 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             relevant = (month==m) & (day==d)
             
             # initialize figure
-            fig, ax = plt.subplots(nrows=2, ncols=1,figsize=(8,6),sharex=True)
+            fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
             fig.suptitle( fnameinL + " / " +  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
-            
+            plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
             # plot loads of leaders & others 
             ax0=ax[0]
             ax0 = plotDailyLoads(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
@@ -492,14 +558,298 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             
             # plot delta between leaders & others 
             ax1=ax[1]
-            ax1,temp = plotDailyDeltas(ax1, df3.loc[relevant])
-            ax1.set_ylim([yminDelta,ymaxDelta])
-            ax1.legend(loc=1)
+            ax1,temp = plotDailyDeltaLoad(ax1, df3.loc[relevant])
+            ax1.set_ylim([-1,1])
+#            ax1.legend(loc=1)
+#            
+#            ax2=ax[2]
+#            ax2,temp = plotDailyDeltaEnergy(ax2, df3.loc[relevant])
+#            ax2.set_ylim([0,ymaxDelta])
+##            ax2.legend(loc=1)       
+            
+            ax3=ax[2]
+            ax3,temp = plotDailyRate(ax3, df3.loc[relevant])
+            ax3.set_ylim([0.025,0.15])
             
             # add to pdf
             pltPdf1.savefig() 
             plt.close()   
                 
+    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
+    pltPdf1.close()
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    
+    return
+
+
+
+def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.csv', 
+                  dirout='./', fnameout='delta.csv',
+                  m = 6, d = 21,dirrate = './', ratein='SCE-TOU-GS3-B.csv',
+                  dirlog='./', fnameLog='PlotDeltaByDay.log'):
+    
+    """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
+    
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    # load time-series data for leaders & others
+    df1raw, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd')
+    df2raw, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd')
+
+    # reading TOU rates
+    rate = readTOURates(dirrate, ratein)
+
+    # assign season & day type
+    df1 = AssignRatePeriods(df1raw, rate, addRate=True, datetimeIndex=True)
+    df2 = AssignRatePeriods(df2raw, rate, addRate=True, datetimeIndex=True)
+    
+    month = df1.index.month
+    day = df1.index.day
+    
+    # find this day in the data
+    relevant = (month==m) & (day==d)
+    df2 = df2[relevant]
+    df1 = df1[relevant]
+    
+    # calculate delta
+    df3 = df2.copy()
+    df3['NormDmnd'] = df1['NormDmnd'] - df2['NormDmnd']
+
+    # open pdf for figures
+    print("Opening plot files")
+    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
+    
+    # find max y limits
+    ymax = np.ceil(np.max([ df1['NormDmnd'].max() *2  , df2['NormDmnd'].max()*2  ])) / 2 +0.5
+
+    # find min / max for delta figure
+    ymaxDelta = 1.0
+    y = np.cumsum(df3['NormDmnd'])/4
+    y = y - np.min(y)
+    ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
+    ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
+    
+    # iterate over each month of the year
+    print('Plotting daily loads & deltas for %s' %(date(2016, m,1).strftime('%B')))
+    
+    # initialize figure
+    fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+    plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
+    
+    # plot loads of leaders & others 
+    ax0=ax[0]
+    ax0 = plotDailyLoads(ax0, df1, c='b', lw=1, label='leaders')
+    ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
+    ax0.set_ylim([0.0,ymax])
+    ax0.legend()
+    
+    # plot delta between leaders & others 
+    ax1=ax[1]
+    ax1,temp = plotDailyDeltaLoad(ax1, df3)
+    ax1.set_ylim([-1,1])
+    
+#    ax2=ax[2]
+#    ax2,temp = plotDailyDeltaEnergy(ax2, df3)
+#    ax2.set_ylim([0,ymaxDelta])
+    
+    ax3=ax[2]
+    ax3,temp = plotDailyRate(ax3, df3)
+    ax3.set_ylim([0.025,0.15])
+    
+    pltPdf1.savefig() 
+    plt.close()  
+    
+    
+    charge = df3['NormDmnd']>0
+    discharge = df3['NormDmnd']<0
+    
+    # aligned to rates    
+    df3x = df3.copy(deep=True)
+    df3x[ 'NormDmnd'] = 0.0
+    onpeak  = df3x['EnergyCost']==np.max(df3x['EnergyCost'])
+    offpeak = df3x['EnergyCost']==np.min(df3x['EnergyCost'])
+    midpeak = (df3x['EnergyCost']>np.min(df3x['EnergyCost'])) & (df3x['EnergyCost']<np.max(df3x['EnergyCost']))
+    
+    chargeDeltas    = np.sort(np.asarray( df3.loc[charge, 'NormDmnd'].values ))
+    dischargeDeltas = np.sort(np.asarray(df3.loc[discharge, 'NormDmnd'].values))
+    
+    onpeakDeltas = copy(dischargeDeltas[:sum(onpeak)])
+    onpeakDeltasx = copy(onpeakDeltas[1:])
+    arrangedOnPeakDeltas = np.asarray(list(np.flipud(copy(onpeakDeltas[::2]))) + copy(list(onpeakDeltasx[::2]) ))
+    
+    midpeakDeltas = dischargeDeltas[sum(onpeak)+1:]
+    midpeakDeltasx = copy(midpeakDeltas[1:])
+    arrangedMidPeakDeltas = np.asarray(list(np.flipud(copy(midpeakDeltas[::2]))) + copy(list(midpeakDeltasx[::2]) ))
+    if sum(midpeak)> len(arrangedMidPeakDeltas):
+        missing = sum(midpeak) - len(arrangedMidPeakDeltas) 
+        addZeros = [0 for x in range(0, missing,1)]
+        arrangedMidPeakDeltas = np.asarray( list(addZeros[:np.int(np.floor(len(addZeros)/2))]) + list(arrangedMidPeakDeltas) +  list(addZeros[np.int(np.floor(len(addZeros)/2)):]) )
+
+    df3x.loc[midpeak, 'NormDmnd'] = arrangedMidPeakDeltas
+    df3x.loc[onpeak, 'NormDmnd'] = arrangedOnPeakDeltas
+    
+    offpeak = df3x[ 'NormDmnd']>=0.0
+    offpeakDeltas = np.flipud(chargeDeltas[:sum(offpeak)-1])
+    if sum(offpeak)> len(offpeakDeltas):
+        missing = sum(offpeak) - len(offpeakDeltas) 
+        addZeros = [0 for x in range(0, missing,1)]
+        offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
+    offpeakDeltasx = copy(offpeakDeltas[1:])
+    arrangedOffPeakDeltas = np.asarray(list(copy(offpeakDeltas[::2])) + copy(list(np.flipud(offpeakDeltasx[::2]) )))
+        
+    stop1 = offpeak.idxmin()
+    start2 = offpeak[stop1:].idxmax()
+    
+    circlen = len(offpeak[start2:])
+    
+    arrangedOffPeakDeltas =np.roll( arrangedOffPeakDeltas,circlen)
+    
+    df3x.loc[offpeak, 'NormDmnd'] = arrangedOffPeakDeltas
+    df1x = df1.copy()
+    df1x['NormDmnd'] = df2['NormDmnd'] + df3x['NormDmnd']
+    
+    fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+    plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
+    
+    ax0=ax[0]
+    ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
+    ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
+    ax0.set_ylim([0.0,ymax])
+    ax0.legend()
+    
+    ax1=ax[1]
+    ax1,temp = plotDailyDeltaLoad(ax1, df3x)
+    ax1.set_ylim([-1,1])
+    
+    ax3=ax[2]
+    ax3,temp = plotDailyRate(ax3, df3)
+    ax3.set_ylim([0.025,0.15])
+        
+    pltPdf1.savefig() 
+    plt.close()      
+    
+    # aligned to artifical rates  
+    rate = readTOURates(dirrate, ratein='TOU-Fake.csv')
+    df1 = AssignRatePeriods(df1raw, rate, addRate=True, datetimeIndex=True)
+    df2 = AssignRatePeriods(df2raw, rate, addRate=True, datetimeIndex=True)
+    df2 = df2[relevant]
+    df1 = df1[relevant]
+    
+    # calculate delta
+    df3 = df2.copy()
+    df3['NormDmnd'] = df1['NormDmnd'] - df2['NormDmnd']
+
+    df3x = df3.copy(deep=True)
+    df3x[ 'NormDmnd'] = 0.0
+    onpeak  = df3x['EnergyCost']==np.max(df3x['EnergyCost'])
+    offpeak = df3x['EnergyCost']==np.min(df3x['EnergyCost'])
+    midpeak = (df3x['EnergyCost']>np.min(df3x['EnergyCost'])) & (df3x['EnergyCost']<np.max(df3x['EnergyCost']))
+    
+    chargeDeltas    = np.sort(np.asarray( df3.loc[charge, 'NormDmnd'].values ))
+    dischargeDeltas = np.sort(np.asarray(df3.loc[discharge, 'NormDmnd'].values))
+    
+    onpeakDeltas = copy(dischargeDeltas[:sum(onpeak)])
+    onpeakDeltasx = copy(onpeakDeltas[1:])
+    arrangedOnPeakDeltas = np.asarray(list(np.flipud(copy(onpeakDeltas[::2]))) + copy(list(onpeakDeltasx[::2]) ))
+    
+    midpeakDeltas = dischargeDeltas[sum(onpeak)+1:]
+    midpeakDeltasx = copy(midpeakDeltas[1:])
+    arrangedMidPeakDeltas = np.asarray(list(np.flipud(copy(midpeakDeltas[::2]))) + copy(list(midpeakDeltasx[::2]) ))
+    if sum(midpeak)> len(arrangedMidPeakDeltas):
+        missing = sum(midpeak) - len(arrangedMidPeakDeltas) 
+        addZeros = [0 for x in range(0, missing,1)]
+        arrangedMidPeakDeltas = np.asarray( list(addZeros[:np.int(np.floor(len(addZeros)/2))]) + list(arrangedMidPeakDeltas) +  list(addZeros[np.int(np.floor(len(addZeros)/2)):]) )
+
+    if len(arrangedMidPeakDeltas)>0 and np.sum(midpeak)>0:
+        df3x.loc[midpeak, 'NormDmnd'] = arrangedMidPeakDeltas[:np.sum(midpeak)]
+    df3x.loc[onpeak, 'NormDmnd'] = arrangedOnPeakDeltas
+    
+    offpeak = df3x[ 'NormDmnd']>=0.0
+    offpeakDeltas = np.flipud(chargeDeltas[:sum(offpeak)])
+    if sum(offpeak)> len(offpeakDeltas):
+        missing = sum(offpeak) - len(offpeakDeltas) 
+        addZeros = [0 for x in range(0, missing,1)]
+        offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
+    offpeakDeltasx = copy(offpeakDeltas[1:])
+    arrangedOffPeakDeltas = np.asarray(list(np.flipud(copy(offpeakDeltas[::2]))) + copy(list(offpeakDeltasx[::2]) ))
+#    arrangedOffPeakDeltas = offpeakDeltas
+#    stop1 = offpeak.idxmin()
+#    start2 = offpeak[stop1:].idxmax()
+    
+#    circlen = len(offpeak[start2:])
+    
+#    arrangedOffPeakDeltas =np.roll( arrangedOffPeakDeltas,circlen)
+    
+    df3x.loc[offpeak, 'NormDmnd'] = arrangedOffPeakDeltas
+    df1x = df1.copy()
+    df1x['NormDmnd'] = df2['NormDmnd'] + df3x['NormDmnd']
+    
+    fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+    plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
+    
+    ax0=ax[0]
+    ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
+    ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
+    ax0.set_ylim([0.0,ymax])
+    ax0.legend()
+    
+    ax1=ax[1]
+    ax1,temp = plotDailyDeltaLoad(ax1, df3x)
+    ax1.set_ylim([-1,1])
+    
+    ax3=ax[2]
+    ax3,temp = plotDailyRate(ax3, df3)
+    ax3.set_ylim([0.025,0.15])
+        
+    pltPdf1.savefig() 
+    plt.close()      
+    
+#    ## random !
+#    # initialize figure
+#    fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+#    plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
+#    
+#    df3x = df3.copy(deep=True)
+#    
+#    array = np.asarray(df3x.loc[charge, 'NormDmnd'].values)
+#    b = random.shuffle( array );
+#    df3x.loc[charge, 'NormDmnd'] = array
+#    
+#    array = np.asarray(df3x.loc[discharge, 'NormDmnd'].values)
+#    a = random.shuffle( array );
+#    df3x.loc[discharge, 'NormDmnd'] = array
+#
+#    df1x = df1.copy()
+#    df1x['NormDmnd'] = df2['NormDmnd'] + df3x['NormDmnd']
+#    
+#    # plot loads of leaders & others 
+#    ax0=ax[0]
+#    ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
+#    ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
+#    ax0.set_ylim([0.0,ymax])
+#    ax0.legend()
+#    
+#    # plot delta between leaders & others 
+#    ax1=ax[1]
+#    ax1,temp = plotDailyDeltaLoad(ax1, df3x)
+#    ax1.set_ylim([-1,1])
+#    
+#    ax3=ax[2]
+#    ax3,temp = plotDailyRate(ax3, df3)
+#    ax3.set_ylim([0.025,0.15])
+#        
+#    pltPdf1.savefig() 
+#    plt.close()     
+    
+    
+  
+    
     print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
     pltPdf1.close()
 

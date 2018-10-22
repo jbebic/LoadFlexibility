@@ -40,6 +40,7 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     fig.suptitle(title) # This titles the figure
     plt.subplots_adjust(wspace=0.3,hspace=0.3 )   
     
+    ax0.set_title('Load [pu]') 
     ax0.set_ylabel('Hour')
     ax0.set_xlabel('Day of Year')
     ax0.set_xlim([0,365])
@@ -49,7 +50,7 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     ax0.set_yticklabels(['0', '6', '12', '18', '24'])        
 
     cmin = 0.0
-    ax1.set_ylabel('Demand')
+    ax1.set_ylabel('Load [pu]')
     if weeklyBox:
         ax1.set_xlabel('Week')
         ax1.set_xlim([0,52])

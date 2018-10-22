@@ -21,11 +21,93 @@ from SupportFunctions import getData, logTime, createLog, findUniqueIDs
 
 #%%  Version and copyright info to record on the log file
 codeName = 'PlotDurationCurves.py'
-codeVersion = '1.4'
+codeVersion = '1.5'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
 #%% Function Definitions
+def outputAnnualDurationCurve(ax0, df, cid, foutLog,varName='NormDmnd', applyNormalization=False):
+    """ creates duration curve for entire year for one customer"""
+    
+    ymin = 0.0
+    ax0.set_title('Annual')
+    ax0.set_ylabel('Load [pu]')
+    ax0.set_xlim([0,8760*4])
+    ax0.set_xticks(np.linspace(0, 8760*4, num=5).tolist())
+    ax0.set_xticklabels(np.linspace(0, 8760, num=5, dtype=np.int16).tolist())
+    ax0.set_xlabel('Hour')
+    ax0.set_aspect('auto')
+    try:
+        df1 = df.sort_values(varName, ascending=False)
+        if applyNormalization:
+            dAvg = df1[varName].mean()
+            df1[varName] = df1[varName].copy()/dAvg 
+        ymax = np.ceil(df1[varName].max()*2)/2  
+        ax0.step(np.arange(df1.shape[0]), (df1[varName]), 'steelblue')
+        ax0.set_ylim([ymin,ymax])   
+        ax0.plot([0, df1.shape[0]], [1.0, 1.0], lw=1, color='gray', alpha=0.25)
+    except:
+        foutLog.write("\n*** Unable to create annual duration plot for %s " %cid )
+        print("*** Unable to create duration annual plot for %s " %cid)
+    return ax0
+
+def outputDailyDurationCurve(ax0, df, cid, foutLog, varName='NormDmnd', applyNormalization=False):
+    """ creates duration curve for entire year for one customer"""
+    
+    ax0.set_title('Daily')
+    ax0.set_xlim([0,24*4])
+    ax0.set_xticks(np.linspace(0, 24*4, num=5).tolist())
+    ax0.set_xticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
+    ax0.set_xlabel('Hour')
+    ax0.set_aspect('auto')
+    
+    for m in range(0,13,1):
+        try:
+            for d in range(0,31,1):
+                try:
+                    df0 = df.loc[ (df['datetime'].dt.month==m) & (df['datetime'].dt.day==d) ]
+                except:
+                    df0 = df.loc[ (df.index.month==m) & (df.index.day==d)]
+                    
+                if len(df0)>0:
+                    df1 = df0.sort_values(varName, ascending=False)
+                    if applyNormalization:
+                        dAvg = df1[varName].mean()
+                        df1[varName] = df1[varName].copy()/dAvg 
+                    ax0.step(np.arange(df1.shape[0]), (df1[varName]), 'steelblue', label='Normalized Demand [pu]', alpha=0.15)
+        except:
+            foutLog.write("\n*** Unable to create daily duration plot for %s " %cid )
+            print("*** Unable to create dailyduration plot for %s " %cid)
+    ax0.plot([0, df1.shape[0]], [1.0, 1.0], lw=1, color='gray', alpha=0.25)
+    return ax0
+
+def outputMonthlyDurationCurve(ax0, df, cid, foutLog, varName='NormDmnd', applyNormalization=False):
+    """ creates duration curve for entire year for one customer"""
+    
+    ax0.set_title('Monthly')
+    ax0.set_xlim([0,31*24*4])
+    ax0.set_xticks(np.linspace(0, 31*24*4, num=5).tolist())
+    ax0.set_xticklabels(np.linspace(0, 31*24, num=5, dtype=np.int16).tolist())
+    ax0.set_xlabel('Hour')
+    ax0.set_aspect('auto')
+    for m in range(0,13,1):
+        try:
+            try:
+                df0 = df.loc[ df['datetime'].dt.month==m]
+            except:
+                df0 = df.loc[ df.index.month==m]
+            df1 = df0.sort_values(varName, ascending=False)
+            if applyNormalization:
+                dAvg = df1[varName].mean()
+                df1[varName] = df1[varName].copy()/dAvg 
+            ax0.step(np.arange(df1.shape[0]), (df1[varName]), c='steelblue', label='Normalized Demand [pu]', alpha=0.5)
+        except:
+            foutLog.write("\n*** Unable to create monthly duration plot for %s " %cid )
+            print("*** Unable to create monthly duration plot for %s " %cid)
+    ax0.plot([0, df1.shape[0]], [1.0, 1.0], lw=1, color='gray', alpha=0.25)
+    return ax0
+
+
 def outputDurationCurve(pltPdf, df, fnamein, cid, foutLog):
     """ creates duration curve for entire year for one customer"""
     
@@ -147,6 +229,69 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory
+    
+    return
+
+
+def PlotDurationCurveSequence(dirin='./', fnamein='IntervalData.csv', 
+                 ignoreCIDs='', considerCIDs='',
+                 dirout='plots/', fnameout='DurationCurveSequence.pdf', 
+                 dirlog='./', fnameLog='PlotDurationCurveSequence.log',
+                  varName='NormDmnd',
+                 applyNormalization = False):
+    
+    """ Create pdf with one page per customer showing annual duration curve, with or without monthly segments """
+
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    # load data from file, find initial list of unique IDs. Update log file
+#    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
+    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName=['NormDmnd','DailyAverage', 'Demand'],usecols=[0,1,2,3,4], datetimeIndex=False)
+
+    # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
+    
+    # open pdf for figures
+    print('Opening plot file: %s' %(os.path.join(dirout, fnameout)))
+    foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
+    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
+
+    # iterate over UniqueIDs to create figure for each in the pdf
+    figN = 0
+    i = 1
+    for cID in UniqueIDs: 
+        print ('Processing %s (%d of %d)' %(cID, i, len(UniqueIDs)))
+        i += 1
+        df2 = df1[df1['CustomerID']==cID]
+        
+        fig, ax = plt.subplots(1,3, figsize=(8,6), sharey=True)
+        fig.suptitle(fnamein + "/" + cID) # This titles the figure    
+        plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+        ax1 = ax[0]
+        ax2 = ax[1]
+        ax3 = ax[2]
+        
+        ax1 = outputAnnualDurationCurve( ax1, df2, cID, foutLog, varName=varName, applyNormalization=applyNormalization)
+        ax2 = outputMonthlyDurationCurve( ax2, df2, cID, foutLog,  varName=varName, applyNormalization=applyNormalization)
+        ax3 = outputDailyDurationCurve( ax3, df2, cID, foutLog,  varName=varName,applyNormalization= applyNormalization)
+        
+        # save to pdf
+        pltPdf1.savefig() 
+        plt.close() 
+        
+    # Closing plot files
+    print("Closing plot files")
+    pltPdf1.close()
+    
+    foutLog.write('\nNumber of customer IDs for which figures were generated: %d\n' % figN)
+    print('Number of customer IDs for which figures were generated: ' + str( figN))
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
 

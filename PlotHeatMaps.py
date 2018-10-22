@@ -45,16 +45,16 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     ax0.set_ylabel('Hour')
     ax0.set_xlabel('Day of Year')
     ax0.set_xlim([0,365])
-    ax0.set_ylim([0,96])
-    ax0.set_yticks(np.linspace(0, 96, num=4).tolist())
-    ax0.set_yticklabels(np.linspace(0, 24, num=4, dtype=np.int16).tolist())
+    ax0.set_ylim([0,24*4])
+    ax0.set_yticks(np.linspace(0, 96, num=5).tolist())
+    ax0.set_yticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
     ax0.set_yticklabels(['0', '6', '12', '18', '24'])        
 
     cmin = 0.0
     ax1.set_ylabel('Demand')
     if weeklyBox:
         ax1.set_xlabel('Week')
-        ax1.set_title('Weekly box-plots')
+#        ax1.set_title('Weekly box-plots')
         ax1.set_xlim([0,52])
         ax1.set_xticks(np.arange(0, 52, step=5).tolist())
     else:
@@ -86,9 +86,8 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
             ax1.boxplot(weeklyData, manage_xticks = False)
         else:
             ax1.boxplot(df3.values, manage_xticks = False)
-            
         ax1.set_ylim([0,cmax]) 
-        ax0.set_aspect('auto')
+#        ax0.set_aspect('auto')
         ax1.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0,ax1])
         
@@ -133,7 +132,7 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
 
     i = 1
     figN = 0
-    for cID in UniqueIDs:
+    for cID in list(set(UniqueIDs)):
         print ('Processing %s (%d of %d) ' %(cID, i, len(UniqueIDs)))
         i += 1
         successFlag = outputLoadHeatmap(pltPdf1, df1,  fnamein+'/'+cID, cID, foutLog, weeklyBox=weeklyBox)

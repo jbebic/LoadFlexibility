@@ -54,12 +54,10 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     ax1.set_ylabel('Demand')
     if weeklyBox:
         ax1.set_xlabel('Week')
-#        ax1.set_title('Weekly box-plots')
         ax1.set_xlim([0,52])
         ax1.set_xticks(np.arange(0, 52, step=5).tolist())
     else:
         ax1.set_xlabel('Day')
-#        ax1.set_title('Daily box-plots')
         ax1.set_xlim([0,365])
         ax1.set_xticks(np.arange(0, 365, step=50).tolist())
     
@@ -130,9 +128,10 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
     foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout)))
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
 
+
     i = 1
     figN = 0
-    for cID in list(set(UniqueIDs)):
+    for cID in sorted(list(set(UniqueIDs))):
         print ('Processing %s (%d of %d) ' %(cID, i, len(UniqueIDs)))
         i += 1
         successFlag = outputLoadHeatmap(pltPdf1, df1,  fnamein+'/'+cID, cID, foutLog, weeklyBox=weeklyBox)

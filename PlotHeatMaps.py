@@ -30,7 +30,6 @@ codeVersion = '1.3'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
-
 #%% Function Definitions
 def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     """ creates an annual heatmap with daily bar charts for a single customer"""
@@ -41,7 +40,6 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
     fig.suptitle(title) # This titles the figure
     plt.subplots_adjust(wspace=0.3,hspace=0.3 )   
     
-    ax0.set_title('Load [pu]') 
     ax0.set_ylabel('Hour')
     ax0.set_xlabel('Day of Year')
     ax0.set_xlim([0,365])
@@ -85,7 +83,7 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True):
         else:
             ax1.boxplot(df3.values, manage_xticks = False)
         ax1.set_ylim([0,cmax]) 
-#        ax0.set_aspect('auto')
+        ax0.set_aspect('auto')
         ax1.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0,ax1])
         

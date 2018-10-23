@@ -51,8 +51,10 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
             dataTypes[temp] = "float"
     else:
         columnNames = ['CustomerID', 'datetimestr', varName]
-        dataTypes[varName] = "float"
+        dataTypes[varName] ="float"
     
+    
+#    print(usecols)
     useColIndex = []
     useColNames = []
     temp = 0
@@ -60,8 +62,10 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
         useColIndex.append(temp)
         useColNames.append( columnNames[usecols.index(temp)])
         temp+=1
-    
         
+#    print(useColIndex)
+#    print(useColNames)
+#    print(dataTypes)
     # Output information to log file
     print("Reading input file " + fnamein)
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
@@ -70,6 +74,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
                       usecols = useColIndex, 
                       names=useColNames, 
                       dtype=dataTypes) # add dtype conversions
+    print(df1.head())
 
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')

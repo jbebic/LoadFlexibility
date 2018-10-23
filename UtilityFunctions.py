@@ -61,7 +61,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     # load data from file, find initial list of unique IDs. Update log file
-    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
+    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog,varName='Demand', usecols=[2,0,1])
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
 #    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
     

@@ -43,21 +43,34 @@ def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLo
 def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], datetimeIndex=True): # Capture start time of code execution and open log file    
     """ Retrieves data from specified folder and csv file, where format is [CustomerID, datetime, varName] """
 
+    dataTypes = {"CustomerID": "str", "datetimestr": "str"}
     if isinstance(varName, list):
         columnNames = ['CustomerID', 'datetimestr']
         for temp in varName:
             columnNames.append(temp)
+            dataTypes[temp] = "float"
     else:
         columnNames = ['CustomerID', 'datetimestr', varName]
+        dataTypes[varName] = "float"
+    
+    useColIndex = []
+    useColNames = []
+    temp = 0
+    for i in range(0, len(usecols),1):
+        useColIndex.append(temp)
+        useColNames.append( columnNames[usecols.index(temp)])
+        temp+=1
+    
         
     # Output information to log file
     print("Reading input file " + fnamein)
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
     df1 = pd.read_csv(os.path.join(dirin,fnamein), 
                       header = 0, 
-                      usecols = usecols, 
-                      names=columnNames) # add dtype conversions
-    
+                      usecols = useColIndex, 
+                      names=useColNames, 
+                      dtype=dataTypes) # add dtype conversions
+
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
     df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
@@ -74,7 +87,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
         foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
 
     UniqueIDs = df1['CustomerID'].unique().tolist()
-
+    
     return df1, UniqueIDs, foutLog
 
 
@@ -181,9 +194,7 @@ def assignDayType(df, datetimeIndex=True):
             df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'  
             
     else:
-        
-        print('...Writing day type to dataframe')
-        
+                
         df['DayType'] = 'wd' # weekday
         df.at[df['datetime'].dt.dayofweek >= 5, 'DayType'] = 'we' # weekend
         

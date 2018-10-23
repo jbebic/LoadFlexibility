@@ -88,7 +88,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     foutKeys.write('CustomerID, AnonymizedID\n')
     aids = [] # an empty list of anonymized customer ids
     i = 1 # sequential CID number being processed
-    for cid in uniqueCIDs[:2]:
+    for cid in uniqueCIDs:
         print('Anonymizing: %s (%d of %d)' %(str(cid), i, uniqueCIDs.size))
         foutLog.write('Anonymizing: %s\n' %(str(cid)))
         i += 1

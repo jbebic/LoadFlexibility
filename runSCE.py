@@ -9,7 +9,7 @@ from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeC
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
-from PlotHeatMaps import PlotHeatMaps
+from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
 
 if True:
@@ -88,9 +88,20 @@ if False:
     
 #%% Plot Billing
 if False:
-    PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', #considerCIDs = 'purelyBundledCustomers.csv',#fnamebase + '.g1c.csv',
+    PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
                    dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
                    dirlog='plots/')
+    
+#%% Plot Billing Heatmaps
+if True:
+    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
+                   considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
+                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1L.Heatmaps.pdf',
+                   dirlog='plots/')     
+    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
+                   considerCIDs =   'g1o.'+ fnamebase + '.Energy.A.groups.csv',
+                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1o.Heatmaps.pdf',
+                   dirlog='plots/') 
     
 #%% Grouping
 if False: # by energy component of bill

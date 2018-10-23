@@ -60,13 +60,9 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
     # load data from file, find initial list of unique IDs. Update log file
-    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog,varName='Demand', usecols=[2,0,1])
-    # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
-#    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
-    
-    
-    
+    df1 = pd.read_csv(os.path.join(dirin,fnamein))
     foutKeys = open(os.path.join(dirout, fnameKeys), 'w')
 #
 #    #%% Output header information to log file
@@ -92,7 +88,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     foutKeys.write('CustomerID, AnonymizedID\n')
     aids = [] # an empty list of anonymized customer ids
     i = 1 # sequential CID number being processed
-    for cid in uniqueCIDs:
+    for cid in uniqueCIDs[:2]:
         print('Anonymizing: %s (%d of %d)' %(str(cid), i, uniqueCIDs.size))
         foutLog.write('Anonymizing: %s\n' %(str(cid)))
         i += 1

@@ -438,99 +438,49 @@ def SplitToGroups(ngroups,
     
     return
 
-def AssignRatePeriods(df, rate, datetimeIndex=False, addRate=False):
+def AssignRatePeriods(df, rate):
     
-    df['DayType'] = ''
-    df['RatePeriod'] = np.nan
-    df = assignDayType(df, datetimeIndex=datetimeIndex)
+    df = assignDayType(df, datetimeIndex=False)
+#    rate = df2.copy()
+#    rate = rate.set_index('RatePeriod')    
     
-    
-    if datetimeIndex:
-        # initialize default rates for "AllOtherHours"
-        for r in rate['RatePeriod']:
-            if rate['AllOtherHours'][r]:
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-                else:
-                    months = (rate[ 'MonthStop'][r] > df.index.month) | (df.index.month >= rate['MonthStart'][r])
-                
-                df.at[months, 'RatePeriod'] = r  
-                if addRate:
-                    df.at[months, 'EnergyCost'] = rate['EnergyCost'][r]  
-                
-        # assign other rate periods
-        for r in rate['RatePeriod']:
+    # initialize default rates for "AllOtherHours"
+    for r in rate['RatePeriod']:
+        if rate['AllOtherHours'][r]:
+            # relevent months of the year
+            if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
+            else:
+                months = (rate[ 'MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate['MonthStart'][r])
+            df.at[months, 'RatePeriod'] = r  
             
-            if not(rate['AllOtherHours'][r]):
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-                else:
-                    months = (rate['MonthStop'][r] > df.index.month) | (df.index.month >= rate[ 'MonthStart'][r])
-                
-                # relevent days of the year
-                if rate['WeekDaysOnly'][r]:
-                    days = (df['DayType'] == 'wd')
-                else:
-                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
-                
-                # relevent hours of the year
-                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
-                    hours = (rate['HourStart'][r] <= df.index.hour) & (df.index.hour < rate[ 'HourStop'][r])
-                else:
-                    hours = (rate['HourStop'][r] > df.index.hour) | (df.index.hour >= rate['HourStart'][r]) 
-                
-                df.at[ hours & days & months, 'RatePeriod'] = r
-                if addRate:
-                    df.at[ hours & days & months, 'EnergyCost'] = rate['EnergyCost'][r]    
-                    
-    else:
-        # initialize default rates for "AllOtherHours"
-        for r in rate['RatePeriod']:
-            if rate['AllOtherHours'][r]:
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
-                else:
-                    months = (rate[ 'MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate['MonthStart'][r])
-                
-                df.at[months, 'RatePeriod'] = r  
-                if addRate:
-                    df.at[months, 'RatePeriod'] = rate['EnergyCost'][r]  
-                
-        # assign other rate periods
-        for r in rate['RatePeriod']:
+    # assign other rate periods
+    for r in rate['RatePeriod']:
+        
+        if not(rate['AllOtherHours'][r]):
             
-            if not(rate['AllOtherHours'][r]):
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
-                else:
-                    months = (rate['MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate[ 'MonthStart'][r])
-                
-                # relevent days of the year
-                if rate['WeekDaysOnly'][r]:
-                    days = (df['DayType'] == 'wd')
-                else:
-                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
-                
-                # relevent hours of the year
-                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
-                    hours = (rate['HourStart'][r] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < rate[ 'HourStop'][r])
-                else:
-                    hours = (rate['HourStop'][r] > df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate['HourStart'][r]) 
-                
-                df.at[ hours & days & months, 'RatePeriod'] = r
-                if addRate:
-                    df.at[ hours & days & months, 'RatePeriod'] = rate['EnergyCost'][r]    
-                
+            # relevent months of the year
+            if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
+            else:
+                months = (rate['MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate[ 'MonthStart'][r])
+            
+            # relevent days of the year
+            if rate['WeekDaysOnly'][r]:
+                days = (df['DayType'] == 'wd')
+            else:
+                days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
+            
+            # relevent hours of the year
+            if rate[ 'HourStop'][r] > rate['HourStart'][r]:
+                hours = (rate['HourStart'][r] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < rate[ 'HourStop'][r])
+            else:
+                hours = (rate['HourStop'][r] > df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate['HourStart'][r]) 
+            
+            df.at[ hours & days & months, 'RatePeriod'] = r
+        
+    
     return df  
-
 
 def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
                      dirrate  = './', ratein='TOU-GS3-B.csv',

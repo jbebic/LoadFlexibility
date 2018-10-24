@@ -145,14 +145,13 @@ def outputBillingHeatmap(pltPdf, df1,  title, cid, foutLog):
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
         cmax = np.ceil( df3.max().max() * 4 ) / 4
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap= 'inferno',
+                                              cmap='viridis',  
                                               origin='lower', 
                                               vmin = cmin, 
-                                              vmax = cmax)
+                                              vmax = 12)
         
         ax0.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax0,ax1])
-        
+        fig.colorbar(im0, ax=[ax0])  
         
         df4 = df2.pivot(index='hour', columns='day', values="EnergyCharge") 
         cmax = np.ceil( df4.max().max() * 4 ) / 4
@@ -163,7 +162,7 @@ def outputBillingHeatmap(pltPdf, df1,  title, cid, foutLog):
                                               vmax = cmax)
         
         ax1.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax1,ax0])        
+        fig.colorbar(im0, ax=[ax1])        
         pltPdf.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
         successFlag = True

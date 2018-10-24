@@ -69,27 +69,45 @@ def plotDailyDeltaEnergy(ax0, df, lw=1, c='b', ls='-'):
     return ax0, np.max(y)
 
 
-def plotDailyDeltaLoad(ax0, df, lw=1, c='b', ls='-'):
+def plotDailyDeltaLoad(ax0, df, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=False):
     
     """ adds specific day's power & energy deltas to axis """
     df = df.sort_values(by='datetime', ascending=True)
-    ax0.set_ylabel('Delta in Loads')
+    ax0.set_ylabel('Delta in Loads [pu]')
     ax0.set_xlabel('Hour of the Day [h]')
     ax0.set_xlim([0,df.shape[0]])
+    
+    ix = np.max(df.loc[df['NormDmnd']<0].index)
+    L = len( df.loc[ix:])
+    
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
-    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    y = [yy for yy in range(-40, 41,1)]
+    y = [yy/2 for yy in range(-80, 81,1)]
     ax0.set_yticks(y)  
     ax0.xaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)    
-    ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5) 
-#    y = np.cumsum(df['NormDmnd'])/4
-#    y = y - np.min(y)
-    ax0.fill_between(np.arange(df.shape[0]), 0,  df['NormDmnd'],  label='Load [pu]')      
-#    ax0.plot(np.arange(df.shape[0]),   df['NormDmnd'],  label='Load [pu]')      
-#    
+    ax0.yaxis.grid(which="major", color='#cbcbcb', linestyle='-', linewidth=0.5)
+                   
+    if shiftFlag:
+        X = [x-L/4 for x in range(0, 28,4)]
+        x2 = []
+        for x in X:
+            if x>24:  
+                x2.append( str(int(x-24)) )
+            elif x<0:
+                x2.append( str(int(24+x)) )
+            else:
+                x2.append( str(int(x)  )) 
+        ax0.set_xticklabels(x2)  
+        ax0.plot(np.arange(df.shape[0]),   np.roll(df['NormDmnd'],L),  label='Load [pu]')      
+    else:
+        ax0.set_xticklabels([str(x) for x in range(0, 28,4)])          
+        if fillFlag:
+            ax0.fill_between(np.arange(df.shape[0]), 0,  df['NormDmnd'],  label='Load [pu]')   
+        else:
+            ax0.plot(np.arange(df.shape[0]),   df['NormDmnd'],  label='Load [pu]')      
+    
+    ax0.plot([0 , df.shape[0] ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
+    
     return ax0, np.max(y)
-
-
 
 def plotDailyRate(ax0, df, lw=1, c='b', ls='-'):
     
@@ -127,7 +145,6 @@ def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     y = np.asarray(shiftedEnergy)/np.asarray(dailyEnergy)*100
     yMax = np.ceil(np.max(y))
     ax2.hist(y,bins='auto', color='purple', lw=0, alpha=0.5)   
-#    ax2.hist(shiftedEnergy,bins='auto', color='purple', lw=0)   
     ax2.set_xlabel('Shiftable Energy [% of Daily Energy]')
     ax2.set_ylabel('Number of Days')
     ax2.set_xlim([0,yMax])  
@@ -135,7 +152,6 @@ def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     ax2.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
                    
     return ax2
-
 
 def formatShiftedEnergy(ax0):
     
@@ -164,24 +180,27 @@ def plotDeltaDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     """ adds specific day's duration curve to axis """
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_xlabel('Duration [h]')
-    x = [x for x in range(0,int(df.shape[0])+int(df.shape[0]/(24/4)), int(df.shape[0]/(24/4)))]
+    x = [x for x in range(-int(df.shape[0]),int(df.shape[0])+int(df.shape[0]/(24/4)), int(df.shape[0]/(24/4)))]
     ax0.set_xticks(x)
-    ax0.set_xticklabels([str(x) for x in range(0, 28,4)])  
-    ax0.set_xlim([0,  int(df.shape[0]*24/24) ])   
-       
+    ax0.set_xticklabels([str(np.abs(x)) for x in range(-24, 28,4)])  
+    ax0.set_xlim([-int(df.shape[0]*16/24),  int(df.shape[0]*16/24) ])   
+                          
     df1 = df.copy()
     charge = df1.loc[df1['NormDmnd']>0]
     discharge = df1.loc[df1['NormDmnd']<0]      
     
-    charge = charge.sort_values('NormDmnd', ascending=False)
-    discharge = discharge.sort_values('NormDmnd', ascending=True)
+    charge = charge.sort_values('NormDmnd', ascending=True)
+    discharge = discharge.sort_values('NormDmnd', ascending=False)
     
-    ax0.step(np.arange(charge.shape[0]), charge['NormDmnd'] * 4.0 ,  ls, lw=lw, c=c, alpha=a)
-    ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'] * 4.0,  ls, lw=lw, c=c, alpha=a)
+    ax0.step(-1.*np.arange(charge.shape[0]), charge['NormDmnd']  ,  ls, lw=lw, c=c, alpha=a)
+    ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'] ,  ls, lw=lw, c=c, alpha=a)
     
-    ymax = np.max([ np.max(abs(charge['NormDmnd'])) * 4.0 , np.max(abs(discharge['NormDmnd'])) * 4.0 ])
+    ymax = np.max([ np.max(abs(charge['NormDmnd'])) , np.max(abs(discharge['NormDmnd']))  ])
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+                   
+    ax0.plot([0 , 0 ], [-1.0, 1.0], lw=1, color='gray', alpha=1.0)
+    ax0.plot([-int(df.shape[0]*16/24),  int(df.shape[0]*16/24) ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
     
     return ax0, ymax
 
@@ -548,7 +567,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, norma
         
         # plot histogram
         ax3 = plotHistogram(ax3, dailyEnergy, shiftedEnergy)             
-        ax3.set_xlim([0.0, yMaxH ])        
+        ax3.set_ylim([0.0, yMaxH ])        
         ax3.set_xlabel('Shiftable Energy [% of Daily]')
         
         ax1.set_xlabel('Shiftable Energy [MWh]')
@@ -707,8 +726,8 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # load time-series data for leaders & others
-    df1, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd')
-    df2, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd')
+    df1, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd',usecols=[0,1,2])
+    df2, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd',usecols=[0,1,2])
 
     # assign season & day type
     print('reading TOU rates...')
@@ -808,8 +827,8 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # load time-series data for leaders & others
-    df1raw, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd')
-    df2raw, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd')
+    df1raw, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd',usecols=[0,1,2])
+    df2raw, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd',usecols=[0,1,2])
 
     # reading TOU rates
     rate = readTOURates(dirrate, ratein)
@@ -925,7 +944,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
     plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
-    fig.suptitle('Improved Alignment to Rate Structure')
+#    fig.suptitle('Improved Alignment to Rate Structure')
     ax0=ax[0]
     ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
     ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
@@ -998,7 +1017,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
     plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
-    fig.suptitle('Hypothetical Rate Structure')
+#    fig.suptitle('Hypothetical Rate Structure')
     ax0=ax[0]
     ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
     ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
@@ -1081,9 +1100,12 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     offpeak2.iloc[stopD[1]:] = False
     
     offpeakDeltas = np.flipud(charge2Deltas[:sum(offpeak2)])
+    print( len(offpeakDeltas), sum(offpeak2))
     if sum(offpeak2)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak2) - len(offpeakDeltas) 
+        print(missing)
         addZeros = [0 for x in range(0, missing,1)]
+        print(addZeros)
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
     arrangedOffPeakDeltas = np.asarray(list(np.flipud(copy(offpeakDeltas[::2]))) + copy(list(offpeakDeltasx[::2]) ))
@@ -1092,7 +1114,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
 
     offpeakDeltas = np.flipud(charge1Deltas[:sum(offpeak1)])
     if sum(offpeak1)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak1) - len(offpeakDeltas) 
         addZeros = [0 for x in range(0, missing,1)]
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
@@ -1106,7 +1128,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
     plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
-    fig.suptitle('Hypothetical Rate Structure')
+#    fig.suptitle('Hypothetical Rate Structure')
     ax0=ax[0]
     ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
     ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
@@ -1188,7 +1210,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     offpeak2.iloc[stopD[1]:] = False
     offpeakDeltas = np.flipud(charge2Deltas[:sum(offpeak2)])
     if np.sum(offpeak2)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak2) - len(offpeakDeltas) 
         addZeros = [0 for x in range(0, missing,1)]
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
@@ -1197,7 +1219,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
 
     offpeakDeltas = np.flipud(charge1Deltas[:sum(offpeak1)])
     if sum(offpeak1)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak1) - len(offpeakDeltas) 
         addZeros = [0 for x in range(0, missing,1)]
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
@@ -1211,7 +1233,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
     plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
-    fig.suptitle('Hypothetical Rate Structure')
+#    fig.suptitle('Hypothetical Rate Structure')
     ax0=ax[0]
     ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
     ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
@@ -1294,7 +1316,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     offpeakDeltas = np.flipud(charge2Deltas[:sum(offpeak2)])
     if sum(offpeak2)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak2) - len(offpeakDeltas) 
         addZeros = [0 for x in range(0, missing,1)]
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
@@ -1304,7 +1326,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
 
     offpeakDeltas = np.flipud(charge1Deltas[:sum(offpeak1)])
     if sum(offpeak1)> len(offpeakDeltas):
-        missing = sum(offpeak) - len(offpeakDeltas) 
+        missing = sum(offpeak1) - len(offpeakDeltas) 
         addZeros = [0 for x in range(0, missing,1)]
         offpeakDeltas = np.asarray( list(offpeakDeltas) + list(addZeros) )
     offpeakDeltasx = copy(offpeakDeltas[1:])
@@ -1318,7 +1340,7 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     
     fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
     plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
-    fig.suptitle('Hypothetical Rate Structure')
+#    fig.suptitle('Hypothetical Rate Structure')
     ax0=ax[0]
     ax0 = plotDailyLoads(ax0, df1x, c='b', lw=1, label='leaders')
     ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
@@ -1380,6 +1402,109 @@ def PlotFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
 #        
 #    pltPdf1.savefig() 
 #    plt.close()     
+    
+    
+  
+    
+    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
+    pltPdf1.close()
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    
+    return
+
+
+
+def PlotWalk2DurationCurve(dirin='./',fnamein='file.csv', fnameinL='leaders.csv', fnameino='others.csv', 
+                  dirout='./', fnameout='delta.csv',
+                  m = 6, d = 21,dirrate = './', ratein='SCE-TOU-GS3-B.csv',
+                  dirlog='./', fnameLog='PlotDeltaByDay.log'):
+    
+    """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
+    
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    # load time-series data for leaders & others
+    df1raw, UniqueIDs, foutLog = getData(dirin, fnameinL, foutLog, varName='NormDmnd',usecols=[0,1,2])
+    df2raw, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName='NormDmnd',usecols=[0,1,2])
+    dfDelta, UniqueIDsGroup, foutLog = getData(dirin, fnamein, foutLog, varName=[ 'NormDmnd', 'Leaders', 'Others'], usecols=[0,1,3, 4, 5])
+    
+    # reading TOU rates
+    rate = readTOURates(dirrate, ratein)
+
+    # assign season & day type
+    df1 = AssignRatePeriods(df1raw, rate, addRate=True, datetimeIndex=True)
+    df2 = AssignRatePeriods(df2raw, rate, addRate=True, datetimeIndex=True)
+    
+    month = df1.index.month
+    day = df1.index.day
+    
+    # find this day in the data
+    relevant = (month==m) & (day==d)
+    df2 = df2[relevant]
+    df1 = df1[relevant]
+    
+    # calculate delta
+    df3 = df2.copy()
+    df3['NormDmnd'] = df1['NormDmnd'] - df2['NormDmnd']
+    df3['Others'] = df3['NormDmnd']
+    # open pdf for figures
+    print("Opening plot files")
+    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
+    
+    # find max y limits
+    ymax = np.ceil(np.max([ df1['NormDmnd'].max() *2  , df2['NormDmnd'].max()*2  ])) / 2 +0.5
+
+    # find min / max for delta figure
+    ymaxDelta = 1.0
+    y = np.cumsum(df3['NormDmnd'])/4
+    y = y - np.min(y)
+    ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
+    ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
+    
+    # iterate over each month of the year
+    print('Plotting daily loads & deltas for %s' %(date(2016, m,1).strftime('%B')))
+    
+    # initialize figure
+    fig, ax = plt.subplots(nrows=2, ncols=3,figsize=(8,6),sharex=False, sharey=True)
+    plt.subplots_adjust(wspace=0.4,hspace=0.4 )    
+#    fig.suptitle('Raw Data')
+    
+    # plot loads of leaders & others 
+#    ax0=ax[0]
+#    ax0 = plotDailyLoads(ax0, df1, c='b', lw=1, label='leaders')
+#    ax0 = plotDailyLoads(ax0, df2, c='k', lw=1, label='others')
+#    ax0.set_ylim([0.0,ymax])
+#    ax0.legend()
+    
+    # plot delta between leaders & others 
+    ax1=ax[0,0]
+    ax1,temp = plotDailyDeltaLoad(ax1, df3, fillFlag=False, lw=3)
+    ax1.set_ylim([-1,1])
+    
+    ax11=ax[0,1]
+    ax11,temp = plotDailyDeltaLoad(ax11, df3, fillFlag=False, shiftFlag=True, lw=3)
+    ax11.set_ylim([-1,1])
+    
+    ax2=ax[0,2]
+#    ax2,temp = plotDailyDeltaEnergy(ax2, df3)
+#    ax2.set_ylim([0,ymaxDelta])
+    
+    ax2, ymax = plotDeltaDuration(ax2, df3, c='steelblue', a=1.0, lw=1.5) 
+    ax2.set_ylabel('Delta in Load [pu]]')
+#    ax2.set_ylim([-40 , 40 ])            
+    
+#    ax3=ax[2]
+#    ax3,temp = plotDailyRate(ax3, df3)
+#    ax3.set_ylim([0.025,0.15])
+    
+    pltPdf1.savefig() 
+    plt.close()  
     
     
   

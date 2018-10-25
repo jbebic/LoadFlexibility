@@ -726,11 +726,8 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     df2, UniqueIDs, foutLog = getData(dirin, fnameino, foutLog, varName=['NormDmnd'],usecols=[0,1,2])
 
     # assign season & day type
-    print('reading TOU rates...')
-    rate = readTOURates(dirrate, ratein)
-
-    df1 = AssignRatePeriods(df1, rate, addRate=True, datetimeIndex=True)
-    df2 = AssignRatePeriods(df2, rate, addRate=True, datetimeIndex=True)
+    df1 = assignDayType(df1, datetimeIndex=True)
+    df2 = assignDayType(df2, datetimeIndex=True)
     
     month = df1.index.month
     day = df1.index.day

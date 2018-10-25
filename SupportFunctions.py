@@ -53,19 +53,15 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
         columnNames = ['CustomerID', 'datetimestr', varName]
         dataTypes[varName] ="float"
     
-    
-#    print(usecols)
     useColIndex = []
     useColNames = []
-    temp = 0
-    for i in range(0, len(usecols),1):
+    for temp in range(0, np.max(usecols)+1,1):
         useColIndex.append(temp)
-        useColNames.append( columnNames[usecols.index(temp)])
-        temp+=1
+        if temp in usecols:
+            useColNames.append( columnNames[usecols.index(temp)])
+        else:
+            useColNames.append( 'var' + str(temp))
         
-#    print(useColIndex)
-#    print(useColNames)
-#    print(dataTypes)
     # Output information to log file
     print("Reading input file " + fnamein)
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
@@ -74,10 +70,12 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
                       usecols = useColIndex, 
                       names=useColNames, 
                       dtype=dataTypes) # add dtype conversions
-    print(df1.head())
 
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
-    df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+    try:
+        df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+    except:
+        pass
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     
     # if selected, set the datetime as the index and sort

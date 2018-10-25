@@ -334,7 +334,7 @@ def annualDurationSummaryPage(pltPdf1, df1, fnamein, normalized=False):
                 ax2, ymax = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.1) 
                 yMaxP = np.max([yMaxP , ymax])
         ax2.set_ylabel('Shiftable Load [%]')
-        ax2.set_ylim([-40 , 40 ])        
+        ax2.set_ylim([-100 , 100 ])        
     
     # save to pdf
     pltPdf1.savefig() 
@@ -383,7 +383,7 @@ def monthlyDurationSummaryPages(pltPdf1, df1, fnamein, yMaxD, normalized=False):
                 ax2, ymax1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='gray', a=0.2)
             else:
                 ax2, ymax1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.5)
-        ax2.set_ylim([-40,40])
+        ax2.set_ylim([-100,100])
         ax2.set_ylabel('Shiftable Load [%]')
         
         # save figure to pdf

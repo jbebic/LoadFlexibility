@@ -397,8 +397,14 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
     offset = np.asarray([ 0.0 for x in range(0, len(df),1) ])
     for cid in list(set(df['CustomerID'])):
         df0 = df[(df['CustomerID']==cid) ]
-        springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
-        fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
+        try:
+            springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
+        except:
+            springIndex =  df0[0].index
+        try:
+            fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
+        except:
+            fallIndex = df0[:].index
         offset[springIndex:fallIndex] = 1.0
                 
 #    if datetimeIndex:

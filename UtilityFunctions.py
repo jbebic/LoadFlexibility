@@ -26,7 +26,7 @@ from SupportFunctions import getData, logTime, createLog, assignDayType, findUni
 
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
-codeVersion = '1.4'
+codeVersion = '1.5'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
@@ -44,12 +44,6 @@ def readTOURates(dirin, ratein):
     
     data = df2.to_dict('series')
     
-#    f = open(os.path.join(dirin,ratein))
-#    reader = csv.DictReader(f) 
-#    data = []
-#    for row in reader:
-#        data.append(row)
-    
     return data
 
 def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
@@ -64,19 +58,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     # load data from file, find initial list of unique IDs. Update log file
     df1 = pd.read_csv(os.path.join(dirin,fnamein))
     foutKeys = open(os.path.join(dirout, fnameKeys), 'w')
-#
-#    #%% Output header information to log file
-#    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-#    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-#    foutLog.write('%s\n' %(codeCopyright))
-#    foutLog.write('%s\n' %(codeAuthors))
-#    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
 
-#    #%% Output file information to log file
-#    print('Reading: %s' %os.path.join(dirin,fnamein))
-#    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-
-#    df1 = pd.read_csv(os.path.join(dirin,fnamein))
     foutLog.write('Read %d records\n' %df1.shape[0])
     df1['aCID'] = ''
 
@@ -117,23 +99,11 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
 def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.csv',
            dirout='./', # fnameout derived from customer IDs
            dirlog='./', fnameLog='ExportLoadFiles.log',):
-    #%% Version and copyright info to record on the log file
-    codeName = 'ExportLoadFiles.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
+    
+    
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
-
-    #%% Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
-    # Output file information to log file
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     print('Reading: %s' %os.path.join(dirin,explist))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,explist))
@@ -182,17 +152,12 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
            tzinput = 'America/Los_Angeles',
            OutputFormat = 'SCE',
            VectorProcessTimeRecords = True):
-    #%% Version and copyright info to record on the log file
-    codeName = 'FixDST.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
+    
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
-#%% Prep DST transition times dataframe
+    # Prep DST transition times dataframe
     tz = timezone(tzinput)
     tzTransTimes = tz._utc_transition_times
     tzTransInfo = tz._transition_info
@@ -201,13 +166,6 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     df2['year']=pd.DatetimeIndex(df2['DSTbeginsUTC']).year.values
     df2.set_index('year', inplace=True)
     
-    #%% Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
-
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
@@ -220,11 +178,8 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         print('Vector processing time records, this takes a while...')
         foutLog.write('Vector processing time records\n')
         dstr = df1['datetimestr'].str.split(':').str[0]
-        # print(dstr.head())
         hstr = df1['datetimestr'].str.split(':').str[1]
-        # print(tstr.head())
         mstr = df1['datetimestr'].str.split(':').str[2]
-        # sstr = df1['datetimestr'].str.split(':').str[3]
         temp = dstr + ' ' + hstr + ':' + mstr
         df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
         logTime(foutLog, '\nFinished processing time records: ', codeTstart)
@@ -241,11 +196,8 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         
         if not VectorProcessTimeRecords:
             dstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[0]
-            # print(dstr.head())
             hstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[1]
-            # print(tstr.head())
             mstr = df1[df1['CustomerID'] == cid]['datetimestr'].str.split(':').str[2]
-            # sstr = df1['datetimestr'].str.split(':').str[3]
             temp = dstr + ' ' + hstr + ':' + mstr
             df1.loc[(df1['CustomerID'] == cid), 'datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
 
@@ -261,7 +213,6 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         dst2 = df2['DSTendsUTC'][year]  +df2['tzinfoe'][year][0]
         
         dst1a = dst1 - pd.Timedelta(hours=1)
-        # dst2a = dst2 + pd.Timedelta(hours=1)
         dst2b = dst2 + pd.Timedelta(hours=2)
         if df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst1a)].empty:
             # There is a blank record at the start of DST, shift the records to the left
@@ -271,12 +222,12 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
                 ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
                 temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
                 df1.at[ix, 'datetime'] = temp
-            td = pd.Timedelta('15 min') # pd.Timedelta('30 min'), pd.Timedelta('45 min')
+            td = pd.Timedelta('15 min') 
             if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
                 ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
                 temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
                 df1.at[ix, 'datetime'] = temp
-            td = pd.Timedelta('30 min') # , pd.Timedelta('45 min')
+            td = pd.Timedelta('30 min') 
             if (df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].size > 1):
                 ix = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)].index[0]
                 temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
@@ -287,7 +238,6 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
                 temp = df1[(df1['CustomerID'] == cid) & (df1['datetime'] == dst2+td)]['datetime'].iloc[0] + pd.Timedelta(hours=1)
                 df1.at[ix, 'datetime'] = temp
             
-            # df1.at[:, 'datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').upper()
     df1['datetimestr'] = df1['datetime'].dt.strftime('%d%b%Y:%H:%M').str.upper()
             
     if OutputFormat == 'SCE':
@@ -300,7 +250,6 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         foutLog.write('Writing: %s in %s format\n' %(os.path.join(dirout,fnameout), OutputFormat))
         df1.set_index(['CustomerID', 'datetime'], inplace=True)
         df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
-        # df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
         df1.to_csv(os.path.join(dirout,fnameout), index=True, float_format='%.1f', date_format='%Y-%m-%d %H:%M', columns=['Demand'])
     else:
         print('\nUnrecognized output format, writing in %s in SCE format' %os.path.join(dirout,fnameout))
@@ -317,22 +266,10 @@ def ConvertFeather(dirin='./', fnamein='IntervalData.feather',
                    dirlog='./', fnameLog='ConvertFeather.log',
                    renameDict={},
                    writeOutput = False):
-    #%% Version and copyright info to record on the log file
-    codeName = 'ConvertFeather.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
+    
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
-    
-    #%% Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -368,22 +305,10 @@ def SplitToGroups(ngroups,
                   dirout='/testdata', foutbase='synthetic20', # 
                   dirlog='/testdata', fnameLog='SplitToGroups.log'):
     
-    #%% Version and copyright info to record on the log file
-    codeName = 'SplitToGroups.py'
-    codeVersion = '1.0'
-    codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-    codeAuthors = "Jovan Bebic GE Global Research\n"
-
+    
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
-    
-    #%% Output header information to log file
-    print('This is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # Output information to log file
     print("Reading input file")
@@ -438,97 +363,132 @@ def SplitToGroups(ngroups,
     
     return
 
-def AssignRatePeriods(df, rate, datetimeIndex=False, addRate=False):
+def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=False, addRate=False):
     
+    # initialize and then assign DayType & RatePeriod
     df['DayType'] = ''
     df['RatePeriod'] = np.nan
     df = assignDayType(df, datetimeIndex=datetimeIndex)
     
-    
     if datetimeIndex:
-        # initialize default rates for "AllOtherHours"
-        for r in rate['RatePeriod']:
-            if rate['AllOtherHours'][r]:
+        df['datetime'] = df.index.copy()
+        df = df.reset_index(drop=True)
+        
+    df = df.sort_values(by=['CustomerID', 'datetime'])
+    df = df.reset_index()
+    
+    # Daylight Savings Time Transition Dataframe
+    tz = timezone(tzinput)
+    tzTransTimes = tz._utc_transition_times
+    tzTransInfo = tz._transition_info
+    df2 = pd.DataFrame.from_dict({'DSTbeginsUTC':tzTransTimes[11:-2:2], 
+                                  'DSTendsUTC':tzTransTimes[12:-1:2],
+                                  'tzinfob':tzTransInfo[11:-2:2],  
+                                  'tzinfoe'   :tzTransInfo[12:-1:2]})
+    df2['year']=pd.DatetimeIndex(df2['DSTbeginsUTC']).year.values
+    df2.set_index('year', inplace=True)
+    year = df['datetime'].iloc[0].year
+    
+    dst1 = df2['DSTbeginsUTC'][year]+df2['tzinfob'][year][0]
+    dst2 = df2['DSTendsUTC'][year]  +df2['tzinfoe'][year][0]
+    
+    springForward = dst1 - pd.Timedelta(hours=1)
+    fallBack = dst2 + pd.Timedelta(hours=2)    
+    offset = np.asarray([ 0.0 for x in range(0, len(df),1) ])
+    for cid in list(set(df['CustomerID'])):
+        df0 = df[(df['CustomerID']==cid) ]
+        springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
+        fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
+        offset[springIndex:fallIndex] = 1.0
                 
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-                else:
-                    months = (rate[ 'MonthStop'][r] > df.index.month) | (df.index.month >= rate['MonthStart'][r])
-                
-                df.at[months, 'RatePeriod'] = r  
-                if addRate:
-                    df.at[months, 'EnergyCost'] = rate['EnergyCost'][r]  
-                
-        # assign other rate periods
-        for r in rate['RatePeriod']:
-
-            if not(rate['AllOtherHours'][r]):
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-                else:
-                    months = (rate['MonthStop'][r] > df.index.month) | (df.index.month >= rate[ 'MonthStart'][r])
-                
-                # relevent days of the year
-                if rate['WeekDaysOnly'][r]:
-                    days = (df['DayType'] == 'wd')
-                else:
-                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
-                
+#    if datetimeIndex:
+#        
+#        # initialize default rates for "AllOtherHours"
+#        for r in rate['RatePeriod']:
+#            if rate['AllOtherHours'][r]:
+#                
+#                # relevent months of the year
+#                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
+#                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
+#                else:
+#                    months = (rate[ 'MonthStop'][r] > df.index.month) | (df.index.month >= rate['MonthStart'][r])
+#                
+#                df.at[months, 'RatePeriod'] = r  
+#                if addRate:
+#                    df.at[months, 'EnergyCost'] = rate['EnergyCost'][r]  
+#                
+#        # assign other rate periods
+#        for r in rate['RatePeriod']:
+#
+#            if not(rate['AllOtherHours'][r]):
+#                
+#                # relevent months of the year
+#                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
+#                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
+#                else:
+#                    months = (rate['MonthStop'][r] > df.index.month) | (df.index.month >= rate[ 'MonthStart'][r])
+#                
+#                # relevent days of the year
+#                if rate['WeekDaysOnly'][r]:
+#                    days = (df['DayType'] == 'wd')
+#                else:
+#                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
+#            
+#                # relevent hours of the year
+#                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
+#                    hours = (rate['HourStart'][r] <= (df.index.hour+offset)) & ((df.index.hour+offset) < rate[ 'HourStop'][r])
+#                else:
+#                    hours = (rate['HourStop'][r] > (df.index.hour+offset)) | ((df.index.hour+offset) >= rate['HourStart'][r]) 
+#                
+#                df.at[ hours & days & months, 'RatePeriod'] = r
+#                if addRate:
+#                    df.at[ hours & days & months, 'EnergyCost'] = rate['EnergyCost'][r]    
+#             
+#    else:
+        
+    # initialize default rates for "AllOtherHours"
+    for r in rate['RatePeriod']:
+        if rate['AllOtherHours'][r]:
             
-                # relevent hours of the year
-                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
-                    hours = (rate['HourStart'][r] <= df.index.hour) & (df.index.hour < rate[ 'HourStop'][r])
-                else:
-                    hours = (rate['HourStop'][r] > df.index.hour) | (df.index.hour >= rate['HourStart'][r]) 
-                
-                df.at[ hours & days & months, 'RatePeriod'] = r
-                if addRate:
-                    df.at[ hours & days & months, 'EnergyCost'] = rate['EnergyCost'][r]    
-             
-    else:
-        # initialize default rates for "AllOtherHours"
-        for r in rate['RatePeriod']:
-            if rate['AllOtherHours'][r]:
-                
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
-                else:
-                    months = (rate[ 'MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate['MonthStart'][r])
-                
-                df.at[months, 'RatePeriod'] = r  
-                if addRate:
-                    df.at[months, 'RatePeriod'] = rate['EnergyCost'][r]  
-                
-        # assign other rate periods
-        for r in rate['RatePeriod']:            
+            # relevent months of the year
+            if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
+            else:
+                months = (rate[ 'MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate['MonthStart'][r])
             
-            if not(rate['AllOtherHours'][r]):
+            df.at[months, 'RatePeriod'] = r  
+            if addRate:
+                df.at[months, 'EnergyCost'] = rate['EnergyCost'][r]  
+            
+    # assign other rate periods
+    for r in rate['RatePeriod']:            
+        
+        if not(rate['AllOtherHours'][r]):
+            
+            # relevent months of the year
+            if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
+                months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
+            else:
+                months = (rate['MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate[ 'MonthStart'][r])
+            
+            # relevent days of the year
+            if rate['WeekDaysOnly'][r]:
+                days = (df['DayType'] == 'wd')
+            else:
+                days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
+            
+            # relevent hours of the year
+            if rate[ 'HourStop'][r] > rate['HourStart'][r]:
+                hours = (rate['HourStart'][r] <=( df['datetime'].dt.hour+offset)) & ((df['datetime'].dt.hour+offset) < rate[ 'HourStop'][r])
+            else:
+                hours = (rate['HourStop'][r] > (df['datetime'].dt.hour+offset)) | ((df['datetime'].dt.hour+offset) >= rate['HourStart'][r]) 
+            
+            df.at[ hours & days & months, 'RatePeriod'] = r
+            if addRate:
+                df.at[ hours & days & months,'EnergyCost'] = rate['EnergyCost'][r]    
                 
-                # relevent months of the year
-                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
-                    months = (rate['MonthStart'][r] <= df['datetime'].dt.month) & (df['datetime'].dt.month < rate['MonthStop'][r])
-                else:
-                    months = (rate['MonthStop'][r] > df['datetime'].dt.month) | (df['datetime'].dt.month >= rate[ 'MonthStart'][r])
-                
-                # relevent days of the year
-                if rate['WeekDaysOnly'][r]:
-                    days = (df['DayType'] == 'wd')
-                else:
-                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
-                
-                # relevent hours of the year
-                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
-                    hours = (rate['HourStart'][r] <= df['datetime'].dt.hour) & (df['datetime'].dt.hour < rate[ 'HourStop'][r])
-                else:
-                    hours = (rate['HourStop'][r] > df['datetime'].dt.hour) | (df['datetime'].dt.hour >= rate['HourStart'][r]) 
-                
-                df.at[ hours & days & months, 'RatePeriod'] = r
-                if addRate:
-                    df.at[ hours & days & months, 'RatePeriod'] = rate['EnergyCost'][r]    
+    if datetimeIndex:
+        df = df.set_index('datetime')
                 
     return df  
 
@@ -536,8 +496,11 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                      dirrate  = './', ratein='TOU-GS3-B.csv',
                      dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
-                     writeDataFile=False, writeSummaryFile=True, 
-                     demandUnit='Wh', writeRatePeriod=False):
+                     tzinput = 'America/Los_Angeles',
+                     demandUnit='Wh', 
+                     writeDataFile=False,
+                     writeSummaryFile=True,
+                     writeRatePeriod=False):
     
     # if no summary file output name is specified:
     if fnameoutsummary:
@@ -580,7 +543,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     rates = readTOURates(dirrate, ratein)
     
     print('Assigning rate periods...')
-    df3 = AssignRatePeriods(df1, rates)
+    df3 = AssignRatePeriods(df1, rates, tzinput)
 
     # merge data & rate period info
     df3['EnergyCharge'] = 0.0

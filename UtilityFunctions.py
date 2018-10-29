@@ -395,7 +395,6 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
     fallBack = dst2 + pd.Timedelta(hours=2)    
     offset = np.asarray([ 0.0 for x in range(0, len(df),1) ])
     for cid in list(set(df['CustomerID'])):
-        print(cid)
         df0 = df[(df['CustomerID']==cid) ]
         try:
             springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
@@ -405,11 +404,10 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
             fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
         except:
             fallIndex = df0.iat[len(df0)-1, 0]
-        print(springIndex, fallIndex)
         try:
-            offset[springIndex:fallIndex] = 1.0
+            offset[int(springIndex):int(fallIndex)] = 1.0
         except:
-            pass
+            print(cid, len(offset), springIndex, fallIndex)
         
     # initialize default rates for "AllOtherHours"
     for r in rate['RatePeriod']:

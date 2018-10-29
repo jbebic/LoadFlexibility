@@ -395,6 +395,7 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
     fallBack = dst2 + pd.Timedelta(hours=2)    
     offset = np.asarray([ 0.0 for x in range(0, len(df),1) ])
     for cid in list(set(df['CustomerID'])):
+        print(cid)
         df0 = df[(df['CustomerID']==cid) ]
         try:
             springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]

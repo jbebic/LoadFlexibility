@@ -404,7 +404,11 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
             fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
         except:
             fallIndex = df0.iat[len(df0)-1, 0]
-        offset[springIndex:fallIndex] = 1.0
+        print(springIndex, fallIndex)
+        try:
+            offset[springIndex:fallIndex] = 1.0
+        except:
+            pass
         
     # initialize default rates for "AllOtherHours"
     for r in rate['RatePeriod']:

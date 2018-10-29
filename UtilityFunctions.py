@@ -399,15 +399,16 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
         try:
             springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
         except:
-            springIndex =  df0.iat[0, 0]
+            springIndex = df0.index[0]
         try:
             fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
         except:
-            fallIndex = df0.iat[len(df0)-1, 0]
+            fallIndex = df0.index[len(df0)-1]
         try:
             offset[int(springIndex):int(fallIndex)] = 1.0
         except:
-            print(cid, len(offset), springIndex, fallIndex)
+            print('Unable to adjusted ' + cid + ' for DST')
+        
         
     # initialize default rates for "AllOtherHours"
     for r in rate['RatePeriod']:

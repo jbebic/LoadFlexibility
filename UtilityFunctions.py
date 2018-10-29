@@ -372,11 +372,10 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
     
     if datetimeIndex:
         df['datetime'] = df.index.copy()
-        df = df.reset_index(drop=True)
-        
+
     df = df.sort_values(by=['CustomerID', 'datetime'])
-    df = df.reset_index()
-    
+    df = df.reset_index(drop=True)
+        
     # Daylight Savings Time Transition Dataframe
     tz = timezone(tzinput)
     tzTransTimes = tz._utc_transition_times
@@ -400,58 +399,12 @@ def AssignRatePeriods(df, rate, tzinput = 'America/Los_Angeles', datetimeIndex=F
         try:
             springIndex = df0[ ( df0['datetime'].dt.month==springForward.month) &  (df0['datetime'].dt.day==springForward.day) & (df0['datetime'].dt.hour==springForward.hour) ].index[0]
         except:
-            print(df0)
-            springIndex =  df0[0].index
+            springIndex =  df0.iat[0, 0]
         try:
             fallIndex = df0 [(df0['datetime'].dt.month==fallBack.month) & (df0['datetime'].dt.day==fallBack.day) & (df0['datetime'].dt.hour==fallBack.hour) ].index[0]
         except:
-            fallIndex = df0[:].index
+            fallIndex = df0.iat[len(df0)-1, 0]
         offset[springIndex:fallIndex] = 1.0
-                
-#    if datetimeIndex:
-#        
-#        # initialize default rates for "AllOtherHours"
-#        for r in rate['RatePeriod']:
-#            if rate['AllOtherHours'][r]:
-#                
-#                # relevent months of the year
-#                if rate[ 'MonthStop'][r] > rate['MonthStart'][r]:
-#                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-#                else:
-#                    months = (rate[ 'MonthStop'][r] > df.index.month) | (df.index.month >= rate['MonthStart'][r])
-#                
-#                df.at[months, 'RatePeriod'] = r  
-#                if addRate:
-#                    df.at[months, 'EnergyCost'] = rate['EnergyCost'][r]  
-#                
-#        # assign other rate periods
-#        for r in rate['RatePeriod']:
-#
-#            if not(rate['AllOtherHours'][r]):
-#                
-#                # relevent months of the year
-#                if rate[ 'MonthStop'][r] > rate[ 'MonthStart'][r]:
-#                    months = (rate['MonthStart'][r] <= df.index.month) & (df.index.month < rate['MonthStop'][r])
-#                else:
-#                    months = (rate['MonthStop'][r] > df.index.month) | (df.index.month >= rate[ 'MonthStart'][r])
-#                
-#                # relevent days of the year
-#                if rate['WeekDaysOnly'][r]:
-#                    days = (df['DayType'] == 'wd')
-#                else:
-#                    days =  (df['DayType'] == 'wd') |  (df['DayType'] == 'we')  |  (df['DayType'] == 'o')  |  (df['DayType'] == 'h') 
-#            
-#                # relevent hours of the year
-#                if rate[ 'HourStop'][r] > rate['HourStart'][r]:
-#                    hours = (rate['HourStart'][r] <= (df.index.hour+offset)) & ((df.index.hour+offset) < rate[ 'HourStop'][r])
-#                else:
-#                    hours = (rate['HourStop'][r] > (df.index.hour+offset)) | ((df.index.hour+offset) >= rate['HourStart'][r]) 
-#                
-#                df.at[ hours & days & months, 'RatePeriod'] = r
-#                if addRate:
-#                    df.at[ hours & days & months, 'EnergyCost'] = rate['EnergyCost'][r]    
-#             
-#    else:
         
     # initialize default rates for "AllOtherHours"
     for r in rate['RatePeriod']:

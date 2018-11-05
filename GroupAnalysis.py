@@ -196,7 +196,9 @@ def plotDeltaDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     ymax = np.max([ np.max(abs(charge['NormDmnd'])) , np.max(abs(discharge['NormDmnd']))  ])    
     ax0.plot([0 , 0 ], [-1.0, 1.0], lw=1, color='gray', alpha=1.0)
-    ax0.plot([-int(df.shape[0]*16/24),  int(df.shape[0]*16/24) ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
+    ax0.plot([-int(df.shape[0]*16/24),  int(df.shape[0]*16/24) ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)  
+    ymaxC = np.max(charge['NormDmnd']) * 4.0
+    ymaxD = np.min(discharge['NormDmnd']) * 4.0
     
     return ax0, ymax
 
@@ -221,9 +223,6 @@ def plotDeltaDuration2(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     ax0.step(-1.*np.arange(charge.shape[0]), charge['NormDmnd']  ,  ls, lw=lw, c=c, alpha=a)
     ax0.step(np.arange(discharge.shape[0]), discharge['NormDmnd'] ,  ls, lw=lw, c=c, alpha=a)
-#    
-#    ax0.step(-1.*np.arange(charge.shape[0]),np.cumsum(charge['NormDmnd'] )/4/5 ,  ls, lw=lw, c='purple', alpha=a)
-#    ax0.step(np.arange(discharge.shape[0]), np.cumsum(discharge['NormDmnd']) /4/5,  ls, lw=lw, c='purple', alpha=a)
     
     ymax = np.max([ np.max(abs(charge['NormDmnd'])) , np.max(abs(discharge['NormDmnd']))  ])    
     ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [ 0.1,  0.1 ], "--", lw=1, color='gray', alpha=0.5)
@@ -251,13 +250,11 @@ def plotDeltaDuration2(ax0, df, lw=1, c='b', ls='-', a=1.0):
                x=(disCrossing+chargeCrossing)/2, y= 0.1,
                verticalalignment="bottom",horizontalalignment="center",
                fontsize=8, fontweight='bold'
-            )    
-    
+            ) 
     
 #    ax0.plot([0 , 0 ], [-5.0, 5.0], lw=1, color='gray', alpha=1.0)
-    
 #    ax0.plot([-int(df.shape[0]*24/24),  int(df.shape[0]*24/24) ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
-#    
+    
     return ax0, ymax
 
 
@@ -290,7 +287,6 @@ def plotDeltaDuration_v2(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     return ax0, ymax, ymaxC, ymaxD
 
-
 def plotDeltaDurationPercentage_v2(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
     """ adds specific day's duration curve to axis """
@@ -314,9 +310,10 @@ def plotDeltaDurationPercentage_v2(ax0, df, lw=1, c='b', ls='-', a=1.0):
     ymax = np.max([ np.max(abs(charge['NormDmnd']) /np.max(df1['Others']) *100 ), np.max(abs(discharge['NormDmnd'])/np.max(df1['Others']) *100)  ])
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-    
-    return ax0, ymax
+    ymaxC = np.max(charge['NormDmnd']) /np.max(df1['Others']) *100 
+    ymaxD = np.min(discharge['NormDmnd']) /np.max(df1['Others']) *100 
 
+    return ax0, ymax, ymaxC, ymaxD
 
 def plotLoadDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     
@@ -340,9 +337,6 @@ def plotLoadDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     
     return ax0, ymax, e
-
-
-
 
 def annualDurationSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     """ create page summary for specific month & add to pdf """
@@ -393,7 +387,7 @@ def annualDurationSummaryPage(pltPdf1, df1, fnamein, normalized=False):
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 pass
             else:
-                ax2, ymax = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.1) 
+                ax2, ymax, temp0, temp1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.1) 
                 yMaxP = np.max([yMaxP , ymax])
         ax2.set_ylabel('Shiftable Load [%]')
         ax2.set_ylim([-100 , 100 ])        
@@ -442,9 +436,9 @@ def monthlyDurationSummaryPages(pltPdf1, df1, fnamein, yMaxD, normalized=False):
         for d in days:
             relevant =  (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
-                ax2, ymax1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='gray', a=0.2)
+                ax2, ymax1, ymax2, ymax3 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='gray', a=0.2)
             else:
-                ax2, ymax1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.5)
+                ax2, ymax1, ymax2, ymax3 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.5)
         ax2.set_ylim([-100,100])
         ax2.set_ylabel('Shiftable Load [%]')
         
@@ -476,9 +470,10 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     yMax = 0
     yMaxD = 1.0
     yMaxP = 0.0
-    
     yMaxD_D = 0.0
     yMaxD_C = 0.0
+    yMaxP_D = 0.0
+    yMaxP_C = 0.0
     
     # iterate over each month
     dailyEnergy = []
@@ -525,10 +520,11 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 pass
             else:
-                ax2, ymax = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.1) 
+                ax2, ymax, ymaxC, ymaxD = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.1) 
         ax2.set_ylabel('Shiftable Load [%]')
         ax2.set_ylim([-100 ,100 ])            
-        
+        yMaxP_C = np.max([yMaxP_C , ymaxC]) 
+        yMaxP_D = np.min([yMaxP_D , ymaxD])
 #        # plot duration curve
 #        for d in days:
 #            relevant = (month==m) & (day==d)
@@ -550,8 +546,27 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False):
     yMaxH = xmax[1]
     
     formatShiftedEnergy(ax1)
+    ax0.text(s=str(round(yMaxD_C,2)) + ' MW',
+               x=-12*4, y=yMaxD_C,
+               verticalalignment="bottom",horizontalalignment="center",
+               fontsize=8#, fontweight='bold'
+            )
+    ax0.text(s=str(round(yMaxD_D,1)) + ' MW',
+               x=12*4, y=yMaxD_D,
+               verticalalignment="top",horizontalalignment="center",
+               fontsize=8#, fontweight='bold'
+            )
     
-    
+    ax2.text(s=str(round(yMaxP_C,1)) + '%',
+               x=-12*4, y=yMaxP_C,
+               verticalalignment="bottom",horizontalalignment="center",
+               fontsize=8#, fontweight='bold'
+            )
+    ax2.text(s=str(round(yMaxP_D,1)) + '%',
+               x=12*4, y=yMaxP_D,
+               verticalalignment="top",horizontalalignment="center",
+               fontsize=8#, fontweight='bold'
+            )   
     # save to pdf
     pltPdf1.savefig() 
     plt.close() 
@@ -608,9 +623,9 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, norma
         for d in days:
             relevant = (month==m) & (day==d)
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
-                ax2, ymax = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='gray', a=0.2) 
+                ax2, ymax, temp0, temp1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='gray', a=0.2) 
             else:
-                ax2, ymax = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.5) 
+                ax2, ymax, temp0, temp1 = plotDeltaDurationPercentage_v2(ax2, df1.loc[relevant], c='steelblue', a=0.5) 
         ax2.set_ylabel('Shiftable Load [%]')
         ax2.set_ylim([-100 , 100 ]) 
             
@@ -710,10 +725,10 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     foutLog.write("Creating annual figure" )
     print("Creating annual figure" )
     pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH, yMaxD_C, yMaxD_D = annualSummaryPage(pltPdf1, df1, fnamein, normalized)       
-    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,1) ) + 'MW')
-    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,1) ) + 'MW')
-    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,1) ) + 'MW')
-    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,1) ) + 'MW')
+    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
+    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
     
     
     # create monthly summaries of shifted energy & load duration

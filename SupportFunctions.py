@@ -26,21 +26,22 @@ def logTime(foutLog, logMsg, tbase):
     foutLog.write('Time delta since start: %.3f seconds \n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)))
     foutLog.write('Time delta since start: %.3f hours \n' %((codeTdelta.seconds+codeTdelta.microseconds/1.e6)/3600))
     
-def createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart): # Capture start time of code execution and open log file
+def createLog(codeName, functionName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart): # Capture start time of code execution and open log file
     """ creates log file and writes code version information """
     
     foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
     # Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('\nThis is: %s, Version: %s\n' %(codeName, codeVersion))
+    print('\nThis is: %s, Version: %s, Function: %s' %(codeName, codeVersion, functionName))
+    foutLog.write('\nThis is: %s, Version: %s, Function: %s\n' %(codeName, codeVersion, functionName))
     foutLog.write('%s\n' %(codeCopyright))
     foutLog.write('%s\n' %(codeAuthors))
     foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
 
     return foutLog
 
-def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], datetimeIndex=True): # Capture start time of code execution and open log file    
+def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], datetimeIndex=True): 
+    
     """ Retrieves data from specified folder and csv file, where format is [CustomerID, datetime, varName] """
 
     dataTypes = {"CustomerID": "str", "datetimestr": "str"}
@@ -69,7 +70,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
                       header = 0, 
                       usecols = useColIndex, 
                       names=useColNames, 
-                      dtype=dataTypes) # add dtype conversions
+                      dtype=dataTypes) 
 
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
     try:
@@ -77,6 +78,47 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
     except:
         pass
     df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+    
+    # if selected, set the datetime as the index and sort
+    if datetimeIndex:
+        df1.set_index(['datetime'], inplace=True)
+        df1.sort_index(inplace=True) # sort on datetime
+        
+        # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
+        foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
+        foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))
+        deltat = df1.index[-1]-df1.index[0]
+        foutLog.write('Expected number of interval records: %.1f\n' %(deltat.total_seconds()/(60*15)+1))
+
+    UniqueIDs = df1['CustomerID'].unique().tolist()
+    
+    return df1, UniqueIDs, foutLog
+
+
+def getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=True): 
+    
+    """ Retrieves data from specified folder and csv file using the column headings from that file """
+
+    # Output information to log file
+    print("Reading input file " + fnamein)
+    foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
+    
+    # read the csv file
+    df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0) 
+    
+    # output to log file
+    foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
+    
+    # read datetime
+    try:
+        df1['datetime'] = pd.to_datetime(df1['datetime'], format='%Y-%m-%d %H:%M')
+    except:
+        pass
+    try:
+        df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
+        df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+    except:
+        pass
     
     # if selected, set the datetime as the index and sort
     if datetimeIndex:
@@ -243,9 +285,62 @@ def assignDayType(df, datetimeIndex=True):
             
     return df
 
-def reduceDataFile(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='',
-                   dirout='./', fnameout='IntervalData.normalized.csv', 
-                   dirlog='./', fnameLog='reduceDataFile.log'):
-    
-    return
 
+def findMissingData(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
+                     dirout='./', fnameout='IgnoreList.csv', 
+                     dirlog='./', fnameLog='InitializeIgnoreList.log'):
+                    
+    """ creates ignoreCID file list of all customerIDs that are missing data """
+    
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    # read data & down-select to uniqueIDs
+    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='Demand', usecols=[0, 1, 2], datetimeIndex=False)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
+    df1.loc[df1['CustomerID'].isin(UniqueIDs)]
+    
+    # ititialize list of ignoreIDs:
+    if ignoreCIDs != '':
+        df9 = pd.read_csv(os.path.join(dirin,ignoreCIDs), 
+                              header = 0, 
+                              usecols = [0], 
+                              comment = '#',
+                              names=['CustomerID'],
+                              dtype={'CustomerID':np.str})
+        ignoreIDs = df9['CustomerID'].tolist()
+        ignoreIDs = [x.replace(" ", "") for x in ignoreIDs]
+    else:
+        ignoreIDs = []
+    
+    perHour = 4
+    
+    i = 1
+    print('Processing...')
+    for cid in UniqueIDs:
+        print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
+        i += 1           
+        df2 = df1[(df1['CustomerID']==cid)].copy()
+        Len = len( df2 )
+        try: 
+            perHour = len( df2[ (df2['datetime'].dt.month == 6) & (df2['datetime'].dt.day == 1) & (df2['datetime'].dt.hour == 6)] )
+        except:
+            pass
+        
+        if Len < 8760*perHour:
+            ignoreIDs.append(cid)
+            
+            foutLog.write('Ignoring ' + cid + ' due to ' + int(8760*perHour-Len) + ' missing data points \n')
+            print('Ignoring ' + cid + ' due to ' + int(8760*perHour-Len) + ' missing data points')            
+    
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+    print('Writing: %s' %os.path.join(dirout,fnameout))
+    ignoreDF = pd.DataFrame(ignoreIDs, columns=['CustomerID'])
+    ignoreDF.to_csv(os.path.join(dirout, fnameout), index=False)   
+        
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    foutLog.close()
+    print('Finished')
+    
+    return 

@@ -27,16 +27,12 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
                 dirlog='./', fnameLog='ReviewLoads.log',
                 InputFormat = 'ISO',
                 skipPlots = True):
-    # Capture start time of code execution and open log file
-    codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirlog, fnameLog), 'w')
     
-    #%% Output header information to log file
-    print('This is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, "DeltaLoads", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -105,16 +101,11 @@ def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consid
                    InputFormat = 'ISO', normalize=True,
                    skipPlots = True, normalizeBy='year'):
 
-    # Capture start time of code execution and open log file
+    # Capture start time of code execution
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirout, fnameLog), 'w')
     
-    #%% Output header information to log file
-    print('This is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    # open log file
+    foutLog = createLog(codeName, "NormalizeLoads", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -262,16 +253,11 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv',
     if dirconsider=='./':
         dirconsider = dirin  
     
-    # Capture start time of code execution and open log file
+    # Capture start time of code execution
     codeTstart = datetime.now()
-    foutLog = open(os.path.join(dirout, fnameLog), 'w')
     
-    #%% Output header information to log file
-    print('\nThis is: %s, Version: %s' %(codeName, codeVersion))
-    foutLog.write('This is: %s, Version: %s\n' %(codeName, codeVersion))
-    foutLog.write('%s\n' %(codeCopyright))
-    foutLog.write('%s\n' %(codeAuthors))
-    foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
+    # open log file
+    foutLog = createLog(codeName, "NormalizeGroup", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))

@@ -14,7 +14,6 @@ from datetime import datetime # time stamps
 from datetime import date
 from pytz import timezone
 import os # operating system interface
-#import csv
 import string
 import random
 import matplotlib.pyplot as plt # plotting 
@@ -30,8 +29,7 @@ codeVersion = '1.5'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
-# %% Function definitions
-
+#%% Function definitions
 def readTOURates(dirin, ratein):
     
     df2 = pd.read_csv(os.path.join(dirin,ratein),
@@ -46,6 +44,7 @@ def readTOURates(dirin, ratein):
     
     return data
 
+#%% Externally-Facing Function definitions
 def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv', 
            dirout='./', fnameout='IntervalData.csv', fnameKeys='IntervalData.lookup.csv',
            dirlog='./', fnameLog='AnonymizeCIDs.log',
@@ -474,7 +473,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, 'CalculateBilling', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # read data & down-select to uniqueIDs
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='Demand', usecols=[0, 1, 2], datetimeIndex=False)
@@ -588,10 +587,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     print('Finished')
     
     return 
-
-
 def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='',
-                     dirout='./', fnameout='groups.csv',
+                     dirout='./', fnamebase='naics',
                      dirplot='./',
                      dirlog='./', fnameLog='CalculateGroups.log',
                      energyPercentiles = [0, 25, 50, 75, 100], 
@@ -602,10 +599,10 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     
     if dirplot=='./':
         dirplot = dirout
-    
+            
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName,'CalculateGroups', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # Capture start time of code execution and open log file
     chargeColumnName = chargeType + "Charge"
@@ -755,14 +752,14 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             print("  " + str(int(len(Others[n]))) + " Others with a max share of " + str(int(maxShareO)) + "%")# 
             
             # write leaders to file
-            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
-            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "L." +fnameout))
-            pd.DataFrame(Leaders[n], columns=['CustomerID']).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "L." + fnameout), index=False) 
+            foutLog.write('\n  Writing: %s' %os.path.join(dirout,fnamebase + ".g" + str(int(n+1)) + "L.groupIDs.csv"))
+            print('  Writing: %s' %os.path.join(dirout,fnamebase + ".g" + str(int(n+1)) + "L.groupIDs.csv"))
+            pd.DataFrame(Leaders[n], columns=['CustomerID']).to_csv(os.path.join(dirout,fnamebase + ".g" + str(int(n+1)) + "L.groupIDs.csv"), index=False) 
             
             # write others to file
-            foutLog.write('\n  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "o." +fnameout))
-            print('  Writing: %s' %os.path.join(dirout,"g" + str(int(n+1)) + "o." +fnameout))
-            pd.DataFrame(Others[n], columns=['CustomerID']).to_csv(os.path.join(dirout,"g" + str(int(n+1)) + "o." + fnameout), index=False) 
+            foutLog.write('\n  Writing: %s' %os.path.join(dirout, fnamebase + ".g" + str(int(n+1)) + "o.groupIDs.csv"))
+            print('  Writing: %s' %os.path.join(dirout,fnamebase + ".g" + str(int(n+1)) + "o.groupIDs.csv"))
+            pd.DataFrame(Others[n], columns=['CustomerID']).to_csv(os.path.join(dirout,fnamebase + ".g" + str(int(n+1)) + "o.groupIDs.csv"), index=False) 
         
         else:
             
@@ -788,7 +785,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     if plotGroups:
         
         print("\nPlotting Energy Consumption vs Total Cost of Energy")
-        pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.csv', '.pdf')))
+        pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnamebase + ". groups.pdf"))
                 
         if len(UniqueIDs)<100:
             ew = 2
@@ -907,14 +904,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-        
-#        if chargeType=="Energy":
-#            for n in range(0,N+1,1):
-#                ax.plot([ qB[n], qB[n]], [ylim[0], ylim[1]], '-',lw=0.5, color=colorsV[n] )
-#        elif chargeType=="TotalDemand":
-#            for n in range(0,N+1,1):
-#                ax.plot([xlim[0], xlim[1]], [ qB[n], qB[n]],  '-',lw=0.5, color=colorsV[n] )
-                
+                        
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
         
@@ -926,8 +916,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         plt.close() # Closes fig to clean up memory       
         
         # save figures to pdf file
-        print('Writing: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))
-        foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnameout.replace('.csv', '.pdf')))
+        print('Writing: %s' %os.path.join(dirplot,fnamebase + ". groups.pdf"))
+        foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnamebase + ". groups.pdf"))
         pltPdf1.close()
         
     logTime(foutLog, '\n\nRunFinished at: ', codeTstart)

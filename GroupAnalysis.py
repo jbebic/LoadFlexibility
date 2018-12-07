@@ -13,6 +13,7 @@ import os # operating system interface
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 from copy import copy as copy
+import pylab
 
 #%% Importing supporting modules
 from SupportFunctions import getData, logTime, createLog,  assignDayType, getDataAndLabels
@@ -21,23 +22,77 @@ from NormalizeLoads import NormalizeGroup
 
 #%% Version and copyright info to record on the log file
 codeName = 'GroupAnalysis.py'
-codeVersion = '1.7'
+codeVersion = '1.8'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Irene Berry, GE Global Research\n"
 
 # %% Basic Function Definitions
 def deltaLoadsFunction(df1, df2):
+    """ take leader and other dateframes and calculate deltas into third dataframe """
+    #copy dataframe
     df3 = df2.copy()
-    df3['NormDelta'] = df1['NormDmnd'] - df2['NormDmnd']
-    df3['AbsDelta']  = df3['NormDelta'] * ( df2['DailyAverage']  )
-    df3['Leaders']   = df1['Demand'].copy()
-    df3['Others']    = df2['Demand'].copy()
-    df3['NormLeaders']   = df1['NormDmnd'].copy()
-    df3['NormOthers']    = df2['NormDmnd'].copy()    
+    # calculate normalized and absolute delta
+    df3['NormDelta']   = df1['NormDmnd'] - df2['NormDmnd']
+    df3['AbsDelta']    = df3['NormDelta'] * ( df2['DailyAverage']  )
+    # assign leaders & others to new dataframe
+    df3['Leaders']     = df1['Demand'].copy()
+    df3['Others']      = df2['Demand'].copy()
+    # assign leaders & others daily averages to new data frame
+    df3['DailyAvgLeaders']     = df1['DailyAverage'] .copy()
+    df3['DailyAvgOthers']      = df2['DailyAverage'] .copy()
+    # assign normalized leaders & others to new dataframe
+    df3['NormLeaders'] = df1['NormDmnd'].copy()
+    df3['NormOthers']  = df2['NormDmnd'].copy()
+    # return only the new dataframe
     return df3
+
+def findShiftingEvents(df0, threshold=0.1):
+    
+    # copy dataframe
+    df = df0.copy()
+    
+    # idendify modes
+    mode = np.asarray(['0' for x in range(0, len(df),1)])
+    charge = df['NormDelta']>threshold
+    mode[charge] = 'c' 
+    discharge = df['NormDelta']<-threshold
+    mode[discharge] = 'd' 
+    
+    gaps = np.where(mode=='0')[0]
+    for ig in range(0, len(gaps)):
+        v0 = [x for x in range(0, gaps[ig]) if not(x in gaps)]
+        v1 = [x for x in range(gaps[ig], len(mode)) if not(x in gaps)]
+        if len(v0)<1:
+            v0 = v1
+        if len(v1)<1:
+            v1 = v0
+        if len(v1)>0:
+            before = mode[ v0[-1] ]
+            after = mode[v1[0]]
+            if before==after:
+                mode[gaps[ig]]=before
+    
+    # identify transitions
+    transitions = np.where( (mode[:-1] != mode[1:]) & (mode[1:] == 'd'))
+    transitions = transitions[0]
+
+    # create cycle count vector
+    cycle = np.asarray([0 for x in range(0, len(charge))])
+    if len(transitions)>1:
+        for i in range(1, len(transitions),1):
+            thiscycle = mode[transitions[i-1]+1:transitions[i]]
+            if np.any( 'd' in thiscycle ) & np.any( 'c' in thiscycle ):
+                cycle[transitions[i-1]+1:transitions[i]] = i
+          
+    # assign to dataframe
+    df = df.assign(cycle=cycle)
+    df = df.assign(mode=mode)
+
+    return df
 
 #%% Add Individual Lines or Figures
 def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
+    
     """ adds specific day's load curve to axis """
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_ylabel('Normalized Load [pu]')
@@ -52,10 +107,11 @@ def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=2, c=c, label=label)
     return ax0
 
-def plotDailyDeltaLoad(ax0, df, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=False):
+def plotDailyDeltaLoad(ax0, df0, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=False):
     
     """ adds specific day's power & energy deltas to axis """
-    df = df.sort_values(by='datetime', ascending=True)
+    df = df0.copy()
+    df = df.sort_values(by='datetime', ascending=True)    
     ax0.set_ylabel('Delta in Loads [pu]')
     ax0.set_xlabel('Hour of the Day [h]')
     ax0.set_xlim([0,df.shape[0]])
@@ -85,11 +141,27 @@ def plotDailyDeltaLoad(ax0, df, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=Fa
         else:
             ax0.plot(np.arange(df.shape[0]),   df['NormDelta'],  label='Load [pu]')      
     ax0.plot([0 , df.shape[0] ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
+    
+    # print cycle number
+    ax0.plot(np.arange(df.shape[0]),   df['cycle'], lw=1.5, color='orangered',  label='#')    
+    
+#    # print cycle transitions
+#    for n in  list(set(df['cycle'])):
+#        x = []
+#        if n==0:
+#            if len(np.where(df['cycle']==1)[0])>0:
+#                x = np.where(df['cycle']==1)[0][-1]
+#        else:
+#            x = np.where(df['cycle']==n)[0][0]
+#        if x:
+#            ax0.plot([x,x], [0, 100], lw=1.5, color='orangered')
+            
     return ax0, np.max(y)
 
-def plotDailyDeltaEnergy(ax0, df, lw=1, c='b', ls='-'):
+def plotDailyDeltaEnergy(ax0, df0, lw=1, c='b', ls='-'):
     
     """ adds specific day's power & energy deltas to axis """    
+    df = df0.copy()
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_ylabel('Delta in Energy [puh]')
     ax0.set_xlabel('Hour of the Day [h]')
@@ -103,9 +175,17 @@ def plotDailyDeltaEnergy(ax0, df, lw=1, c='b', ls='-'):
     y = np.cumsum(df['NormDelta'])/4
     y = y - np.min(y)
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw*2, c='purple', label='Energy [pu-h]')
+    cycle = df['cycle'].values
+    transitions = np.where( (cycle[:-1] != cycle[1:]) )[0]
+
+    # print cycle transitions
+    for ix in transitions:
+        ax0.plot([ix,ix], [0, 100], lw=1.5, color='orangered')
+
     return ax0, np.max(y)
 
 def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
+    
     """ adds histogram of daily shifted energy """
     y = np.asarray(shiftedEnergy)/np.asarray(dailyEnergy)*100
     yMax = np.ceil(np.max(y))
@@ -114,13 +194,20 @@ def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     ax2.set_ylabel('Number of Days')
     ax2.set_xlim([0,yMax])  
     ax2.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
-    ax2.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+    ax2.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
     return ax2
 
-def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0, threshold=0.1,  addText=False, varType='Norm'):
+def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0,  addText=False, varType='Norm', threshold=0.1):
     
     """ adds specific day's duration curve to axis """
     
+    
+    cm = pylab.get_cmap('jet')
+    
+    # calculate # data points per hour
+    Ns = 4.0
+        
+    # switch between three options 
     if varType in ['Percentage', '%', 'Percent', 'percent', 'percentage']:
           varName='AbsDelta'
     elif varType in ['Norm', 'norm', 'pu']:
@@ -128,63 +215,200 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
     else:
         varName = 'AbsDelta'
         
+    # sort dataframe & extract charge / discharge vectors
+    Nevents = np.max(df['cycle'])
+    for n in range(0, Nevents+1,1):  
+        if Nevents>0 and n>0:
+            lineColor = cm(1.*n/Nevents)
+        else:
+            lineColor='steelblue'
+        df1 = df.loc[df['cycle']==n].copy()
+
+        charge = df1.loc[df1[varName]>0]
+        discharge = df1.loc[df1[varName]<0]    
+        charge = charge.sort_values(varName, ascending=True)
+        discharge = discharge.sort_values(varName, ascending=False)   
+        
+        # format x and y ticks and labels
+        x = [x for x in range(-int(df.shape[0]),int(df.shape[0])+int(df.shape[0]/(24/Ns)), int(df.shape[0]/(24/Ns)))]
+        ax0.set_xticks(x)
+        ax0.set_xticklabels([str(np.abs(x)) for x in range(-24, 28,int(Ns))])  
+        ax0.set_xlim([-int(df.shape[0]*20/24),  int(df.shape[0]*20/24) ])   
+        
+        if varType in ['Percentage', '%', 'Percent', 'percent', 'percentage']:
+            """ PERCENTAGE OF DAILY AVERAGE """
+            # plot charge & discharge
+            ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] /np.mean(df['DailyAvgOthers']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            ax0.step(np.arange(discharge.shape[0]), discharge[varName] /np.mean(df['DailyAvgOthers']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            # calculate min / max values
+            ymax = np.max([ np.max(abs(charge[varName]) /np.mean(df1['DailyAvgOthers']) *100 ), np.max(abs(discharge[varName])/np.mean(df['DailyAvgOthers']) *100)  ])
+            ymaxC = np.max(charge[varName]) /np.mean(df['DailyAvgOthers']) *100 
+            ymaxD = np.min(discharge[varName]) /np.mean(df['DailyAvgOthers']) *100 
+            # set y-label
+            ax0.set_ylabel('Shfitable Load [%]')
+            
+        elif varType in ['Norm', 'norm', 'pu']:
+            """ NORMALIZED DELTA """
+            # plot charge & discharge
+            ax0.step(-1.*np.arange(charge.shape[0]), charge[varName]  ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            ax0.step(np.arange(discharge.shape[0]), discharge[varName] ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            # calculate min / max values
+            ymax = np.max([ np.max(abs(charge[varName])) , np.max(abs(discharge[varName]))  ])    
+            ymaxC = np.max(charge[varName]) * Ns
+            ymaxD = np.min(discharge[varName]) * Ns
+            # set y-label
+            ax0.set_ylabel('Shfitable Load [pu]')
+            # plot horizontal lines at the threshold
+            ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold,  threshold ], "--", lw=1, color='gray', alpha=0.5)
+            ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold, -threshold],  "--",  lw=1, color='gray', alpha=0.5) 
+        
+        else:
+            """ ABSOLUTE DELTA of the OTHERS """
+            # plot charge & discharge
+            ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] * Ns ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            ax0.step(np.arange(discharge.shape[0]), discharge[varName]* Ns ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+            # calculate min / max values
+            ymax = np.max([ np.max(abs(charge[varName])) , np.max(abs(discharge[varName]))  ])  * Ns  
+            ymaxC = np.max(charge[varName]) * Ns
+            ymaxD = np.min(discharge[varName]) * Ns
+            # set y-label
+            ax0.set_ylabel('Shfitable Load [MW]')
+            # plot horizontal lines at the threshold
+            ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold*100*np.mean(df1['Others'])* Ns,  threshold*100*np.mean(df1['Others'])* 4.0 ]  , "--", lw=1, color='gray', alpha=0.5)
+            ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold*100*np.mean(df1['Others'])* Ns, -threshold*100*np.mean(df1['Others'])* 4.0] ,  "--",  lw=1, color='gray', alpha=0.5) 
+            
+        # add gridlines & x-label
+        ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+        ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
+        ax0.set_xlabel('Duration [h]')
+        
+#    if addText:
+#        
+#        # calculate variable crossing points
+#        chargeCrossing = -1 * len( charge[charge['NormDelta'] <threshold] )
+#        disCrossing = len( discharge[discharge['NormDelta'] >-threshold] )
+#        
+#        # calculate hours of charging and discharging beyond threshold
+#        chargeHours = len(charge[charge['NormDelta'] >threshold] ) / Ns
+#        dischargeHours =  len(discharge[discharge['NormDelta'] <-threshold] ) / Ns
+#        
+#        # plot verical lines at crossing points
+#        ax0.plot([chargeCrossing , chargeCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
+#        ax0.plot([disCrossing , disCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
+#        
+#        # add text label of CHARGE HOURS
+#        ax0.text(s=str(int(round(chargeHours,0))) + 'hr',
+#                   x=-1.*charge.shape[0], y= np.max(charge[varName] ),
+#                   verticalalignment="bottom",horizontalalignment="center",
+#                   fontsize=8, fontweight='bold')
+#        
+#        # add text label of DISCHARGE HOURS
+#        ax0.text(s=str(int(round(dischargeHours,0)) )+ 'hr',
+#                   x=discharge.shape[0], y= np.min(discharge[varName] ),
+#                   verticalalignment="top",horizontalalignment="center",
+#                   fontsize=8, fontweight='bold')
+#        
+#        # add text label of GAP HOURS
+#        ax0.text(s=str(int(round((disCrossing-chargeCrossing)/Ns,0)) )+ 'hr',
+#                   x=(disCrossing+chargeCrossing)/2, y= 0.1,
+#                   verticalalignment="bottom",horizontalalignment="center",
+#                   fontsize=8, fontweight='bold') 
+#    
+    return ax0, ymax, ymaxC, ymaxD
+
+def plotDeltaDurationX(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0, threshold=0.1,  addText=False, varType='Norm'):
+    
+    """ adds specific day's duration curve to axis """
+    
+    # calculate # data points per hour
+    Ns = 4.0
+    
+    # find shifting events
+    df = findShiftingEvents(df, threshold=threshold)
+    
+    # switch between three options 
+    if varType in ['Percentage', '%', 'Percent', 'percent', 'percentage']:
+          varName='AbsDelta'
+    elif varType in ['Norm', 'norm', 'pu']:
+        varName='NormDelta'
+    else:
+        varName = 'AbsDelta'
+        
+    # sort dataframe & extract charge / discharge vectors
     df = df.sort_values(by='datetime', ascending=True)
-    ax0.set_xlabel('Duration [h]')
-    x = [x for x in range(-int(df.shape[0]),int(df.shape[0])+int(df.shape[0]/(24/4)), int(df.shape[0]/(24/4)))]
-    ax0.set_xticks(x)
-    ax0.set_xticklabels([str(np.abs(x)) for x in range(-24, 28,4)])  
-    ax0.set_xlim([-int(df.shape[0]*20/24),  int(df.shape[0]*20/24) ])   
+    
     df1 = df.copy()
     charge = df1.loc[df1[varName]>0]
     discharge = df1.loc[df1[varName]<0]    
     charge = charge.sort_values(varName, ascending=True)
     discharge = discharge.sort_values(varName, ascending=False)   
     
+    # format x and y ticks and labels
+    x = [x for x in range(-int(df.shape[0]),int(df.shape[0])+int(df.shape[0]/(24/Ns)), int(df.shape[0]/(24/Ns)))]
+    ax0.set_xticks(x)
+    ax0.set_xticklabels([str(np.abs(x)) for x in range(-24, 28,int(Ns))])  
+    ax0.set_xlim([-int(df.shape[0]*20/24),  int(df.shape[0]*20/24) ])   
+    
     if varType in ['Percentage', '%', 'Percent', 'percent', 'percentage']:
-        
-        ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] /np.mean(df1['Others']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
-        ax0.step(np.arange(discharge.shape[0]), discharge[varName] /np.mean(df1['Others']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
-        ymax = np.max([ np.max(abs(charge[varName]) /np.mean(df1['Others']) *100 ), np.max(abs(discharge[varName])/np.mean(df1['Others']) *100)  ])
-        ymaxC = np.max(charge[varName]) /np.mean(df1['Others']) *100 
-        ymaxD = np.min(discharge[varName]) /np.mean(df1['Others']) *100 
+        """ PERCENTAGE OF DAILY AVERAGE """
+        # plot charge & discharge
+        ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] /np.mean(df1['DailyAvgOthers']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+        ax0.step(np.arange(discharge.shape[0]), discharge[varName] /np.mean(df1['DailyAvgOthers']) *100,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+        # calculate min / max values
+        ymax = np.max([ np.max(abs(charge[varName]) /np.mean(df1['DailyAvgOthers']) *100 ), np.max(abs(discharge[varName])/np.mean(df1['DailyAvgOthers']) *100)  ])
+        ymaxC = np.max(charge[varName]) /np.mean(df1['DailyAvgOthers']) *100 
+        ymaxD = np.min(discharge[varName]) /np.mean(df1['DailyAvgOthers']) *100 
+        # set y-label
         ax0.set_ylabel('Shfitable Load [%]')
         
     elif varType in ['Norm', 'norm', 'pu']:
-        
+        """ NORMALIZED DELTA """
+        # plot charge & discharge
         ax0.step(-1.*np.arange(charge.shape[0]), charge[varName]  ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
         ax0.step(np.arange(discharge.shape[0]), discharge[varName] ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+        # calculate min / max values
         ymax = np.max([ np.max(abs(charge[varName])) , np.max(abs(discharge[varName]))  ])    
-        ymaxC = np.max(charge[varName]) * 4.0
-        ymaxD = np.min(discharge[varName]) * 4.0
+        ymaxC = np.max(charge[varName]) * Ns
+        ymaxD = np.min(discharge[varName]) * Ns
+        # set y-label
         ax0.set_ylabel('Shfitable Load [pu]')
-
+        # plot horizontal lines at the threshold
         ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold,  threshold ], "--", lw=1, color='gray', alpha=0.5)
         ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold, -threshold],  "--",  lw=1, color='gray', alpha=0.5) 
     
     else:
-        
-        ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] * 4.0 ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
-        ax0.step(np.arange(discharge.shape[0]), discharge[varName]* 4.0 ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
-        ymax = np.max([ np.max(abs(charge[varName])) , np.max(abs(discharge[varName]))  ])  * 4.0  
-        ymaxC = np.max(charge[varName]) * 4.0
-        ymaxD = np.min(discharge[varName]) * 4.0
+        """ ABSOLUTE DELTA of the OTHERS """
+        # plot charge & discharge
+        ax0.step(-1.*np.arange(charge.shape[0]), charge[varName] * Ns ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+        ax0.step(np.arange(discharge.shape[0]), discharge[varName]* Ns ,  lineStyle, lw=lineWidth, c=lineColor, alpha=lineAlpha)
+        # calculate min / max values
+        ymax = np.max([ np.max(abs(charge[varName])) , np.max(abs(discharge[varName]))  ])  * Ns  
+        ymaxC = np.max(charge[varName]) * Ns
+        ymaxD = np.min(discharge[varName]) * Ns
+        # set y-label
         ax0.set_ylabel('Shfitable Load [MW]')
-
-        ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold*100*np.mean(df1['Others'])* 4.0,  threshold*100*np.mean(df1['Others'])* 4.0 ]  , "--", lw=1, color='gray', alpha=0.5)
-        ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold*100*np.mean(df1['Others'])* 4.0, -threshold*100*np.mean(df1['Others'])* 4.0] ,  "--",  lw=1, color='gray', alpha=0.5) 
+        # plot horizontal lines at the threshold
+        ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold*100*np.mean(df1['Others'])* Ns,  threshold*100*np.mean(df1['Others'])* 4.0 ]  , "--", lw=1, color='gray', alpha=0.5)
+        ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold*100*np.mean(df1['Others'])* Ns, -threshold*100*np.mean(df1['Others'])* 4.0] ,  "--",  lw=1, color='gray', alpha=0.5) 
         
-    # add gridlines
+    # add gridlines & x-label
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
-        
+    ax0.set_xlabel('Duration [h]')
+    
     if addText:
         
-        chargeCrossing = -1 * len( charge[charge[varName] <threshold] )
-        disCrossing = len( discharge[discharge[varName] >-threshold] )
-        chargeHours = len(charge[charge[varName] >threshold] ) /4
-        dischargeHours =  len(discharge[discharge[varName] <-threshold] ) /4
-        ax0.plot([chargeCrossing , chargeCrossing ], [-threshold*100, threshold*100], "--", lw=1, color='gray', alpha=0.5)
-        ax0.plot([disCrossing , disCrossing ], [-threshold*100, threshold*100], "--", lw=1, color='gray', alpha=0.5)
+        # calculate variable crossing points
+        chargeCrossing = -1 * len( charge[charge['NormDelta'] <threshold] )
+        disCrossing = len( discharge[discharge['NormDelta'] >-threshold] )
+        
+        # calculate hours of charging and discharging beyond threshold
+        chargeHours = len(charge[charge['NormDelta'] >threshold] ) / Ns
+        dischargeHours =  len(discharge[discharge['NormDelta'] <-threshold] ) / Ns
+        
+        # plot verical lines at crossing points
+        ax0.plot([chargeCrossing , chargeCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
+        ax0.plot([disCrossing , disCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
         
         # add text label of CHARGE HOURS
         ax0.text(s=str(int(round(chargeHours,0))) + 'hr',
@@ -199,7 +423,7 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
                    fontsize=8, fontweight='bold')
         
         # add text label of GAP HOURS
-        ax0.text(s=str(int(round((disCrossing-chargeCrossing)/4,0)) )+ 'hr',
+        ax0.text(s=str(int(round((disCrossing-chargeCrossing)/Ns,0)) )+ 'hr',
                    x=(disCrossing+chargeCrossing)/2, y= 0.1,
                    verticalalignment="bottom",horizontalalignment="center",
                    fontsize=8, fontweight='bold') 
@@ -207,6 +431,7 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
     return ax0, ymax, ymaxC, ymaxD
 
 def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
+    
     """ adds specific day's shifted energy to axis """
     df = df.sort_values(by='datetime', ascending=True)                  
     y = np.cumsum(df['NormDelta'])
@@ -217,6 +442,7 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     return ax0, np.max(y)
 
 def formatShiftedEnergy(ax0):
+    
     """ formats the axis on which shifted energy is plotted """
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
@@ -331,6 +557,7 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False, threshold=0.1):
     return pltPdf1, yMax, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D
 
 def monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized=False, threshold=0.1):
+    
     """ create page summary for specific month & add to pdf"""
     
     month = df1.index.month
@@ -424,7 +651,9 @@ def DeltaLoads(dirin='./', fnameinL='groups.csv',   fnameino='groups.csv',
     # write to file
     print('Writing output file: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDelta','AbsDelta', 'Leaders', 'Others'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
+    df3.to_csv( os.path.join(dirout,fnameout), 
+               columns=['CustomerID', 'datetime', 'NormDelta','AbsDelta', 'Leaders', 'Others',  'NormLeaders', 'NormOthers', 'DailyAvgLeaders', 'DailyAvgOthers'], 
+               float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
 
     # finish log with run time
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
@@ -432,9 +661,9 @@ def DeltaLoads(dirin='./', fnameinL='groups.csv',   fnameino='groups.csv',
     return
 
 def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
-                   dirrate = './', ratein='SCE-TOU-GS3-B.csv', 
-                  dirout='./', fnameout='delta.csv',
-                  dirlog='./', fnameLog='PlotDeltaByDay.log'):
+                  dirout='./', fnameout='delta.csv', 
+                  dirlog='./', fnameLog='PlotDeltaByDay.log', 
+                  threshold = 0.1,withDuration=True):
     
     """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
     
@@ -451,7 +680,6 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     # assign season & day type
     df1 = assignDayType(df1, datetimeIndex=True)
     df2 = assignDayType(df2, datetimeIndex=True)
-    
     month = df1.index.month
     day = df1.index.day
     
@@ -486,124 +714,44 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
             
             # find this day in the data
             relevant = (month==m) & (day==d)
+            df3x = findShiftingEvents(df3.loc[relevant], threshold=threshold)
             
             # initialize figure
-            fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
-            fig.suptitle( fnameinL + " / " +  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
-            plt.subplots_adjust(wspace=0.4,hspace=0.4 )  
+            if withDuration:
+                fig = plt.figure(figsize=(8,6))
+                plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+                ax0 = plt.subplot2grid((3, 2), (0, 0),   fig=fig)
+                ax1 = plt.subplot2grid((3, 2), (1, 0),  fig=fig)
+                ax2 = plt.subplot2grid((3, 2), (2, 0),   fig=fig)
+                ax3 = plt.subplot2grid((3, 2), (0, 1), rowspan=3, fig=fig)
+                fig.suptitle(  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
+            else:
+                fig, ax = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+                ax0=ax[0]
+                ax1=ax[1]
+                ax2=ax[2]
+                fig.suptitle( fnameinL + " / " +  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
+                plt.subplots_adjust(wspace=0.4,hspace=0.4 )  
             
             # plot loads of leaders & others 
-            ax0=ax[0]
             ax0 = plotDailyLoads(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
             ax0 = plotDailyLoads(ax0, df2.loc[relevant], c='k', lw=1, label='others')
             ax0.set_ylim([0.0,ymax])
             ax0.legend()
             
-            # plot delta between leaders & others 
-            ax1=ax[1]
-            ax1,temp = plotDailyDeltaLoad(ax1, df3.loc[relevant])
+            # plot delta between leaders & others - in POWER
+            ax1,temp = plotDailyDeltaLoad(ax1, df3x)
             ax1.set_ylim([-yLim,yLim])
             
-            ax2=ax[2]
-            ax2,temp = plotDailyDeltaEnergy(ax2, df3.loc[relevant])
-            ax2.set_ylim([0,ymaxDelta])
-
-            # add to pdf
-            pltPdf1.savefig() 
-            plt.close()   
-                
-    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
-    pltPdf1.close()
-
-    # finish log with run time
-    logTime(foutLog, '\nRunFinished at: ', codeTstart)
-    
-    return
-
-def PlotDeltaByDayWithDuration(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
-                   dirrate = './', ratein='SCE-TOU-GS3-B.csv', 
-                  dirout='./', fnameout='delta.csv',
-                  dirlog='./', fnameLog='PlotDeltaByDay.log', 
-                  threshold = 0.1):
-    
-    """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
-    
-    # Capture start time of code execution
-    codeTstart = datetime.now()
-    
-    # open log file
-    foutLog = createLog(codeName, "PlotDeltaByDayWithDuration", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-
-    # load time-series data for leaders & others
-    df1, UniqueIDs, foutLog = getDataAndLabels(dirin, fnameinL, foutLog, datetimeIndex=True)
-    df2, UniqueIDs, foutLog = getDataAndLabels(dirin, fnameino, foutLog, datetimeIndex=True)
-
-    # assign season & day type
-    df1 = assignDayType(df1, datetimeIndex=True)
-    df2 = assignDayType(df2, datetimeIndex=True)
-    month = df1.index.month
-    day = df1.index.day
-    
-    # calculate delta
-    df3 = deltaLoadsFunction(df1, df2)
-    
-    # open pdf for figures
-    print("Opening plot files")
-    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
-    
-    # find max y limits
-    ymax = np.ceil(np.max([ df1['NormDmnd'].max() *2  , df2['NormDmnd'].max()*2  ])) / 2
-    ymaxDelta = 1.0
-    yLim =  np.ceil(np.max([ df3['NormDelta'].max() *2  ,  abs(df3['NormDelta'].min() *2)    ])) / 2
-    for m in range(1, 13,1):
-        days = list(set(df1.loc[(month==m)].index.day))  
-        for d in days:
-            relevant = (month==m) & (day==d)
-            y = np.cumsum(df3.loc[relevant,'NormDelta'])/4
-            y = y - np.min(y)
-            ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
-    ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
-    
-    # iterate over each month of the year
-    print("Creating plots for")
-    for m in range(1, 13,1):
-        print('\t%s' %(date(2016, m,1).strftime('%B')))
-        
-        # iterate over each day of the month
-        days = list(set(df1.loc[(month==m)].index.day))  
-        for d in days:
-            
-            # find this day in the data
-            relevant = (month==m) & (day==d)
-            
-            # initialize figure
-            fig = plt.figure(figsize=(8,6))
-            plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
-            ax0 = plt.subplot2grid((3, 2), (0, 0),   fig=fig)
-            ax1 = plt.subplot2grid((3, 2), (1, 0),  fig=fig)
-            ax2 = plt.subplot2grid((3, 2), (2, 0),   fig=fig)
-            ax3 = plt.subplot2grid((3, 2), (0, 1), rowspan=3, fig=fig)
-            fig.suptitle(  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
-            
-            # plot loads of leaders & others 
-            ax0 = plotDailyLoads(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
-            ax0 = plotDailyLoads(ax0, df2.loc[relevant], c='k', lw=1, label='others')
-            ax0.set_ylim([0.0,ymax])
-            ax0.set_xlabel('')
-            
-            # plot delta between leaders & others 
-            ax1,temp = plotDailyDeltaLoad(ax1, df3.loc[relevant])
-            ax1.set_ylim([-yLim,yLim])
-            ax1.set_xlabel('')
-            
-            # plot shifted energy
-            ax2,temp = plotDailyDeltaEnergy(ax2, df3.loc[relevant])
+            # plot delta between leaders & others - in ENERGY
+            ax2,temp = plotDailyDeltaEnergy(ax2, df3x)
             ax2.set_ylim([0,ymaxDelta])
             
-            # plot duration curve
-            ax3, temp0, temp1, temp2 = plotDeltaDuration(ax3, df3.loc[relevant], addText=True, varType='pu', threshold=threshold)
-            ax3.set_ylim([-yLim, yLim])
-            
+            if withDuration:
+                # plot duration curve of the load DELTA
+                ax3, temp0, temp1, temp2 = plotDeltaDuration(ax3, df3x, addText=True, varType='pu', threshold=threshold)
+                ax3.set_ylim([-yLim, yLim])
+                    
             # add to pdf
             pltPdf1.savefig() 
             plt.close()   
@@ -631,7 +779,7 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     
     # load data from file, find initial list of unique IDs. Update log file    
     df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
-    
+
     # add season & day type
     df1 = assignDayType(df1)
 
@@ -667,27 +815,30 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
 
 def GroupAnalysisMaster(dirin='./', dirout='./', 
                         fnamebase='NAICS', fnamegroup = 'NAICS.groups.csv', 
-                        fnamein='IntervalData.csv',  N=4, threshold=0.1, demandUnit='Wh',
+                        fnamein='IntervalData.csv',  Ngroups=4, threshold=0.5, demandUnit='Wh',
                         dirlog='./', fnameLog='GroupAnalysisMaster.log',
-                        steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDay', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']):
+                        steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']):
 
     # Capture start time of code execution
     codeTstart = datetime.now()
     
     # open log file
-    foutLog = createLog(codeName, "GroupAnalysisMaster", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLogMaster = createLog(codeName, "GroupAnalysisMaster", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
                         
-    for n in range(1,N+1,1):  
-        foutLog.write('\n********************************************************')        
+    for n in range(1,Ngroups+1,1): 
+        
+        # write to log and print about the master loop
+        foutLogMaster.write('\n********************************************************')        
         print('\n********************************************************')
         codeTstartx = datetime.now()
-        foutLog.write('\nAnalyzing group #' + str(n) + ' : ' + str(datetime.now()-codeTstartx) )
+        foutLogMaster.write('\nAnalyzing group #' + str(n) + ' : ' + str(datetime.now()-codeTstartx) )
         print('\nAnalyzing group #' + str(n) + ' : ' + str(datetime.now()-codeTstartx) )
         groupL = 'g' + str(n) + 'L'
         groupo = 'g' + str(n) + 'o'
         fnameinL=fnamebase+ "." + groupL + ".normalized.csv"
         fnameino=fnamebase+ "." + groupo + ".normalized.csv"
         fnameout_raw  = fnamebase+".delta." + groupL + "-" + groupo 
+        
         
         if ('Normalize' in steps) or ('NormalizeGroup' in steps):
             # normalize leaders
@@ -696,8 +847,9 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
                            demandUnit=demandUnit,
                            dirout=dirout, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
                            dirlog=dirlog)                        
-            foutLog.write('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
+            foutLogMaster.write('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
+            
             
             # normalize others
             NormalizeGroup(dirin=dirin, fnamein=fnamein,groupName=groupo ,
@@ -705,7 +857,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
                            demandUnit=demandUnit,
                            dirout=dirout, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
                            dirlog=dirlog)           
-            foutLog.write('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
+            foutLogMaster.write('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
         
         
@@ -714,25 +866,30 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
             DeltaLoads(dirin=dirin, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        fnameout= fnameout_raw + ".csv" )    
-            foutLog.write('\n\tCalculated delta ' + groupL + '-' + groupo +' : ' + str(datetime.now()-codeTstartx) )
+            foutLogMaster.write('\n\tCalculated delta ' + groupL + '-' + groupo +' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tCalculated delta ' + groupL + '-' + groupo +' : ' + str(datetime.now()-codeTstartx) )
+        
         
         if ('PlotDeltaByDay' in steps) or ('DeltaByDay' in steps) or ('ByDay' in steps):
             # plot deltas between loads for each day
             PlotDeltaByDay(dirin=dirin, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
+                       threshold=threshold,withDuration=False,
                        fnameout= fnameout_raw + ".pdf")  
-            foutLog.write('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
+            foutLogMaster.write('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
+        
         
         if ('PlotDeltaByDayWithDuration' in steps) or ('DeltaByDayWithDuration' in steps) or ('ByDayWithDuration' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDayWithDuration(dirin=dirin, dirout=dirout, dirlog=dirlog,
+            PlotDeltaByDay(dirin=dirin, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
-                       threshold=threshold,
-                       fnameout= fnameout_raw + "_wDuration.pdf" )  
-            foutLog.write('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))
+                       threshold=threshold, withDuration=True,
+                       fnameout= fnameout_raw + "_wDuration.pdf" ,
+                       fnameLog='PlotDeltaByDayWithDuration.log',)  
+            foutLogMaster.write('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))
+        
         
         if ('PlotDeltaSummary' in steps) or ('DeltaSummary' in steps) or ('Summary' in steps):
             # plot annual & monthly summary of load flexibility 
@@ -740,12 +897,15 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
                        dirout=dirout, fnameout=fnameout_raw + '.Summary.pdf',
                        threshold=threshold,
                        dirlog=dirlog)
-            foutLog.write('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
+            foutLogMaster.write('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
+            
+        foutLogMaster.write('\nDone with group #' + str(n) + ' : ' + str(datetime.now()-codeTstartx) )
+        print('\nDone with group #' + str(n) + ' : ' + str(datetime.now()-codeTstartx) )
         
     # finish log with run time
-    logTime(foutLog, '\nRunFinished at: ', codeTstart)
-        
+    logTime(foutLogMaster, '\n\nAll groups finished at: ', codeTstart)
+    
     return 
 
 #%% Show the Process & Illustrative Examples
@@ -1354,6 +1514,103 @@ def ShowWalk2DurationCurve(dirin='./',fnamein='file.csv', fnameinL='leaders.csv'
     pltPdf1.close()
 
 #%% Unused / Old
+#def xPlotDeltaByDayWithDuration(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv', 
+#                  dirout='./', fnameout='delta.csv',
+#                  dirlog='./', fnameLog='PlotDeltaByDayWithDuration.log', 
+#                  threshold = 0.1):
+#    
+#    """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
+#    
+#    # Capture start time of code execution
+#    codeTstart = datetime.now()
+#    
+#    # open log file
+#    foutLog = createLog(codeName, "PlotDeltaByDayWithDuration", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+#
+#    # load time-series data for leaders & others
+#    df1, UniqueIDs, foutLog = getDataAndLabels(dirin, fnameinL, foutLog, datetimeIndex=True)
+#    df2, UniqueIDs, foutLog = getDataAndLabels(dirin, fnameino, foutLog, datetimeIndex=True)
+#
+#    # assign season & day type
+#    df1 = assignDayType(df1, datetimeIndex=True)
+#    df2 = assignDayType(df2, datetimeIndex=True)
+#    month = df1.index.month
+#    day = df1.index.day
+#    
+#    # calculate delta
+#    df3 = deltaLoadsFunction(df1, df2)
+#        
+#    # open pdf for figures
+#    print("Opening plot files")
+#    pltPdf1 = dpdf.PdfPages(os.path.join(dirout, fnameout))
+#    
+#    # find max y limits
+#    ymax = np.ceil(np.max([ df1['NormDmnd'].max() *2  , df2['NormDmnd'].max()*2  ])) / 2
+#    ymaxDelta = 1.0
+#    yLim =  np.ceil(np.max([ df3['NormDelta'].max() *2  ,  abs(df3['NormDelta'].min() *2)    ])) / 2
+#    for m in range(1, 13,1):
+#        days = list(set(df1.loc[(month==m)].index.day))  
+#        for d in days:
+#            relevant = (month==m) & (day==d)
+#            y = np.cumsum(df3.loc[relevant,'NormDelta'])/4
+#            y = y - np.min(y)
+#            ymaxDelta = np.max([ ymaxDelta, np.max(y) ])
+#    ymaxDelta = np.ceil( ymaxDelta * 2.0 ) / 2.0
+#    
+#    # iterate over each month of the year
+#    print("Creating plots for")
+#    for m in range(1, 13,1):
+#        print('\t%s' %(date(2016, m,1).strftime('%B')))
+#        
+#        # iterate over each day of the month
+#        days = list(set(df1.loc[(month==m)].index.day))  
+#        for d in days:
+#
+#            # find this day in the data
+#            relevant = (month==m) & (day==d)
+#            df3x = findShiftingEvents(df3.loc[relevant], threshold=threshold)
+#            
+#            # initialize figure
+#            fig = plt.figure(figsize=(8,6))
+#            plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+#            ax0 = plt.subplot2grid((3, 2), (0, 0),   fig=fig)
+#            ax1 = plt.subplot2grid((3, 2), (1, 0),  fig=fig)
+#            ax2 = plt.subplot2grid((3, 2), (2, 0),   fig=fig)
+#            ax3 = plt.subplot2grid((3, 2), (0, 1), rowspan=3, fig=fig)
+#            fig.suptitle(  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
+#            
+#            # plot loads of leaders & others 
+#            ax0 = plotDailyLoads(ax0, df1.loc[relevant], c='b', lw=1, label='leaders')
+#            ax0 = plotDailyLoads(ax0, df2.loc[relevant], c='k', lw=1, label='others')
+#            ax0.set_ylim([0.0,ymax])
+#            ax0.set_xlabel('')
+#            
+#            # plot delta between leaders & others - in POWER
+#            ax1,temp = plotDailyDeltaLoad(ax1, df3x)
+#            ax1.set_ylim([-yLim,yLim])
+#            ax1.set_xlabel('')
+#            
+#            # plot shifted energy: delta between leaders & others - in ENERGY
+#            ax2,temp = plotDailyDeltaEnergy(ax2, df3x)
+#            ax2.set_ylim([0,ymaxDelta])
+#            
+#            # plot duration curve of the load DELTA
+#            ax3, temp0, temp1, temp2 = plotDeltaDuration(ax3, df3x, addText=True, varType='pu', threshold=threshold)
+#            ax3.set_ylim([-yLim, yLim])
+#            
+#            # add to pdf
+#            pltPdf1.savefig() 
+#            plt.close()   
+#                
+#    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout)))
+#    pltPdf1.close()
+#
+#    # finish log with run time
+#    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+#    
+#    return    
+#    
+    
 #def plotLoadDuration(ax0, df, lw=1, c='b', ls='-', a=1.0):
 #    
 #    """ adds specific day's duration curve to axis """

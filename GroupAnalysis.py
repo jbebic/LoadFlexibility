@@ -854,7 +854,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
             
             # normalize others
             NormalizeGroup(dirin=dirin, fnamein=fnamein,groupName=groupo ,
-                           considerCIDs= fnamebase + "." + groupo + ".groupIDss.csv",
+                           considerCIDs= fnamebase + "." + groupo + ".groupIDs.csv",
                            demandUnit=demandUnit,
                            dirout=dirout, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
                            dirlog=dirlog)           

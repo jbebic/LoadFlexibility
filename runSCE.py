@@ -4,7 +4,7 @@ Created on Mon May 28 09:28:36 2018
 
 @author: jbebic
 """
-from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary
+from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary, GroupAnalysisMaster
 from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
@@ -38,7 +38,7 @@ if False:
                    writeOutput = True)
 
 #%% AnonymizeCIDs #CAREFULL when running this function - it overwrites existing CIDs completely and require to re-do all the steps.
-if True:
+if False:
     AnonymizeCIDs(dirin='private/', fnamein=fnamebase + '.csv', 
                   dirout='input/', fnameout=fnamebase + '.A.csv', fnameKeys=fnamebase + '.lookup.csv',
                   dirlog='private/', fnameLog='AnonymizeCIDs.log')#,IDlen=6)
@@ -93,7 +93,7 @@ if False:
                    dirlog='plots/')
     
 #%% Plot Billing Heatmaps
-if True:
+if False:
     PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
                    considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
                    dirout='plots/', fnameout=fnamebase + '.A.billing.g1L.Heatmaps.pdf',
@@ -121,7 +121,13 @@ if False: # by demand component of bill
                    plotGroups = True, chargeType='Demand', energyPercentiles = [10, 30, 50, 70, 90],
                    dirout='output/', fnameout=fnamebase + '.Demand.A.groups.csv',
                    dirlog='plots/', dirplot='plots/')   
-
+if True: # performs normalizing groups, delta between groups, plot delta by day, & plot delta summary (all in one function)
+    GroupAnalysisMaster(dirin_raw='input/',
+                        dirin_pro = 'output/',
+                        dirout='output/', dirlog='output/',
+                        fnamebase=fnamebase,
+                        fnamein=fnamebase+'.A.csv',
+                        Ngroups=2, threshold=0.5, demandUnit='Wh') 
 #%% Normalize profiles
 if False:
     for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o'] :

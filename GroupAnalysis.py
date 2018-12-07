@@ -813,7 +813,7 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
     
     return
 
-def GroupAnalysisMaster(dirin='./', dirout='./', 
+def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout='./', 
                         fnamebase='NAICS', fnamegroup = 'NAICS.groups.csv', 
                         fnamein='IntervalData.csv',  
                         Ngroups=4, threshold=0.5, demandUnit='Wh',
@@ -843,20 +843,20 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         
         if ('Normalize' in steps) or ('NormalizeGroup' in steps):
             # normalize leaders
-            NormalizeGroup(dirin=dirin, fnamein=fnamein, groupName=groupL,
+            NormalizeGroup(dirin=dirin_raw, fnamein=fnamein, groupName=groupL,
                            considerCIDs=fnamebase + "." + groupL+ ".groupIDs.csv",
                            demandUnit=demandUnit,
-                           dirout=dirout, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
+                           dirout=dirin_pro, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
                            dirlog=dirlog)                        
             foutLogMaster.write('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
             
             
             # normalize others
-            NormalizeGroup(dirin=dirin, fnamein=fnamein,groupName=groupo ,
+            NormalizeGroup(dirin=dirin_raw, fnamein=fnamein,groupName=groupo ,
                            considerCIDs= fnamebase + "." + groupo + ".groupIDs.csv",
                            demandUnit=demandUnit,
-                           dirout=dirout, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
+                           dirout=dirin_pro, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
                            dirlog=dirlog)           
             foutLogMaster.write('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
@@ -864,7 +864,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         
         if ('Delta' in steps) or ('DeltaLoads' in steps):
             # calculate detla between normalized loads
-            DeltaLoads(dirin=dirin, dirout=dirout, dirlog=dirlog,
+            DeltaLoads(dirin=dirin_pro, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        fnameout= fnameout_raw + ".csv" )    
             foutLogMaster.write('\n\tCalculated delta ' + groupL + '-' + groupo +' : ' + str(datetime.now()-codeTstartx) )
@@ -873,7 +873,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         
         if ('PlotDeltaByDay' in steps) or ('DeltaByDay' in steps) or ('ByDay' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirin, dirout=dirout, dirlog=dirlog,
+            PlotDeltaByDay(dirin=dirin_pro, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        threshold=threshold,withDuration=False,
                        fnameout= fnameout_raw + ".pdf")  
@@ -883,7 +883,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         
         if ('PlotDeltaByDayWithDuration' in steps) or ('DeltaByDayWithDuration' in steps) or ('ByDayWithDuration' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirin, dirout=dirout, dirlog=dirlog,
+            PlotDeltaByDay(dirin=dirin_pro, dirout=dirout, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        threshold=threshold, withDuration=True,
                        fnameout= fnameout_raw + "_wDuration.pdf" ,
@@ -894,7 +894,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         
         if ('PlotDeltaSummary' in steps) or ('DeltaSummary' in steps) or ('Summary' in steps):
             # plot annual & monthly summary of load flexibility 
-            PlotDeltaSummary(dirin=dirin, fnamein=fnameout_raw  + ".csv",
+            PlotDeltaSummary(dirin=dirin_pro, fnamein=fnameout_raw  + ".csv",
                        dirout=dirout, fnameout=fnameout_raw + '.Summary.pdf',
                        threshold=threshold,
                        dirlog=dirlog)

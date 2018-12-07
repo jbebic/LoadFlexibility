@@ -6,12 +6,19 @@ Created on Mon May 28 09:28:36 2018
 """
 from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
-from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
+from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves, PlotDurationCurveSequence
 from NormalizeLoads import ReviewLoads, NormalizeLoads, NormalizeGroup
-from PlotHeatMaps import PlotHeatMaps
-from GroupAnalysis import DeltaLoads,  PlotDeltaByDay, PlotDeltaSummary
+from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
+from GroupAnalysis import GroupAnalysisMaster, DeltaLoads,  PlotDeltaByDay, PlotDeltaSummary,  ShowWalk2DurationCurve, ShowFlexibilityOptions
+from SupportFunctions import findMissingData
 
 fnamebase = 'synthetic10'
+
+initialize = False # create data, anonymize,  normalize
+calculate = False # plot heatmaps & calculate billing
+group = False# create groups
+analyze = False # analyze
+plot = False # plot duration plots
 
 #%% Create profiles
 if False:
@@ -31,7 +38,7 @@ if False:
 
 #%% AnonymizeCIDs
 if False:
-    AnonymizeCIDs(dirin='testdata/', fnamein='two_grocers_DST.csv', 
+    AnonymizeCIDs(dirin='testdata/', fnamein=fnamebase+'.csv',
                   dirout='testdata/', fnameout='two_grocers_DST.anonymized.csv', fnameKeys='two_grocers_DST.lookup.csv',
                   dirlog='testdata/', fnameLog='AnonymizeCIDs.log',
                   IDlen=6)
@@ -67,12 +74,6 @@ if False:
                    InputFormat='SCE', 
                    normalizeBy='year', normalize=False)    
     
-#%% Export Load Files
-if False:
-    ExportLoadFiles(dirin='testdata/', fnamein=fnamebase+'.csv', 
-                    explist=fnamebase+'.export.csv',
-                    dirout='testdata/', 
-                   dirlog='testdata/')
     
 #%% Calculate Billing
 if False:
@@ -80,71 +81,81 @@ if False:
                      dirout='testdata/', fnameout=fnamebase+'.billing.csv',
                      fnameoutsummary ='summary.' + fnamebase + '.billing.csv',
                      dirlog='testdata/',
-                     demandUnit='Wh',dirrate='tou_data/',ratein='SCE-TOU-GS2-B.csv',
-                     writeDataFile=False,
+                     demandUnit='Wh',dirrate='tou_data/',ratein='SCE-TOU-PA-2-B.csv',
+                     writeDataFile=True,
                      writeSummaryFile=True)   
     
+#%% Plot heatmaps
+if False:    
+    PlotHeatMapOfBilling(dirin='testdata/', fnamein=fnamebase+'.billing.csv', # considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
+                 dirout='testdata/', fnameout=fnamebase+'.HeatMaps.BillingNew.pdf',
+                 dirlog='testdata/')    
+    
+if False:
+    findMissingData(dirin='testdata/', fnamein=fnamebase+'.csv',
+                dirout='testdata/',fnameout=fnamebase + '.List.MissingData.csv', 
+                dirlog='testdata/', fnameLog='InitializeIgnoreList.log')
+    
 #%% Group Customers
-if True:
-    CalculateGroups(dirin='testdata/', # outputs
+if False:
+    CalculateGroups(dirin='testdata/', 
                     fnamein="summary." + fnamebase+'.billing.csv',
-                     dirout='testdata/', # outputs
-                     dirplot='testdata/', # plots
-                     fnameout=fnamebase+'.groups.csv',
-                     dirlog='testdata/', 
-                     energyPercentiles = [5, 27.5,  50, 72.5, 95], 
-                     chargeType="Total")
+                    dirout='testdata/', 
+                    dirplot='testdata/', 
+                    fnamebase=fnamebase,
+                    dirlog='testdata/',  
+                    ignore1515=True,
+                    energyPercentiles = [5, 27.5,  50, 72.5, 95], 
+                    chargeType="Total")
     
     
-#%% Normalize & Plot
+#%% RUN ENTIRE GROUP ANALYSIS
+if True:
+     GroupAnalysisMaster(dirin='testdata/', dirout='testdata/', dirlog='testdata/',
+                     fnamebase=fnamebase,
+                     fnamein=fnamebase+'.4billing.csv',
+                     Ngroups=1, threshold=0.5, demandUnit='kWh'),
+#                     steps=[ 'Summary'])
+##                     steps=['DeltaByDayWithDuration']) #
+##                    steps=['NormalizeGroup', 'DeltaLoads', 'DeltaByDay', 'DeltaByDayWithDuration', 'Summary'])
+     
 if False:
-    for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o']:
-        NormalizeGroup(dirin='testdata/', # inputs
-                       fnamein=fnamebase+'.4billing.csv', 
-                       considerCIDs= groupName + "." + fnamebase + ".groups.csv",
-                       dirout='testdata/', # outputs
-                       fnameout=fnamebase+'.normalized.'+ groupName +  '.csv',
-                       dirlog='testdata/', 
-                       groupName=groupName)
+     GroupAnalysisMaster(dirin='data/', dirout='data/', dirlog='data/',
+                     fnamebase='waterSupplyandIrrigationSystems',
+                     fnamein=fnamebase+'.4billing.csv',
+                     Ngroups=1, threshold=0.25, demandUnit='kWh',
+                     steps=[ 'DeltaByDayWithDuration'])     
+     
+   
+#if False:
+#    for n in [1]:
+#        fnamebase = 'largeOfficesAll' #.g1L.energyOnly.A.normalized
+#        groupL = 'g' + str(n) + 'L'
+#        groupo = 'g' + str(n) + 'o'
+#        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
+#        ShowFlexibilityOptions(dirin='data/', # outputs
+#                   fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
+#                   fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
+#                   dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
+#                   fnameout=fnameout.replace('.csv', '.flexibility.pdf'))       
         
-#%% Compare Normalized Groups
-if False:
-    for n in [1,2,3,4]:
-        
-        groupL = 'g' + str(n) + 'L'
-        groupo = 'g' + str(n) + 'o'
-        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
-    
-        DeltaLoads(dirin='testdata/', # outputs
-                   fnameinL=fnamebase+".normalized." + groupL + ".csv",
-                   fnameino=fnamebase+".normalized." + groupo + ".csv",
-                   dirout='testdata/', # outputs 
-                   fnameout=fnameout,
-                   dirlog='testdata/' # outputs
-                   ) 
-        
-        PlotDelta(dirin='testdata/',  # outputs
-                  fnamein=fnameout, 
-                  dirout='testdata/', # plots
-                  fnameout=fnameout.replace('.csv', '.pdf'),
-                  dirlog='testdata/' # outputs
-                  )  
+#        ShowWalk2DurationCurve(dirin='data/', # outputs
+#                   fnamein  = fnamebase+".delta." + groupL + "." + groupo + ".csv",
+#                   fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
+#                   fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
+#                   dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
+#                   fnameout=fnameout.replace('.csv', '.durationWalk.pdf'))       
         
             
 #%% Plot Duration Curves
-if False: # annual duration curve 
+        
+if plot: # annual duration curve 
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                        dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
     
-if False: # monthly duration curve showing entire year with duration for each month
-    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.g1O.csv',
-                       considerCIDs= groupName + ".synthetic10.groups.csv",
-                       dirout='testdata/', fnameout=fnamebase+'.DurationCurvesByMonth.pdf',
-                       dirlog='testdata/',
-                       byMonthFlag = True)    
-    
-if False: # family of duration curves on one plot
+#if plot: # monthly duration curve showing entire year with duration for each month
+if plot: # family of duration curves on one plot
     PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
                                dirout='testdata/', fnameout=fnamebase+'.FamilyOfDurationCurves.pdf',
                                dirlog='testdata/')
@@ -154,4 +165,3 @@ if False:
     PlotHeatMaps(dirin='testdata/', fnamein=fnamebase+'.normalized.csv', # considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
                  dirout='testdata/', fnameout=fnamebase+'.HeatMaps.g1.pdf',
                  dirlog='testdata/')
-    

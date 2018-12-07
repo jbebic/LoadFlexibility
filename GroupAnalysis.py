@@ -815,7 +815,8 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
 
 def GroupAnalysisMaster(dirin='./', dirout='./', 
                         fnamebase='NAICS', fnamegroup = 'NAICS.groups.csv', 
-                        fnamein='IntervalData.csv',  Ngroups=4, threshold=0.5, demandUnit='Wh',
+                        fnamein='IntervalData.csv',  
+                        Ngroups=4, threshold=0.5, demandUnit='Wh',
                         dirlog='./', fnameLog='GroupAnalysisMaster.log',
                         steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']):
 
@@ -843,7 +844,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
         if ('Normalize' in steps) or ('NormalizeGroup' in steps):
             # normalize leaders
             NormalizeGroup(dirin=dirin, fnamein=fnamein, groupName=groupL,
-                           considerCIDs= groupL + "." + fnamebase + ".groups.csv",
+                           considerCIDs=fnamebase + "." + groupL+ ".groupIDs.csv",
                            demandUnit=demandUnit,
                            dirout=dirout, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
                            dirlog=dirlog)                        
@@ -853,7 +854,7 @@ def GroupAnalysisMaster(dirin='./', dirout='./',
             
             # normalize others
             NormalizeGroup(dirin=dirin, fnamein=fnamein,groupName=groupo ,
-                           considerCIDs= groupo + "." + fnamebase + ".groups.csv",
+                           considerCIDs= fnamebase + "." + groupo + ".groupIDss.csv",
                            demandUnit=demandUnit,
                            dirout=dirout, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
                            dirlog=dirlog)           

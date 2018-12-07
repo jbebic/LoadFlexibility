@@ -52,7 +52,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, 'AnonymizeCIDs', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # load data from file, find initial list of unique IDs. Update log file
     df1 = pd.read_csv(os.path.join(dirin,fnamein))

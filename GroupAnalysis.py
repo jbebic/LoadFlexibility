@@ -143,7 +143,7 @@ def plotDailyDeltaLoad(ax0, df0, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=F
     ax0.plot([0 , df.shape[0] ], [0.0, 0.0], lw=1, color='gray', alpha=1.0)
     
     # print cycle number
-    ax0.plot(np.arange(df.shape[0]),   df['cycle'], lw=1.5, color='orangered',  label='#')    
+#    ax0.plot(np.arange(df.shape[0]),   df['cycle'], lw=1.5, color='orangered',  label='#')    
     
 #    # print cycle transitions
 #    for n in  list(set(df['cycle'])):
@@ -782,6 +782,7 @@ def PlotDeltaSummary(dirin='./', fnamein='IntervalData.normalized.csv',
 
     # add season & day type
     df1 = assignDayType(df1)
+    df1 = df1.assign(cycle = [0 for x in range(0, len(df1),1)])
 
     # open pdf for figures
     print("Opening plot files")

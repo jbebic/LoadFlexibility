@@ -593,8 +593,8 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
             gap = len(data) - 24*Ns
             i0 = int(np.floor(gap/2))
             i1 = int(24*Ns)
-            
-        averageWeekday[i0:i1]  = data[i0:i1] 
+        i2 = i0 + i1
+        averageWeekday[:i1]  = data[i0:i2] 
         
         # find average weekend profile
         averageWeekend = [np.nan for x in range(0, len(weekends.index),1)]
@@ -609,7 +609,8 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
             gap = len(data) - 24*Ns
             i0 = int(np.floor(gap/2))
             i1 = int(24*Ns)
-        averageWeekend[i0:i1]  = data[i0:i1] 
+        i2 = i0 + i1
+        averageWeekend[:i1]  = data[i0:i2] 
         
         weekdays[date(2016, m,1).strftime('%B') ] = averageWeekday
         weekends[date(2016, m,1).strftime('%B') ] = averageWeekend

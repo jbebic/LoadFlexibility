@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt # plotting
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 from copy import copy as copy
 import pylab
+import warnings
+warnings.filterwarnings("ignore")
 
 #%% Importing supporting modules
 from SupportFunctions import getData, logTime, createLog,  assignDayType, getDataAndLabels
@@ -93,6 +95,7 @@ def findShiftingEvents(df0, threshold=0.1):
     
     rawtransitions0 = np.asarray( np.where( (mode[:-1] != mode[1:]) & (mode[:-1]!='0')  )[0])
     deltaEnergy = energy[rawtransitions0].values
+    deltaEnergy = np.nan_to_num(deltaEnergy)
     rawdischarges = rawtransitions0[ deltaEnergy<-np.max(totalEnergy)*threshold ] 
     rawcharges = rawtransitions0[ deltaEnergy>np.max(totalEnergy)*threshold ]
     
@@ -255,7 +258,7 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
     charge = charge.sort_values(varName, ascending=True)
     discharge = discharge.sort_values(varName, ascending=False)   
     x_raw = np.asarray( np.sort( list( -1.*np.arange(charge.shape[0]) / Ns ) + list( np.arange(discharge.shape[0]) /Ns)) )
-    y_raw = np.flipud( np.asarray( np.sort(  list(charge[varName].values/np.max(df['Others'].values) *100) +  list( discharge[varName].values /np.max(df['Others'].values) *100 )   )))
+    y_raw = np.flipud( np.asarray( np.sort(  list(charge[varName].values/np.max(df['Others'].values) ) +  list( discharge[varName].values /np.max(df['Others'].values)  )   )))
     x_out = np.asarray( np.sort( list([ x/Ns for x in range(-int(24*Ns),1, 1) ]  ) + list([ x/Ns for x in range(0,int(24*Ns+1), 1) ]  ) ))
     
     y_out = []
@@ -585,7 +588,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
         avgWd = outputWd.mean(axis=0).values
         slopeWd  = np.asarray( [0] + list(np.diff(avgWd)) )
         slopeWd = np.nan_to_num(slopeWd)
-        data = avgWd[slopeWd<0]
+        data = avgWd[slopeWd<0]/100
         if len(data)<24*Ns:
             i0 = 0
             i1 = int(len(data))
@@ -601,7 +604,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
         avgWe = outputWe.mean(axis=0).values
         slopeWe = np.asarray( [0] + list(np.diff(avgWe)) )
         slopeWe = np.nan_to_num(slopeWe)
-        data = avgWe[slopeWd<0]
+        data = avgWe[slopeWd<0]/100
         if len(data)<24*Ns:
             i0 = 0
             i1 = int(len(data))

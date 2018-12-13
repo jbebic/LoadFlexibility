@@ -329,50 +329,13 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
             
             # set y-label
             ax0.set_ylabel('Shfitable Load [MW]')
-            # plot horizontal lines at the threshold
-            # ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [threshold*100*np.mean(df1['Others'])* Ns,  threshold*100*np.mean(df1['Others'])* 4.0 ]  , "--", lw=1, color='gray', alpha=0.5)
-            # ax0.plot( [-int(df.shape[0]*24/24),  int(df.shape[0]*24/24)], [-threshold*100*np.mean(df1['Others'])* Ns, -threshold*100*np.mean(df1['Others'])* 4.0] ,  "--",  lw=1, color='gray', alpha=0.5) 
             
         # add gridlines & x-label
         ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
         ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
         ax0.set_xlabel('Duration [h]')
         
-#    if addText:
-#        
-#        # calculate variable crossing points
-#        chargeCrossing = -1 * len( charge[charge['NormDelta'] <threshold] )
-#        disCrossing = len( discharge[discharge['NormDelta'] >-threshold] )
-#        
-#        # calculate hours of charging and discharging beyond threshold
-#        chargeHours = len(charge[charge['NormDelta'] >threshold] ) / Ns
-#        dischargeHours =  len(discharge[discharge['NormDelta'] <-threshold] ) / Ns
-#        
-#        # plot verical lines at crossing points
-#        ax0.plot([chargeCrossing , chargeCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
-#        ax0.plot([disCrossing , disCrossing ], [-100, 100], "--", lw=1, color='gray', alpha=0.5)
-#        
-#        # add text label of CHARGE HOURS
-#        ax0.text(s=str(int(round(chargeHours,0))) + 'hr',
-#                   x=-1.*charge.shape[0], y= np.max(charge[varName] ),
-#                   verticalalignment="bottom",horizontalalignment="center",
-#                   fontsize=8, fontweight='bold')
-#        
-#        # add text label of DISCHARGE HOURS
-#        ax0.text(s=str(int(round(dischargeHours,0)) )+ 'hr',
-#                   x=discharge.shape[0], y= np.min(discharge[varName] ),
-#                   verticalalignment="top",horizontalalignment="center",
-#                   fontsize=8, fontweight='bold')
-#        
-#        # add text label of GAP HOURS
-#        ax0.text(s=str(int(round((disCrossing-chargeCrossing)/Ns,0)) )+ 'hr',
-#                   x=(disCrossing+chargeCrossing)/2, y= 0.1,
-#                   verticalalignment="bottom",horizontalalignment="center",
-#                   fontsize=8, fontweight='bold') 
-#    
     return ax0, ymax, ymaxC, ymaxD, x_out, y_out
-
-
 
 def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     
@@ -588,33 +551,38 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
         avgWd = outputWd.mean(axis=0).values
         slopeWd  = np.asarray( [0] + list(np.diff(avgWd)) )
         slopeWd = np.nan_to_num(slopeWd)
-        data = avgWd[slopeWd<0]/100
-        if len(data)<24*Ns:
+        while np.max( slopeWd )>0:
+            avgWd = avgWd[slopeWd<0]
+            slopeWd  = np.asarray( list(np.diff(avgWd)) + [0])
+            slopeWd = np.nan_to_num(slopeWd)
+        if len(avgWd)<24*Ns:
             i0 = 0
-            i1 = int(len(data))
+            i1 = int(len(avgWd))
         else:
-            gap = len(data) - 24*Ns
+            gap = len(avgWd) - 24*Ns
             i0 = int(np.floor(gap/2))
             i1 = int(24*Ns)
         i2 = i0 + i1
-        averageWeekday[:i1]  = data[i0:i2] 
+        averageWeekday[:i1]  = avgWd[i0:i2] 
         
         # find average weekend profile
         averageWeekend = [np.nan for x in range(0, len(weekends.index),1)]
         avgWe = outputWe.mean(axis=0).values
-        slopeWe = np.asarray( [0] + list(np.diff(avgWe)) )
+        slopeWe = np.asarray( list(np.diff(avgWe)) + [0])
         slopeWe = np.nan_to_num(slopeWe)
-        data = avgWe[slopeWd<0]/100
-        if len(data)<24*Ns:
+        while np.max( slopeWe )>0:
+            avgWe = avgWe[slopeWe<0]
+            slopeWe  = np.asarray( list(np.diff(avgWe)) + [0])
+            slopeWe = np.nan_to_num(slopeWe)        
+        if len(avgWe)<24*Ns:
             i0 = 0
-            i1 = int(len(data))
+            i1 = int(len(avgWe))
         else:
-            gap = len(data) - 24*Ns
+            gap = len(avgWe) - 24*Ns
             i0 = int(np.floor(gap/2))
             i1 = int(24*Ns)
         i2 = i0 + i1
-        averageWeekend[:i1]  = data[i0:i2] 
-        
+        averageWeekend[:i1]  = avgWe[i0:i2] 
         weekdays[date(2016, m,1).strftime('%B') ] = averageWeekday
         weekends[date(2016, m,1).strftime('%B') ] = averageWeekend
         
@@ -819,52 +787,9 @@ def PlotDeltaSummary(dirin='./', fnamein='delta.csv',
     
     return
 
-def PlotDeltaSummaryByDay(dirin='./', fnamein='IntervalData.normalized.csv', 
-                 dirout='plots/', fnameout='DurationCurves.pdf', 
-                 normalized=False, threshold=0.1,
-                 dirlog='./', fnameLog='PlotDeltaSummary.log'):
-    
-    """Creates pdf with 13 pages: 1 page summary of entire year followed by monthly. Each page shows shifted energy & duration curves """
-    
-    # Capture start time of code execution
-    codeTstart = datetime.now()
-    
-    # open log file
-    foutLog = createLog(codeName, "PlotDeltaSummary", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-    
-    # load data from file, find initial list of unique IDs. Update log file    
-    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
-
-    # add season & day type
-    df1 = assignDayType(df1)
-
-    # open pdf for figures
-    print("Opening plot files")
-    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-
-    # create annual summary of shifted energy & load duration
-    foutLog.write("Creating annual figure" )
-    print("Creating annual figure" )
-    pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D = annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized,threshold=threshold)       
-    
-    # write results for user
-    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
-    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
-    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
-    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
-    
-    # Closing plot files
-    print('Writing output file: %s' %os.path.join(os.path.join(dirout, fnameout)))
-    foutLog.write('\n\nWriting: %s' %os.path.join(dirout, fnameout))
-    pltPdf1.close()
-
-    # finish log with run time
-    logTime(foutLog, '\nRunFinished at: ', codeTstart)
-    
-    return
 
 
-def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout_plots='./',
+def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                         fnamebase='NAICS', fnamegroup = 'NAICS.groups.csv', 
                         fnamein='IntervalData.csv',  
                         Ngroups=4, threshold=0.5, demandUnit='Wh',
@@ -899,7 +824,7 @@ def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout
             NormalizeGroup(dirin=dirin_raw, fnamein=fnamein, groupName=groupL,
                            considerCIDs=fnamebase + "." + groupL+ ".groupIDs.csv",
                            demandUnit=demandUnit,
-                           dirout=dirin_pro, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
+                           dirout=dirout_data, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
                            dirlog=dirlog)                        
             foutLogMaster.write('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupL + ' : ' + str(datetime.now()-codeTstartx) )
@@ -908,14 +833,14 @@ def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout
             NormalizeGroup(dirin=dirin_raw, fnamein=fnamein,groupName=groupo ,
                            considerCIDs= fnamebase + "." + groupo + ".groupIDs.csv",
                            demandUnit=demandUnit,
-                           dirout=dirin_pro, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
+                           dirout=dirout_data, fnameout=fnamebase + "." + groupo +  '.normalized.csv',
                            dirlog=dirlog)           
             foutLogMaster.write('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
             print('\n\tNormalized ' + groupo + ' : ' + str(datetime.now()-codeTstartx) )
         
         if ('Delta' in steps) or ('DeltaLoads' in steps):
             # calculate detla between normalized loads
-            DeltaLoads(dirin=dirin_pro, dirout=dirout_data, dirlog=dirlog,
+            DeltaLoads(dirin=dirout_data, dirout=dirout_data, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        fnameout= fnameout_raw + ".csv" )    
             foutLogMaster.write('\n\tCalculated delta ' + groupL + '-' + groupo +' : ' + str(datetime.now()-codeTstartx) )
@@ -923,7 +848,7 @@ def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout
         
         if ('PlotDeltaByDay' in steps) or ('DeltaByDay' in steps) or ('ByDay' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirin_pro, dirout=dirout_plots, dirlog=dirlog,
+            PlotDeltaByDay(dirin=dirout_data, dirout=dirout_plots, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        threshold=threshold,withDuration=False,
                        fnameout= fnameout_raw + ".pdf")  
@@ -932,7 +857,7 @@ def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout
         
         if ('PlotDeltaByDayWithDuration' in steps) or ('DeltaByDayWithDuration' in steps) or ('ByDayWithDuration' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirin_pro, dirout=dirout_plots, dirlog=dirlog,
+            PlotDeltaByDay(dirin=dirout_data, dirout=dirout_plots, dirlog=dirlog,
                        fnameinL=fnameinL, fnameino=fnameino,
                        threshold=threshold, withDuration=True,
                        fnameout= fnameout_raw + "_wDuration.pdf" ,
@@ -942,7 +867,7 @@ def GroupAnalysisMaster(dirin_raw='./', dirin_pro='./', dirout_data='./', dirout
         
         if ('PlotDeltaSummary' in steps) or ('DeltaSummary' in steps) or ('Summary' in steps):
             # plot annual & monthly summary of load flexibility 
-            PlotDeltaSummary(dirin=dirin_pro, fnamein=fnameout_raw  + ".csv",
+            PlotDeltaSummary(dirin=dirout_data, fnamein=fnameout_raw  + ".csv",
                        dirout_data=dirout_data, fnameout_data  = fnameout_duration + '.csv',
                        dirout_plots=dirout_plots, fnameout_plots=fnameout_raw + '.Summary.pdf',
                        threshold=threshold,
@@ -1564,6 +1489,49 @@ def ShowWalk2DurationCurve(dirin='./',fnamein='file.csv', fnameinL='leaders.csv'
     pltPdf1.close()
 
 #%% Unused / Old
+#def PlotDeltaSummaryByDay(dirin='./', fnamein='IntervalData.normalized.csv', 
+#                 dirout='plots/', fnameout='DurationCurves.pdf', 
+#                 normalized=False, threshold=0.1,
+#                 dirlog='./', fnameLog='PlotDeltaSummary.log'):
+#    
+#    """Creates pdf with 13 pages: 1 page summary of entire year followed by monthly. Each page shows shifted energy & duration curves """
+#    
+#    # Capture start time of code execution
+#    codeTstart = datetime.now()
+#    
+#    # open log file
+#    foutLog = createLog(codeName, "PlotDeltaSummary", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+#    
+#    # load data from file, find initial list of unique IDs. Update log file    
+#    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
+#
+#    # add season & day type
+#    df1 = assignDayType(df1)
+#
+#    # open pdf for figures
+#    print("Opening plot files")
+#    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
+#
+#    # create annual summary of shifted energy & load duration
+#    foutLog.write("Creating annual figure" )
+#    print("Creating annual figure" )
+#    pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D = annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized,threshold=threshold)       
+#    
+#    # write results for user
+#    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+#    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+#    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
+#    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
+#    
+#    # Closing plot files
+#    print('Writing output file: %s' %os.path.join(os.path.join(dirout, fnameout)))
+#    foutLog.write('\n\nWriting: %s' %os.path.join(dirout, fnameout))
+#    pltPdf1.close()
+#
+#    # finish log with run time
+#    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+#    
+#    return
 #def annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized=False, threshold=0.1):
 #    
 #    """ create page summary for specific month & add to pdf """

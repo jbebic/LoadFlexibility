@@ -9,18 +9,19 @@ from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves, PlotDurationCurveSequence
 from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
-from GroupAnalysis import GroupAnalysisMaster, ShowWalk2DurationCurve, ShowFlexibilityOptions
+from GroupAnalysis import GroupAnalysisMaster, ShowWalk2DurationCurve, ShowFlexibilityOptions, SaveDeltaByMonth
 from SupportFunctions import findMissingData
 
-fnamebase = 'synthetic10'
-ratein =  'SCE-TOU-PA-2-B.csv'
 
-#initialize = False # create data, anonymize,  normalize
-#calculate = False # plot heatmaps & calculate billing
-#group = False# create groups
-#analyze = False # analyze
-#plot = False # plot duration plots
-#
+#%% Define Iterations
+if True:
+    fnamebase = 'synthetic10'
+    ratein =  'SCE-TOU-PA-2-B.csv'
+
+if False:
+    fnamebase = 'waterSupplyandIrrigationSystems'
+    ratein =  'SCE-TOU-PA-2-B.csv'
+
 #%% Create profiles
 if False: # GenerateSyntheticProfiles
     GenerateSyntheticProfiles(10, # number of profiles to create
@@ -32,14 +33,6 @@ if False: # GenerateSyntheticProfiles
                   dirout='testdata/', 
                   fnameout = fnamebase + '.csv', 
                   dirlog='testdata/')
-
-##%% Convert Feather file
-#if False:
-#    ConvertFeather(dirin='testdata/', fnamein='GroceryTOU_GS3B_Q1O15_152017.feather',
-#                   dirout='testdata/', fnameout='GroceryTOU_GS3B_Q1O15_152017.csv',
-#                   dirlog='testdata/',
-#                   renameDict={'DatePeriod':'datetimestr', 'Usage':'Demand'},
-#                   writeOutput = True)
 
 #%% AnonymizeCIDs
 if False: # AnonymizeCIDs
@@ -62,13 +55,6 @@ if False: # FixDST
                    tzinput='America/Los_Angeles',
                    OutputFormat='SCE')
 
-#%% Review load profiles
-#if False:
-#    ReviewLoads(dirin='testdata/', fnamein=fnamebase+'.csv',
-#                   dirout='testdata/', fnameout=fnamebase+'.summary.csv',
-#                   dirlog='testdata/',
-#                   InputFormat = 'SCE')
-
 #%% Normalize profiles
 if False: # NormalizeLoads
     NormalizeLoads(dirin='testdata/', 
@@ -79,6 +65,16 @@ if False: # NormalizeLoads
                    InputFormat='SCE', 
                    normalizeBy='day')
     
+if False: # format for billing calc
+    NormalizeLoads(dirin='testdata/', 
+                   fnamein=fnamebase+'.csv', 
+                   dirout='testdata/', 
+                   fnameout=fnamebase+'.4billing.csv',
+                   dirlog='testdata/', 
+                   InputFormat='SCE', 
+                   normalizeBy='year', 
+                   normalize=False)        
+    
 #%% Plot heatmaps
 if False:  # PlotHeatMaps  
     PlotHeatMaps(dirin='testdata/', 
@@ -88,14 +84,6 @@ if False:  # PlotHeatMaps
                  dirout='testdata/', 
                  fnameout=fnamebase+'.HeatMaps.g1.pdf',
                  dirlog='testdata/')    
-    
-##%% Create data with right format for billing calc
-#if False:
-#    NormalizeLoads(dirin='testdata/', fnamein=fnamebase+'.csv', 
-#                   dirout='testdata/', fnameout=fnamebase+'.4billing.csv',
-#                   dirlog='testdata/', 
-#                   InputFormat='SCE', 
-#                   normalizeBy='year', normalize=False)    
     
 #%% Calculate Billing
 if False: # CalculateBilling
@@ -134,72 +122,108 @@ if False: #  CalculateGroups
                     energyPercentiles = [5, 27.5,  50, 72.5, 95], 
                     chargeType="Total")
         
-#%% Analyze Groups & Calculate Flexibility
-if False: # GroupAnalysisMaster
-    GroupAnalysisMaster(dirin_raw = 'testdata/', 
-                     dirin_pro = 'testdata/',
-                     dirout_data = 'testdata/', 
-                     dirout_plots = 'testdata/',
-                     dirlog = 'testdata/',
-                     fnamebase = fnamebase,
-                     fnamein = fnamebase+'.4billing.csv',
-                     Ngroups = 1, 
-                     threshold = 0.25, 
-                     demandUnit = 'kWh',
-                     steps=['Summary'])
-##                     steps=['DeltaByDayWithDuration']) #
-##                    steps=['NormalizeGroup', 'DeltaLoads', 'DeltaByDay', 'DeltaByDayWithDuration', 'Summary'])
-                        
-if False:  # GroupAnalysisMaster
-    # performs normalizing groups, delta between groups, plot delta by day, & plot delta summary
-    GroupAnalysisMaster(dirin_raw='input/', # folder where the raw data inputs are located  
-                     dirin_pro = 'output/', # folder where the processed data inputs (to this function) are located
+#%% Analyze Groups & Calculate Flexibility      
+# performs normalizing groups, delta between groups, plot delta by day, & plot delta summary
+if True:  # full chain using synthetic data, e.g. for GE
+    GroupAnalysisMaster(dirin_raw = 'testdata/', # folder where the raw data inputs are located  
+                     dirout_data ='testdata/',  # folder where to save the ouput data
+                     dirout_plots = 'testdata/', # folder where to save the output figures
+                     dirlog = 'testdata/', # folder where the log file(s) are saved
+                     fnamebase = fnamebase, # file name base (usual by the type of building / NAICS)
+                     fnamein = fnamebase+'.4billing.csv', # interval data
+                     Ngroups = 2, # tells the function how many groups to iterate over
+                     threshold = 0.5, # sets the threshold for identifying multiple cycles per day
+                     demandUnit = 'kWh' # unit of the raw interval data
+                     )
+    
+if False:  # full chain using real data, e.g. for SCE
+    GroupAnalysisMaster(dirin_raw = 'input/', # folder where the raw data inputs are located  
                      dirout_data ='output/',  # folder where to save the ouput data
                      dirout_plots = 'plots/', # folder where to save the output figures
-                     dirlog='output/', #  folder where to save the log file(s)
-                     fnamebase=fnamebase, # file name base (usual by the type of building / NAICS)
-                     fnamein=fnamebase+'.A.csv', # 
-                     Ngroups=2, # tells the function how many groups to iterate over
-                     threshold=0.5, # sets the threshold for identifying multiple cycles per day
-                     demandUnit='Wh')
+                     dirlog = 'output/', #  folder where to save the log file(s)
+                     fnamebase = 'waterSupplyandIrrigationSystems', # file name base (usual by the type of building / NAICS)
+                     fnamein = 'waterSupplyandIrrigationSystems.A.csv', # interval data 
+                     Ngroups = 2, # tells the function how many groups to iterate over
+                     threshold = 0.5, # sets the threshold for identifying multiple cycles per day
+                     demandUnit = 'Wh' # unit of the raw interval data
+                     )
+    
+if False:  # part of chain using real data, e.g. for GE
+    GroupAnalysisMaster(dirin_raw = 'input/', # folder where the raw data inputs are located  
+                     dirout_data ='output/',  # folder where to save the ouput data
+                     dirout_plots = 'plots/', # folder where to save the output figures
+                     dirlog = 'output/', #  folder where to save the log file(s)
+                     fnamebase = 'waterSupplyandIrrigationSystems', # file name base (usual by the type of building / NAICS)
+                     fnamein = 'waterSupplyandIrrigationSystems.A.csv', # interval data 
+                     Ngroups = 2, # tells the function how many groups to iterate over
+                     threshold = 0.5, # sets the threshold for identifying multiple cycles per day
+                     demandUnit = 'Wh', # unit of the raw interval data
+                     steps=['Summary'] # which steps of the analysis to run, default is entire chain
+                     )
 
-if True: # GroupAnalysisMaster
-    GroupAnalysisMaster(dirin_raw='testdata/', dirin_pro='output/', 
-                    dirout_data='output/', 
-                    dirout_plots='plots/',
-                    fnamebase='waterSupplyandIrrigationSystems',
+#if False: # GroupAnalysisMaster - synthetic data
+#    GroupAnalysisMaster(dirin_raw='testdata/', 
+#                    dirout_data='output/', 
+#                    dirout_plots='plots/',
+#                    fnamebase='waterSupplyandIrrigationSystems',
+#                    fnamein=fnamebase+'.4billing.csv',
+#                    Ngroups=1, 
+#                    threshold=0.1, 
+#                    demandUnit='Wh',
+#                     steps=['Summary'])     
+#   
+#if False: # GroupAnalysisMaster
+#    GroupAnalysisMaster(dirin_raw='data/', 
+#                    dirout_data='data/', 
+#                    dirout_plots='plots/',
+#                    fnamebase='largeOfficesAll',
+#                    fnamein=fnamebase+'.4billing.csv',
+#                    Ngroups=1, 
+#                    threshold=0.1, 
+#                    demandUnit='Wh',
+#                    steps=['Summary'])    
+    
+if False:
+    SaveDeltaByMonth(dirin_raw='data/', 
+                    dirout='output/', 
+                    fnamebase='largeOfficesAll',
+                    fnameout = 'largeOfficesAll.DurationCurves.csv',
                     fnamein=fnamebase+'.4billing.csv',
-                    Ngroups=1, 
-                    threshold=0.1, 
-                    demandUnit='Wh',
-                     steps=['Summary'])     
-        
-#if False:
-#    for n in [1]:
-#        fnamebase = 'largeOfficesAll' #.g1L.energyOnly.A.normalized
-#        groupL = 'g' + str(n) + 'L'
-#        groupo = 'g' + str(n) + 'o'
-#        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
-#        ShowFlexibilityOptions(dirin='data/', # outputs
-#                   fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
-#                   fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
-#                   dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
-#                   fnameout=fnameout.replace('.csv', '.flexibility.pdf'))       
-        
-#        ShowWalk2DurationCurve(dirin='data/', # outputs
-#                   fnamein  = fnamebase+".delta." + groupL + "." + groupo + ".csv",
-#                   fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
-#                   fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
-#                   dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
-#                   fnameout=fnameout.replace('.csv', '.durationWalk.pdf'))       
-            
+                    Ngroups=4)
+     
 #%% Plot Duration Curves     
 if False: # annual duration curve 
-    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
-                       dirout='testdata/', fnameout=fnamebase+'.DurationCurves.pdf',
+    PlotDurationCurves(dirin='testdata/', 
+                       fnamein=fnamebase+'.normalized.csv',
+                       dirout='testdata/', 
+                       fnameout=fnamebase+'.DurationCurves.pdf',
                        dirlog='testdata/')
     
 if False: # family of duration curves 
-    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase+'.normalized.csv',
-                               dirout='testdata/', fnameout=fnamebase+'.FamilyOfDurationCurves.pdf',
+    PlotFamilyOfDurationCurves(dirin='testdata/', 
+                               fnamein=fnamebase+'.normalized.csv',
+                               dirout='testdata/', 
+                               fnameout=fnamebase+'.FamilyOfDurationCurves.pdf',
                                dirlog='testdata/')
+    
+#%% Demonstration Figures
+if False:
+    
+    n = 1        
+    fnamebase = 'largeOfficesAll' #.g1L.energyOnly.A.normalized
+    groupL = 'g' + str(n) + 'L'
+    groupo = 'g' + str(n) + 'o'
+    fnameout  = fnamebase+".delta." + groupL + "-" + groupo + ".csv"
+    
+    ShowFlexibilityOptions(dirin='data/', # outputs
+               fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
+               fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
+               dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
+               fnameout=fnameout.replace('.csv', '.flexibility.pdf'))       
+    
+    ShowWalk2DurationCurve(dirin='data/', # outputs
+               fnamein  = fnamebase+".delta." + groupL + "." + groupo + ".csv",
+               fnameinL=fnamebase+ "." + groupL + ".energyOnly.A.normalized.csv",
+               fnameino=fnamebase+ "." + groupo + ".energyOnly.A.normalized.csv",
+               dirout='data/', dirrate='tou_data/',ratein='SCE-TOU-GS3-B.csv',
+               fnameout=fnameout.replace('.csv', '.durationWalk.pdf'))          

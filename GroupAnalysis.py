@@ -918,7 +918,6 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
         if ('PlotDeltaSummary' in steps) or ('DeltaSummary' in steps) or ('Summary' in steps):
             # plot annual & monthly summary of load flexibility 
             PlotDeltaSummary(dirin=dirout_data, fnamein=fnameout_raw  + ".csv",
-                       dirout_data=dirout_data, fnameout_data  = fnameout_duration + '.csv',
                        dirout_plots=dirout_plots, fnameout_plots=fnameout_raw + '.Summary.pdf',
                        threshold=threshold,
                        dirlog=dirlog)

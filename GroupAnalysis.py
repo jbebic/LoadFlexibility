@@ -467,23 +467,16 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False, threshold=0.1):
         
     return pltPdf1, yMax, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D
 
-def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized=False, saveAllDurationCurves=False, threshold=0.1):
+def monthlySummaryPages(pltPdf1, df1, fnamein,  yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized=False, saveAllDurationCurves=False, threshold=0.1):
     
     """ create page summary for specific month & add to pdf"""
     
     month = df1.index.month
     day = df1.index.day
-    Ns = 60 / (df1.index[1].minute - df1.index[0].minute)
-    v = [ x/Ns for x in range(0, int(24*Ns),1) ]
-    months = [ date(2016, m,1).strftime('%B') for m in range(1, 13,1)]
-    weekdays = pd.DataFrame(columns=months, index=v)
-    weekends = pd.DataFrame(columns=months, index=v)
     
     # iterate over each month
     for m in range(1, 13,1):
         days = list(set(df1.loc[(month==m)].index.day))
-        Y_wd    = []
-        Y_we    = []
 
         # initialize figure
         fig = plt.figure(figsize=(8,6))
@@ -512,10 +505,8 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
         
             if df1.loc[relevant, 'DayType'][0] in ['we','h']:
                 ax0, ymax1, temp0, temp1, x0, y  = plotDeltaDuration(ax0, df1x, lineColor='gray', lineAlpha=0.2, addText=False, varType='Abs', threshold=threshold)
-                Y_we.append(y)
             else:
                 ax0, ymax1 , temp0, temp1, x, y = plotDeltaDuration(ax0, df1x, lineAlpha=0.5, addText=False, varType='Abs', threshold=threshold)
-                Y_wd.append(y)
             if df1x['DayType'][0] in ['we','h']:
                 ax2, ymax, temp0, temp1 , x0, y0 = plotDeltaDuration(ax2, df1x, lineColor='gray', lineAlpha=0.2, addText=False, varType='%', threshold=threshold ) 
             else:
@@ -538,59 +529,7 @@ def monthlySummaryPages(pltPdf1, df1, fnamein, dirout, fnameout, yMaxE, yMaxD, y
         # save figure to pdf
         pltPdf1.savefig() 
         plt.close() 
-        
-        outputWd = pd.DataFrame(Y_wd, columns=x)
-        outputWe = pd.DataFrame(Y_we, columns=x)
-        
-        if saveAllDurationCurves:
-            outputWd.to_csv(dirout + "/" + fnameout.replace('csv', date(2016, m,1).strftime('%B') + "Weekdays.csv" ))        
-            outputWe.to_csv(dirout + "/" + fnameout.replace('csv', date(2016, m,1).strftime('%B') + "Weekends.csv" ))        
-        
-        # find average weekday profile
-        averageWeekday = [np.nan for x in range(0, len(weekdays.index),1)]
-        avgWd = outputWd.mean(axis=0).values
-        slopeWd  = np.asarray( [0] + list(np.diff(avgWd)) )
-        slopeWd = np.nan_to_num(slopeWd)
-        while np.max( slopeWd )>0:
-            avgWd = avgWd[slopeWd<0]
-            slopeWd  = np.asarray( list(np.diff(avgWd)) + [0])
-            slopeWd = np.nan_to_num(slopeWd)
-        if len(avgWd)<24*Ns:
-            i0 = 0
-            i1 = int(len(avgWd))
-        else:
-            gap = len(avgWd) - 24*Ns
-            i0 = int(np.floor(gap/2))
-            i1 = int(24*Ns)
-        i2 = i0 + i1
-        averageWeekday[:i1]  = avgWd[i0:i2] 
-        
-        # find average weekend profile
-        averageWeekend = [np.nan for x in range(0, len(weekends.index),1)]
-        avgWe = outputWe.mean(axis=0).values
-        slopeWe = np.asarray( list(np.diff(avgWe)) + [0])
-        slopeWe = np.nan_to_num(slopeWe)
-        while np.max( slopeWe )>0:
-            avgWe = avgWe[slopeWe<0]
-            slopeWe  = np.asarray( list(np.diff(avgWe)) + [0])
-            slopeWe = np.nan_to_num(slopeWe)        
-        if len(avgWe)<24*Ns:
-            i0 = 0
-            i1 = int(len(avgWe))
-        else:
-            gap = len(avgWe) - 24*Ns
-            i0 = int(np.floor(gap/2))
-            i1 = int(24*Ns)
-        i2 = i0 + i1
-        averageWeekend[:i1]  = avgWe[i0:i2] 
-        weekdays[date(2016, m,1).strftime('%B') ] = averageWeekday
-        weekends[date(2016, m,1).strftime('%B') ] = averageWeekend
-        
-    weekends = weekends.T
-    weekdays = weekdays.T
-    weekdays.to_csv(dirout + "/" + fnameout.replace('csv',  "Weekdays.csv" ))        
-    weekends.to_csv(dirout + "/" + fnameout.replace('csv', "Weekends.csv" ))        
-        
+                
     return pltPdf1
 
 # %% Externally-Facing Function Definitions
@@ -734,8 +673,119 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
     
     return
 
+
+
+def SaveDeltaByMonth(dirin_raw='./', 
+                    dirout='./', 
+                    fnamebase='fnamebase',
+                    fnamein='IntervalData.csv',
+                    fnameout = 'duration.csv', 
+                    Ngroups=1,
+                    dirlog='./', fnameLog='SaveDeltaByMonth.log' ):
+    
+    """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
+    
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, "PlotDeltaByDay", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    months = [ date(2016, m,1).strftime('%B') for m in range(1, 13,1)]
+    durations_we = pd.DataFrame(columns=months)
+    durations    = pd.DataFrame(columns=months)
+        
+    # iterate over each month of the year
+    print("Calculating Average Delta for")
+    for m in range(1, 13,1):
+        print('\n%s' %(date(2016, m,1).strftime('%B')))
+        
+        for n in range(1,Ngroups+1,1): 
+            groupL = 'g' + str(n) + 'L'
+            groupo = 'g' + str(n) + 'o'
+            fnameinL=fnamebase+ "." + groupL + ".normalized.csv"
+            fnameino=fnamebase+ "." + groupo + ".normalized.csv"
+
+            # load time-series data for leaders & others
+            dfL, UniqueIDs, foutLog = getDataAndLabels( dirin_raw, fnameinL, foutLog, datetimeIndex=True )
+            dfo, UniqueIDs, foutLog = getDataAndLabels( dirin_raw, fnameino, foutLog, datetimeIndex=True )
+    
+            # calculate # data points per hour
+            Ns = 60 / ( dfL.index[1].minute - dfL.index[0].minute )
+            v = [ x/Ns for x in range(0, int(24*Ns),1) ]
+            
+            leaders_we = pd.DataFrame( index=v )
+            others_we = pd.DataFrame( index=v )
+            leaders = pd.DataFrame( index=v )
+            others = pd.DataFrame( index=v )
+            
+            # assign season & day type
+            dfL = assignDayType( dfL, datetimeIndex=True )
+            dfo = assignDayType( dfo, datetimeIndex=True )
+            monthL = dfL.index.month
+            dayL = dfL.index.day
+            montho = dfo.index.month
+            dayo = dfo.index.day
+            
+            # iterate over each day of the month
+            days = list(set(dfL.loc[(monthL==m)].index.day))
+            for d in days:
+                relevantL = (monthL==m) & (dayL==d)
+                relevanto = (montho==m) & (dayo==d)
+                
+                if dfL.loc[relevantL, 'DayType'][0] in ['we','h']:
+                    # find this day in the data
+                    leaders_we[d] = dfL.loc[relevantL,'Demand'].values
+                    others_we[d]  = dfo.loc[relevanto,'Demand'].values
+                    
+                else:
+                    # find this day in the data
+                    leaders[d] = dfL.loc[relevantL,'Demand'].values
+                    others[d]  = dfo.loc[relevanto,'Demand'].values
+                
+            # sum & normalize the leaders 
+            leaders = leaders.T
+            avgLeaders = leaders.mean(axis=0).values
+            normLeaders = avgLeaders / np.mean(avgLeaders)
+            
+            # sum & normalize the others
+            others = others.T
+            avgOthers = others.mean(axis=0).values
+            normOthers = avgOthers / np.mean(avgOthers)
+            
+            # delta between leaders and others
+            normDelta = np.flipud( np.sort((normLeaders - normOthers)) )
+            durations[(date(2016, m,1).strftime('%B'))] = normDelta  *np.mean(avgOthers)
+            
+            
+            # sum & normalize the leaders 
+            leaders_we = leaders_we.T
+            avgLeaders_we = leaders.mean(axis=0).values
+            normLeaders_we = avgLeaders / np.mean(avgLeaders_we)
+            
+            # sum & normalize the others
+            others_we = others_we.T
+            avgOthers_we = others_we.mean(axis=0).values
+            normOthers_we = avgOthers_we / np.mean(avgOthers_we)
+            
+            # delta between leaders and others
+            normDelta_we = np.flipud( np.sort((normLeaders_we - normOthers_we)) )
+            durations_we[(date(2016, m,1).strftime('%B'))] = normDelta_we  *np.mean(avgOthers_we)
+            
+    print('\nWriting: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekdays.csv" ))))
+    durations = durations.T
+    durations.to_csv(dirout + "/" + fnameout.replace('csv',  ".Weekdays.csv" ))     
+    
+    print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekends.csv" ))))
+    durations_we = durations_we.T
+    durations_we.to_csv(dirout + "/" + fnameout.replace('.csv',  ".Weekends.csv" ))        
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    
+    return
+
 def PlotDeltaSummary(dirin='./', fnamein='delta.csv', 
-                 dirout_data='output/',  fnameout_data='DurationCurves.csv',
                  dirout_plots='plots/', fnameout_plots='DurationCurves.pdf', 
                  normalized=False, threshold=0.1,
                  dirlog='./', fnameLog='PlotDeltaSummary.log'):
@@ -766,7 +816,7 @@ def PlotDeltaSummary(dirin='./', fnamein='delta.csv',
     # create monthly summaries of shifted energy & load duration
     foutLog.write("\nCreating monthly figures" )
     print("Creating monthly figures" )
-    pltPdf1 = monthlySummaryPages(pltPdf1, df1, fnamein, dirout_data, fnameout_data, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized,threshold=threshold)  
+    pltPdf1 = monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized,threshold=threshold)  
     
     # write average duration curves
     

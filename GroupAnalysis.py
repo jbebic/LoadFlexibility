@@ -337,7 +337,7 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
         
     return ax0, ymax, ymaxC, ymaxD, x_out, y_out
 
-def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
+def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0, showCycles=False):
     
     """ adds specific day's shifted energy to axis """
     df = df.sort_values(by='datetime', ascending=True)                  
@@ -348,10 +348,11 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0):
     ax0.set_xticks([x for x in range(0, int(df.shape[0])+int(df.shape[0]/(24/4)),int(df.shape[0]/(24/4)))])
     
     # print cycle transitions
-    cycle = df['cycle'].values
-    transitions = np.where( (cycle[:-1] != cycle[1:]) )[0]
-    for ix in transitions:
-        ax0.plot([ix,ix], [0, np.max(y)], lw=1, color='orangered')
+    if showCycles:
+        cycle = df['cycle'].values
+        transitions = np.where( (cycle[:-1] != cycle[1:]) )[0]
+        for ix in transitions:
+            ax0.plot([ix,ix], [0, np.max(y)], lw=1, color='orangered')
     
     return ax0, np.max(y)
 
@@ -675,13 +676,14 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
 
 
 
-def SaveDeltaByMonth(dirin_raw='./', 
-                    dirout='./', 
-                    fnamebase='fnamebase',
-                    fnamein='IntervalData.csv',
+def SaveDeltaByMonth(dirin_raw = './', 
+                    dirout = './', 
+                    fnamebase = 'fnamebase',
+                    fnamein = 'IntervalData.csv',
                     fnameout = 'duration.csv', 
                     Ngroups=1,
-                    dirlog='./', fnameLog='SaveDeltaByMonth.log' ):
+                    dirlog='./', 
+                    fnameLog='SaveDeltaByMonth.log' ):
     
     """ Creates pdf with 365 pages showing the leader and other loads & the delta for each day of the year"""
     
@@ -695,6 +697,10 @@ def SaveDeltaByMonth(dirin_raw='./',
     durations_we = pd.DataFrame(columns=months)
     durations    = pd.DataFrame(columns=months)
         
+    
+    peakLeaders = 0.0
+    peakOthers = 0.0
+    
     # iterate over each month of the year
     print("Calculating Average Delta for")
     for m in range(1, 13,1):
@@ -817,10 +823,7 @@ def PlotDeltaSummary(dirin='./', fnamein='delta.csv',
     foutLog.write("\nCreating monthly figures" )
     print("Creating monthly figures" )
     pltPdf1 = monthlySummaryPages(pltPdf1, df1, fnamein, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, normalized,threshold=threshold)  
-    
-    # write average duration curves
-    
-    
+        
     # write results for user
     print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
     foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
@@ -866,12 +869,13 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
         fnameinL=fnamebase+ "." + groupL + ".normalized.csv"
         fnameino=fnamebase+ "." + groupo + ".normalized.csv"
         fnameout_raw  = fnamebase+".delta." + groupL + "-" + groupo 
-        fnameout_duration  = fnamebase+".duration"
         
         if ('Normalize' in steps) or ('NormalizeGroup' in steps):
             
             # normalize leaders
-            NormalizeGroup(dirin=dirin_raw, fnamein=fnamein, groupName=groupL,
+            NormalizeGroup(dirin=dirin_raw, 
+                           fnamein=fnamein, 
+                           groupName=groupL,
                            considerCIDs=fnamebase + "." + groupL+ ".groupIDs.csv",
                            demandUnit=demandUnit,
                            dirout=dirout_data, fnameout=fnamebase + "." + groupL +  '.normalized.csv',
@@ -898,18 +902,26 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
         
         if ('PlotDeltaByDay' in steps) or ('DeltaByDay' in steps) or ('ByDay' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirout_data, dirout=dirout_plots, dirlog=dirlog,
-                       fnameinL=fnameinL, fnameino=fnameino,
-                       threshold=threshold,withDuration=False,
+            PlotDeltaByDay(dirin=dirout_data, 
+                       dirout=dirout_plots, 
+                       dirlog=dirlog,
+                       fnameinL=fnameinL, 
+                       fnameino=fnameino,
+                       threshold=threshold,
+                       withDuration=False,
                        fnameout= fnameout_raw + ".pdf")  
             foutLogMaster.write('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
         
         if ('PlotDeltaByDayWithDuration' in steps) or ('DeltaByDayWithDuration' in steps) or ('ByDayWithDuration' in steps):
             # plot deltas between loads for each day
-            PlotDeltaByDay(dirin=dirout_data, dirout=dirout_plots, dirlog=dirlog,
-                       fnameinL=fnameinL, fnameino=fnameino,
-                       threshold=threshold, withDuration=True,
+            PlotDeltaByDay(dirin=dirout_data, 
+                       dirout=dirout_plots, 
+                       dirlog=dirlog,
+                       fnameinL=fnameinL, 
+                       fnameino=fnameino,
+                       threshold=threshold, 
+                       withDuration=True,
                        fnameout= fnameout_raw + "_wDuration.pdf" ,
                        fnameLog='PlotDeltaByDayWithDuration.log',)  
             foutLogMaster.write('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))
@@ -917,8 +929,10 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
         
         if ('PlotDeltaSummary' in steps) or ('DeltaSummary' in steps) or ('Summary' in steps):
             # plot annual & monthly summary of load flexibility 
-            PlotDeltaSummary(dirin=dirout_data, fnamein=fnameout_raw  + ".csv",
-                       dirout_plots=dirout_plots, fnameout_plots=fnameout_raw + '.Summary.pdf',
+            PlotDeltaSummary(dirin=dirout_data, 
+                       fnamein=fnameout_raw  + ".csv",
+                       dirout_plots=dirout_plots, 
+                       fnameout_plots=fnameout_raw + '.Summary.pdf',
                        threshold=threshold,
                        dirlog=dirlog)
             foutLogMaster.write('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
@@ -1076,6 +1090,8 @@ def ShowFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
             
     pltPdf1.savefig() 
     plt.close()      
+    
+    
     
     "aligned to artifical rates  "
     rate = readTOURates(dirrate, ratein='TOU-Fake.csv')
@@ -1538,139 +1554,139 @@ def ShowWalk2DurationCurve(dirin='./',fnamein='file.csv', fnameinL='leaders.csv'
     pltPdf1.close()
 
 #%% Unused / Old
-#def PlotDeltaSummaryByDay(dirin='./', fnamein='IntervalData.normalized.csv', 
-#                 dirout='plots/', fnameout='DurationCurves.pdf', 
-#                 normalized=False, threshold=0.1,
-#                 dirlog='./', fnameLog='PlotDeltaSummary.log'):
-#    
-#    """Creates pdf with 13 pages: 1 page summary of entire year followed by monthly. Each page shows shifted energy & duration curves """
-#    
-#    # Capture start time of code execution
-#    codeTstart = datetime.now()
-#    
-#    # open log file
-#    foutLog = createLog(codeName, "PlotDeltaSummary", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-#    
-#    # load data from file, find initial list of unique IDs. Update log file    
-#    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
-#
-#    # add season & day type
-#    df1 = assignDayType(df1)
-#
-#    # open pdf for figures
-#    print("Opening plot files")
-#    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-#
-#    # create annual summary of shifted energy & load duration
-#    foutLog.write("Creating annual figure" )
-#    print("Creating annual figure" )
-#    pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D = annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized,threshold=threshold)       
-#    
-#    # write results for user
-#    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
-#    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
-#    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
-#    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
-#    
-#    # Closing plot files
-#    print('Writing output file: %s' %os.path.join(os.path.join(dirout, fnameout)))
-#    foutLog.write('\n\nWriting: %s' %os.path.join(dirout, fnameout))
-#    pltPdf1.close()
-#
-#    # finish log with run time
-#    logTime(foutLog, '\nRunFinished at: ', codeTstart)
-#    
-#    return
-#def annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized=False, threshold=0.1):
-#    
-#    """ create page summary for specific month & add to pdf """
-#
-#    # initialize variables
-#    month = df1.index.month
-#    day = df1.index.day
-#    
-#    # iterate over each month
-#    dailyEnergy = []
-#    shiftedEnergy = []
-#    for m in range(1,13,1):
-#        days = list(set(df1.loc[(month==m)].index.day))
-#        X = []
-#        Y = []
-#        
-#        # plot shifted energy
-#        for d in days:
-#            relevant = (month==m) & (day==d)
-#            
-#            # initialize figure
-#            fig = plt.figure(figsize=(8,6))
-#            fig.suptitle(  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
-#            plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
-#            ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
-#            ax1 = plt.subplot2grid((2, 2), (0, 1),  fig=fig)
-#            ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
-#            
-#            ymax = 0
-#            yMax = 0
-#            yMaxD = 0.0
-#            yMaxP = 0.0
-#            yMaxD_D = 0.0
-#            yMaxD_C = 0.0
-#            yMaxP_D = 0.0
-#            yMaxP_C = 0.0            
-#            
-#            df1x = findShiftingEvents(df1.loc[relevant], threshold=threshold)
-#            
-#            dailyEnergy.append( np.sum( df1.loc[relevant,'Others'].values) )
-#            ax1, ymax = plotShiftedEnergy(ax1, df1x, c='purple', a=0.8)
-#            yMax = np.max([yMax, ymax])
-#            shiftedEnergy.append(ymax)
-#            
-#            # plot load-duration
-#            ax0, ymax, ymaxC, ymaxD, x, y = plotDeltaDuration(ax0, df1x, lineAlpha=0.8, addText=False, varType='Abs', threshold=threshold) 
-#            yMaxD = np.max([yMaxD , ymax])
-#            yMaxD_C = np.max([yMaxD_C , ymaxC]) 
-#            yMaxD_D = np.min([yMaxD_D , ymaxD])
-#            
-#            X.append(x)
-#            Y.append(y)
-#                
-#            ax2, ymax, ymaxC, ymaxD, x0, y0 = plotDeltaDuration(ax2, df1x, lineAlpha=0.8, addText=False, varType='%', threshold=threshold) 
-#            yMaxP = np.max([yMaxP , ymax])
-#            yMaxP_C = np.max([yMaxP_C , ymaxC]) 
-#            yMaxP_D = np.min([yMaxP_D , ymaxD])
-#            ax2.plot( [-int(df1.shape[0]*24/24),  int(df1.shape[0]*24/24)], [threshold*100,  threshold*100 ], "--", lw=1, color='gray', alpha=0.5)
-#            ax2.plot( [-int(df1.shape[0]*24/24),  int(df1.shape[0]*24/24)], [-threshold*100, -threshold*100], "--", lw=1, color='gray', alpha=0.5) 
-#
-#            formatShiftedEnergy(ax1)
-#            ax0.text(s=str(round(yMaxD_C,2)) + ' MW',
-#                       x=-12*4, y=yMaxD_C,
-#                       verticalalignment="bottom",horizontalalignment="center",
-#                       fontsize=8)
-#            
-#            ax0.text(s=str(round(yMaxD_D,1)) + ' MW',
-#                       x=12*4, y=yMaxD_D,
-#                       verticalalignment="top",horizontalalignment="center",
-#                       fontsize=8)
-#            
-#            ax2.text(s=str(round(yMaxP_C,1)) + '%',
-#                       x=-12*4, y=yMaxP_C,
-#                       verticalalignment="bottom",horizontalalignment="center",
-#                       fontsize=8)
-#            
-#            ax2.text(s=str(round(yMaxP_D,1)) + '%',
-#                       x=12*4, y=yMaxP_D,
-#                       verticalalignment="top",horizontalalignment="center",
-#                       fontsize=8)   
-#        
-#            # save to pdf
-#            pltPdf1.savefig() 
-#            plt.close() 
-#        
-#        output = pd.DataFrame(Y, columns=x)
-#        output.to_csv(dirout + "/" + fnamein.replace('delta.', '').replace('csv', date(2016, m,1).strftime('%B') + ".csv" ))
-#        
-#    return pltPdf1, yMax, yMaxD, yMaxP, 0, 0, yMaxD_C, yMaxD_D
-#
+def PlotDeltaSummaryByDay(dirin='./', fnamein='IntervalData.normalized.csv', 
+                 dirout='plots/', fnameout='DurationCurves.pdf', 
+                 normalized=False, threshold=0.1,
+                 dirlog='./', fnameLog='PlotDeltaSummary.log'):
+    
+    """Creates pdf with 13 pages: 1 page summary of entire year followed by monthly. Each page shows shifted energy & duration curves """
+    
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, "PlotDeltaSummary", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    # load data from file, find initial list of unique IDs. Update log file    
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
+
+    # add season & day type
+    df1 = assignDayType(df1)
+
+    # open pdf for figures
+    print("Opening plot files")
+    pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
+
+    # create annual summary of shifted energy & load duration
+    foutLog.write("Creating annual figure" )
+    print("Creating annual figure" )
+    pltPdf1, yMaxE, yMaxD, yMaxP, yMaxH, xMaxH, yMaxD_C, yMaxD_D = annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized,threshold=threshold)       
+    
+    # write results for user
+    print('\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+    foutLog.write('\n\tMaximum Shiftable Load, Charging is ' + str(round(yMaxD_C,2) ) + ' MW')
+    print('\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
+    foutLog.write('\n\tMaximum Shiftable Load, Disharging is ' + str(round(yMaxD_D,2) ) + ' MW')
+    
+    # Closing plot files
+    print('Writing output file: %s' %os.path.join(os.path.join(dirout, fnameout)))
+    foutLog.write('\n\nWriting: %s' %os.path.join(dirout, fnameout))
+    pltPdf1.close()
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    
+    return
+def annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized=False, threshold=0.1):
+    
+    """ create page summary for specific month & add to pdf """
+
+    # initialize variables
+    month = df1.index.month
+    day = df1.index.day
+    
+    # iterate over each month
+    dailyEnergy = []
+    shiftedEnergy = []
+    for m in range(1,13,1):
+        days = list(set(df1.loc[(month==m)].index.day))
+        X = []
+        Y = []
+        
+        # plot shifted energy
+        for d in days:
+            relevant = (month==m) & (day==d)
+            
+            # initialize figure
+            fig = plt.figure(figsize=(8,6))
+            fig.suptitle(  date(2016, m,1).strftime('%B')  + " / " + str(int(d)) +  " / " + df1.loc[relevant, 'DayType'][0])   
+            plt.subplots_adjust(wspace=0.3,hspace=0.3 )    
+            ax0 = plt.subplot2grid((2, 2), (0, 0),  fig=fig)
+            ax1 = plt.subplot2grid((2, 2), (0, 1),  fig=fig)
+            ax2 = plt.subplot2grid((2, 2), (1, 0),  fig=fig)
+            
+            ymax = 0
+            yMax = 0
+            yMaxD = 0.0
+            yMaxP = 0.0
+            yMaxD_D = 0.0
+            yMaxD_C = 0.0
+            yMaxP_D = 0.0
+            yMaxP_C = 0.0            
+            
+            df1x = findShiftingEvents(df1.loc[relevant], threshold=threshold)
+            
+            dailyEnergy.append( np.sum( df1.loc[relevant,'Others'].values) )
+            ax1, ymax = plotShiftedEnergy(ax1, df1x, c='purple', a=0.8)
+            yMax = np.max([yMax, ymax])
+            shiftedEnergy.append(ymax)
+            
+            # plot load-duration
+            ax0, ymax, ymaxC, ymaxD, x, y = plotDeltaDuration(ax0, df1x, lineAlpha=0.8, addText=False, varType='Abs', threshold=threshold) 
+            yMaxD = np.max([yMaxD , ymax])
+            yMaxD_C = np.max([yMaxD_C , ymaxC]) 
+            yMaxD_D = np.min([yMaxD_D , ymaxD])
+            
+            X.append(x)
+            Y.append(y)
+                
+            ax2, ymax, ymaxC, ymaxD, x0, y0 = plotDeltaDuration(ax2, df1x, lineAlpha=0.8, addText=False, varType='%', threshold=threshold) 
+            yMaxP = np.max([yMaxP , ymax])
+            yMaxP_C = np.max([yMaxP_C , ymaxC]) 
+            yMaxP_D = np.min([yMaxP_D , ymaxD])
+            ax2.plot( [-int(df1.shape[0]*24/24),  int(df1.shape[0]*24/24)], [threshold*100,  threshold*100 ], "--", lw=1, color='gray', alpha=0.5)
+            ax2.plot( [-int(df1.shape[0]*24/24),  int(df1.shape[0]*24/24)], [-threshold*100, -threshold*100], "--", lw=1, color='gray', alpha=0.5) 
+
+            formatShiftedEnergy(ax1)
+            ax0.text(s=str(round(yMaxD_C,2)) + ' MW',
+                       x=-12*4, y=yMaxD_C,
+                       verticalalignment="bottom",horizontalalignment="center",
+                       fontsize=8)
+            
+            ax0.text(s=str(round(yMaxD_D,1)) + ' MW',
+                       x=12*4, y=yMaxD_D,
+                       verticalalignment="top",horizontalalignment="center",
+                       fontsize=8)
+            
+            ax2.text(s=str(round(yMaxP_C,1)) + '%',
+                       x=-12*4, y=yMaxP_C,
+                       verticalalignment="bottom",horizontalalignment="center",
+                       fontsize=8)
+            
+            ax2.text(s=str(round(yMaxP_D,1)) + '%',
+                       x=12*4, y=yMaxP_D,
+                       verticalalignment="top",horizontalalignment="center",
+                       fontsize=8)   
+        
+            # save to pdf
+            pltPdf1.savefig() 
+            plt.close() 
+        
+        output = pd.DataFrame(Y, columns=x)
+        output.to_csv(dirout + "/" + fnamein.replace('delta.', '').replace('csv', date(2016, m,1).strftime('%B') + ".csv" ))
+        
+    return pltPdf1, yMax, yMaxD, yMaxP, 0, 0, yMaxD_C, yMaxD_D
+
     
 #def plotDeltaDurationX(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0, threshold=0.1,  addText=False, varType='Norm'):
 #    

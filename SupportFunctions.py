@@ -71,7 +71,7 @@ def getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[1,2,0], dateti
                       usecols = useColIndex, 
                       names=useColNames, 
                       dtype=dataTypes) 
-
+    
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
     try:
         df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
@@ -105,26 +105,31 @@ def getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=True):
     
     # read the csv file
     df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0) 
-    
     # output to log file
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
-    
+
     # read datetime
     try:
         df1['datetime'] = pd.to_datetime(df1['datetime'], format='%Y-%m-%d %H:%M')
     except:
-        pass
+        try:
+            df1['datetime'] = pd.to_datetime(df1['datetime'], format='%m/%d/%Y %H:%M')
+        except:
+            pass
     try:
         df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
         df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
     except:
-        pass
+        try:
+            df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%m/%d/%Y %H:%M')
+            df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
+        except:
+            pass
     
     # if selected, set the datetime as the index and sort
     if datetimeIndex:
         df1.set_index(['datetime'], inplace=True)
         df1.sort_index(inplace=True) # sort on datetime
-        
         # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
         foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
         foutLog.write('Time records end on: %s\n' %df1.index[-1].strftime('%Y-%m-%d %H:%M'))

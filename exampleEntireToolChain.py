@@ -98,7 +98,7 @@ if False: # CalculateBilling
                      writeDataFile=True,
                      writeSummaryFile=True)   
     
-if True:# Heatmap of Billing
+if False:# Heatmap of Billing
     Plot3HeatMaps(dirin='testdata/', 
                          fnamein=fnamebase+'.billing.csv', # considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
                          dirout='testdata/', 

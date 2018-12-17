@@ -4,7 +4,7 @@ Created on Fri Sep  7 11:51:10 2018
 
 @author: berryi
 """
-#%% Importing all the necessary Python packages
+#%% Import all the necessary Python packages
 import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
@@ -15,6 +15,8 @@ import matplotlib.backends.backend_pdf as dpdf # pdf output
 from copy import copy as copy
 import pylab
 import warnings
+
+#%% Track warnings instead of writing them to the console
 warnings.filterwarnings("ignore")
 
 #%% Importing supporting modules
@@ -55,6 +57,8 @@ def deltaLoadsFunction(df1, df2):
     return df3
 
 def findShiftingEvents(df0, threshold=0.1):
+    
+    """ searches in a normalized segment of data for charge/discharge cycles & adds to the dataframe """
     
     # copy dataframe
     df = df0.copy()
@@ -146,6 +150,7 @@ def findShiftingEvents(df0, threshold=0.1):
 def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     
     """ adds specific day's load curve to axis """
+    
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_ylabel('Normalized Load [pu]')
     ax0.set_xlabel('Hour of the Day [h]')
@@ -157,11 +162,13 @@ def plotDailyLoads(ax0, df, lw=1, c='b', ls='-', label=''):
     ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax0.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5) 
     ax0.plot(np.arange(df.shape[0]), df['NormDmnd'], ls,  lw=2, c=c, label=label)
+    
     return ax0
 
 def plotDailyDeltaLoad(ax0, df0, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=False):
     
     """ adds specific day's power & energy deltas to axis """
+    
     df = df0.copy()
     df = df.sort_values(by='datetime', ascending=True)    
     ax0.set_ylabel('Delta in Loads [pu]')
@@ -200,7 +207,8 @@ def plotDailyDeltaLoad(ax0, df0, lw=1, c='b', ls='-', fillFlag=True, shiftFlag=F
 
 def plotDailyDeltaEnergy(ax0, df0, lw=1, c='b', ls='-'):
     
-    """ adds specific day's power & energy deltas to axis """    
+    """ adds specific day's power & energy deltas to axis """
+    
     df = df0.copy()
     df = df.sort_values(by='datetime', ascending=True)
     ax0.set_ylabel('Delta in Energy [puh]')
@@ -227,6 +235,7 @@ def plotDailyDeltaEnergy(ax0, df0, lw=1, c='b', ls='-'):
 def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     
     """ adds histogram of daily shifted energy """
+    
     y = np.asarray(shiftedEnergy)/np.asarray(dailyEnergy)*100
     yMax = np.ceil(np.max(y))
     ax2.hist(y,bins='auto', color='purple', lw=0, alpha=0.5)   
@@ -235,6 +244,7 @@ def plotHistogram(ax2, dailyEnergy, shiftedEnergy):
     ax2.set_xlim([0,yMax])  
     ax2.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
     ax2.yaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
+                   
     return ax2
 
 def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0,  addText=False, varType='Norm', threshold=0.1):
@@ -539,7 +549,7 @@ def DeltaLoads(dirin='./', fnameinL='groups.csv',   fnameino='groups.csv',
                dirlog='./', fnameLog='DeltaLoads.log',
                dataName = 'delta'):
     
-    """ calculates delta between leaders & others in a group """
+    """ calculates delta between leaders & others in a group and saves to csv """
     
     # Capture start time of code execution
     codeTstart = datetime.now()
@@ -679,7 +689,6 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
 def SaveDeltaByMonth(dirin_raw = './', 
                     dirout = './', 
                     fnamebase = 'fnamebase',
-                    fnamein = 'IntervalData.csv',
                     fnameout = 'duration.csv', 
                     Ngroups=1,
                     dirlog='./', 
@@ -696,10 +705,6 @@ def SaveDeltaByMonth(dirin_raw = './',
     months = [ date(2016, m,1).strftime('%B') for m in range(1, 13,1)]
     durations_we = pd.DataFrame(columns=months)
     durations    = pd.DataFrame(columns=months)
-        
-    
-    peakLeaders = 0.0
-    peakOthers = 0.0
     
     # iterate over each month of the year
     print("Calculating Average Delta for")
@@ -741,14 +746,20 @@ def SaveDeltaByMonth(dirin_raw = './',
                 
                 if dfL.loc[relevantL, 'DayType'][0] in ['we','h']:
                     # find this day in the data
-                    leaders_we[d] = dfL.loc[relevantL,'Demand'].values
-                    others_we[d]  = dfo.loc[relevanto,'Demand'].values
+                    try:
+                        leaders_we[d] = dfL.loc[relevantL,'Demand'].values
+                        others_we[d]  = dfo.loc[relevanto,'Demand'].values
+                    except:
+                        pass
                     
                 else:
                     # find this day in the data
-                    leaders[d] = dfL.loc[relevantL,'Demand'].values
-                    others[d]  = dfo.loc[relevanto,'Demand'].values
-                
+                    try:
+                        leaders[d] = dfL.loc[relevantL,'Demand'].values
+                        others[d]  = dfo.loc[relevanto,'Demand'].values
+                    except:
+                        pass
+                    
             # sum & normalize the leaders 
             leaders = leaders.T
             avgLeaders = leaders.mean(axis=0).values
@@ -845,7 +856,7 @@ def PlotDeltaSummary(dirin='./', fnamein='delta.csv',
 def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                         fnamebase='NAICS', fnamegroup = 'NAICS.groups.csv', 
                         fnamein='IntervalData.csv',  
-                        Ngroups=4, threshold=0.5, demandUnit='Wh',
+                        Ngroups=4, threshold=1.0, demandUnit='Wh',
                         dirlog='./', fnameLog='GroupAnalysisMaster.log',
                         steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']):
 
@@ -1290,7 +1301,6 @@ def ShowFlexibilityOptions(dirin='./', fnameinL='leaders.csv', fnameino='others.
     discharge1Deltas = dischargeDeltas[:np.int(np.floor(len(dischargeDeltas)/2))]
     discharge2Deltas = dischargeDeltas[np.int(np.floor(len(dischargeDeltas)/2)):] 
 
-    
     onpeakDeltas = copy(discharge1Deltas[:sum(onpeak)])
     onpeakDeltasx = copy(onpeakDeltas[1:])
     arrangedOnPeakDeltas = np.asarray(list(np.flipud(copy(onpeakDeltas[::2]))) + copy(list(onpeakDeltasx[::2]) ))

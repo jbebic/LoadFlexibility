@@ -13,11 +13,11 @@ from GroupAnalysis import GroupAnalysisMaster, ShowWalk2DurationCurve, ShowFlexi
 from SupportFunctions import findMissingData
 
 #%% Define Iterations
-if True:
+if True: # synthetic10
     fnamebase = 'synthetic10'
     ratein =  'SCE-TOU-PA-2-B.csv'
 
-if False:
+if False: #waterSupplyandIrrigationSystems
     fnamebase = 'waterSupplyandIrrigationSystems'
     ratein =  'SCE-TOU-PA-2-B.csv'
 
@@ -32,6 +32,9 @@ if False: # GenerateSyntheticProfiles
                   dirout='testdata/', 
                   fnameout = fnamebase + '.csv', 
                   dirlog='testdata/')
+# see example ouputs:
+    # 
+
 
 #%% AnonymizeCIDs
 if False: # AnonymizeCIDs
@@ -43,6 +46,10 @@ if False: # AnonymizeCIDs
                   dirlog='testdata/', 
                   fnameLog='AnonymizeCIDs.log',
                   IDlen=6)
+# see example outputs:
+    #   two_grocers_DST.lookup.csv
+    #
+
 
 #%% Fix DST
 if False: # FixDST
@@ -53,6 +60,9 @@ if False: # FixDST
                    dirlog='testdata/',
                    tzinput='America/Los_Angeles',
                    OutputFormat='SCE')
+
+# see example output: examples/fnameout.csv
+    # 
 
 #%% Normalize profiles
 if False: # NormalizeLoads
@@ -74,6 +84,10 @@ if False: # format for billing calc
                    normalizeBy='year', 
                    normalize=False)        
     
+# see example outputs:
+    #    
+    #
+    
 #%% Plot heatmaps
 if False:  # PlotHeatMaps  
     PlotHeatMaps(dirin='testdata/', 
@@ -83,6 +97,9 @@ if False:  # PlotHeatMaps
                  dirout='testdata/', 
                  fnameout=fnamebase+'.HeatMaps.g1.pdf',
                  dirlog='testdata/')    
+
+# see example outputs:
+    #    
     
 #%% Calculate Billing
 if False: # CalculateBilling
@@ -97,13 +114,19 @@ if False: # CalculateBilling
                      ratein=ratein,
                      writeDataFile=True,
                      writeSummaryFile=True)   
+
+# see example outputs:
+    #    
     
-if False:# Heatmap of Billing
+if True:# Heatmap of Billing
     Plot3HeatMaps(dirin='testdata/', 
-                         fnamein=fnamebase+'.billing.csv', # considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
-                         dirout='testdata/', 
-                         fnameout=fnamebase+'.HeatMaps.BillingNew.pdf',
-                         dirlog='testdata/')    
+                  fnamein=fnamebase+'.billing.csv', # considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
+                  dirout='testdata/', 
+                  fnameout=fnamebase+'.HeatMaps.BillingNew.pdf',
+                  dirlog='testdata/')    
+
+# see example outputs:
+    #    
     
 if False: #findMissingData: creates csv of customers with missing data, to use as ignoreCID
     findMissingData(dirin='testdata/', 
@@ -112,6 +135,9 @@ if False: #findMissingData: creates csv of customers with missing data, to use a
                     fnameout=fnamebase + '.List.MissingData.csv', 
                     dirlog='testdata/', 
                     fnameLog='InitializeIgnoreList.log')
+
+# see example outputs:
+    #    
     
 #%% Group Customers
 if False: #  CalculateGroups
@@ -124,6 +150,9 @@ if False: #  CalculateGroups
                     ignore1515=True,
                     energyPercentiles = [5, 27.5,  50, 72.5, 95], 
                     chargeType="Total")
+
+# see example outputs:
+    #    
         
 #%% Analyze Groups & Calculate Flexibility      
 # performs normalizing groups, delta between groups, plot delta by day, & plot delta summary
@@ -147,7 +176,6 @@ if False:  # full chain using real data, e.g. for SCE
                      fnamebase = 'waterSupplyandIrrigationSystems', # file name base (usual by the type of building / NAICS)
                      fnamein = 'waterSupplyandIrrigationSystems.A.csv', # interval data 
                      Ngroups = 2, # tells the function how many groups to iterate over
-                     threshold = 0.5, # sets the threshold for identifying multiple cycles per day
                      demandUnit = 'Wh' # unit of the raw interval data
                      )
     
@@ -159,7 +187,6 @@ if False:  # part of chain using real data, e.g. for GE
                      fnamebase = 'waterSupplyandIrrigationSystems', # file name base (usual by the type of building / NAICS)
                      fnamein = 'waterSupplyandIrrigationSystems.A.csv', # interval data 
                      Ngroups = 1, # tells the function how many groups to iterate over
-                     threshold = 0.2, # sets the threshold for identifying multiple cycles per day
                      demandUnit = 'Wh', # unit of the raw interval data
                      steps=['DeltaByDayWithDuration'] # which steps of the analysis to run, default is entire chain
                      )  
@@ -172,10 +199,12 @@ if False:  # part of chain using real data, e.g. for GE
                      fnamebase = 'LargeOfficesAll', # file name base (usual by the type of building / NAICS)
                      fnamein = 'LargeOfficesAll.A.csv', # interval data 
                      Ngroups = 2, # tells the function how many groups to iterate over
-                     threshold = 0.5, # sets the threshold for identifying multiple cycles per day
                      demandUnit = 'Wh', # unit of the raw interval data
                      steps=['Summary'] # which steps of the analysis to run, default is entire chain
                      )
+
+# see example outputs:
+    #    
      
 #%% Plot heatmaps
 if False:  # PlotHeatMaps  
@@ -188,9 +217,9 @@ if False:  # PlotHeatMaps
                  fnameout='largeOfficesAll.delta.g1L-g1o.HeatMap.pdf',
                  dirlog='output/',
                  )    
+# see example outputs:
+    #    
 
-
-    
 #%% Save Duration to CSV
 if False:# SaveDeltaByMonth
     SaveDeltaByMonth(dirin_raw='data/', 
@@ -198,9 +227,12 @@ if False:# SaveDeltaByMonth
                     dirout='output/', 
                     fnamebase='largeOfficesAll',
                     Ngroups=4,
-                    fnameout = 'largeOfficesAll.DurationCurves.csv',
-                    dirlog = 'output/')
-     
+                    fnameout='largeOfficesAll.DurationCurves.csv',
+                    dirlog='output/')
+# see example outputs:
+    #      
+    
+    
 #%% Plot Duration Curves     
 if False: # annual duration curve 
     PlotDurationCurves(dirin='testdata/', 
@@ -219,25 +251,23 @@ if False: # family of duration curves
 #%% Demonstration Figures
 if False:
     
-    n = 1        
-    fnamebase = 'largeOfficesAll'
-    groupL = 'g' + str(n) + 'L'
-    groupo = 'g' + str(n) + 'o'
+    groupL = 'g1L'
+    groupo = 'g1o'
     fnameout  = fnamebase+".delta." + groupL + "-" + groupo + ".csv"
     
     ShowFlexibilityOptions(dirin='data/',
-               fnameinL=fnamebase+ "." + groupL + ".normalized.csv",
-               fnameino=fnamebase+ "." + groupo + ".normalized.csv",
-               dirout='data/', 
-               dirrate='tou_data/',
-               ratein='SCE-TOU-GS3-B.csv',
-               fnameout=fnameout.replace('.csv', '.flexibility.pdf'))       
+               fnameinL = fnamebase+ "." + groupL + ".normalized.csv",
+               fnameino = fnamebase+ "." + groupo + ".normalized.csv",
+               dirout = 'data/', 
+               dirrate = 'tou_data/',
+               ratein = 'SCE-TOU-GS3-B.csv',
+               fnameout = fnameout.replace('.csv', '.flexibility.pdf'))       
     
     ShowWalk2DurationCurve(dirin='data/',
-               fnamein  = fnamebase+".delta." + groupL + "." + groupo + ".csv",
-               fnameinL=fnamebase+ "." + groupL + ".normalized.csv",
-               fnameino=fnamebase+ "." + groupo + ".normalized.csv",
-               dirout='data/', 
-               dirrate='tou_data/',
-               ratein='SCE-TOU-GS3-B.csv',
-               fnameout=fnameout.replace('.csv', '.durationWalk.pdf'))          
+               fnamein = fnamebase+".delta." + groupL + "." + groupo + ".csv",
+               fnameinL = fnamebase+ "." + groupL + ".normalized.csv",
+               fnameino = fnamebase+ "." + groupo + ".normalized.csv",
+               dirout = 'data/', 
+               dirrate = 'tou_data/',
+               ratein = 'SCE-TOU-GS3-B.csv',
+               fnameout = fnameout.replace('.csv', '.durationWalk.pdf'))          

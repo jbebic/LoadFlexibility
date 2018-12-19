@@ -249,12 +249,12 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
-        cmax = np.ceil( df3.max().max() * 4 ) / 4
+        cmax = np.ceil( df3.max().max()  ) 
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap= 'viridis',  
                                               origin='lower', 
                                               vmin = cmin, 
-                                              vmax = 12)
+                                              vmax = cmax)
         ax0.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0])
         
@@ -365,7 +365,7 @@ def Plot3HeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs=
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName=["Demand", "EnergyCharge"], usecols=[0,1,2,3])
     df1['day'] = df1.index.dayofyear
     df1['hour'] = df1.index.hour + df1.index.minute/60.
-    df1['EnergyCost'] = df1['EnergyCharge'] / df1['Demand'] * 100
+    df1['EnergyCost'] = df1['EnergyCharge'].values / df1['Demand'].values * 100
     
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)

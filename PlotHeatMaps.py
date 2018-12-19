@@ -164,12 +164,13 @@ def outputBillingHeatmap(pltPdf, df1,  title, cid, foutLog):
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
     try:
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
+        df3 = df3.fillna(method='ffill')
         cmax = np.ceil( df3.max().max() * 4 ) / 4
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap= 'viridis',  
                                               origin='lower', 
                                               vmin = cmin, 
-                                              vmax = 12)
+                                              vmax = cmax)
         
         ax0.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0])
@@ -249,7 +250,7 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
-        print(df3)
+        df3 = df3.fillna(method='ffill')
         cmax = np.ceil( df3.max().max()  ) 
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap= 'viridis',  

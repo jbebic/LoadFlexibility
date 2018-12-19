@@ -772,8 +772,7 @@ def SaveDeltaByMonth(dirin_raw = './',
             
             # delta between leaders and others
             normDelta = np.flipud( np.sort((normLeaders - normOthers)) )
-            durations[(date(2016, m,1).strftime('%B'))] = normDelta  *np.mean(avgOthers)
-            
+            durations[(date(2016, m,1).strftime('%B'))] = normDelta  #*np.mean(avgOthers)
             
             # sum & normalize the leaders 
             leaders_we = leaders_we.T
@@ -787,7 +786,7 @@ def SaveDeltaByMonth(dirin_raw = './',
             
             # delta between leaders and others
             normDelta_we = np.flipud( np.sort((normLeaders_we - normOthers_we)) )
-            durations_we[(date(2016, m,1).strftime('%B'))] = normDelta_we  *np.mean(avgOthers_we)
+            durations_we[(date(2016, m,1).strftime('%B'))] = normDelta_we # *np.mean(avgOthers_we)
             
     print('\nWriting: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekdays.csv" ))))
     durations = durations.T

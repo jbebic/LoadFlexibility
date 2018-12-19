@@ -249,6 +249,7 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
+        print(df3)
         cmax = np.ceil( df3.max().max()  ) 
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap= 'viridis',  

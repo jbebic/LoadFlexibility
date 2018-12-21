@@ -278,9 +278,9 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         ax1.set_aspect('auto')
         fig.colorbar(im0, ax=[ax1])
         try:
-            ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+            ax1.text(s=str(round(np.sum(df5.values),1) ) ,
                        x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-            ax1.text(s='GWh',
+            ax1.text(s='MWh/yr',
                        x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
         except:
             pass
@@ -396,9 +396,9 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
         fig.colorbar(im0, ax=[ax1]) 
         df5 = df5.fillna(value=0.0)
         try:
-            ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+            ax1.text(s=str(round(np.sum(df5.values),1) ) ,
                        x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-            ax1.text(s='GWh',
+            ax1.text(s='MWh/yr',
                        x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
         except:
             pass

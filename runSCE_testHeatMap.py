@@ -4,13 +4,14 @@ Created on Mon May 28 09:28:36 2018
 
 @author: jbebic
 """
-from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary, GroupAnalysisMaster, SaveDeltaByMonth
+from GroupAnalysis import GroupAnalysisMaster, SaveDeltaByMonth
 from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
-from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
+from NormalizeLoads import ReviewLoads, NormalizeLoads
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
-from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling, Plot3HeatMaps
+from PlotHeatMaps import PlotHeatMaps
 from PlotBilling import PlotBillingData
+from CustomerReport import CreateCustomerReports
 
 if True:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -79,6 +80,7 @@ if False:
                 considerCIDs = 'g' + str(n) + 'L.'+ fnamebase + '.Energy.A.groups.csv',
                 dirout='plots/', fnameout=fnamebase + ".g" + str(n) + 'L.A.HeatMaps.pdf',
                 dirlog='plots/')
+        
 #%% Calculate Billing
 if False:
     CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
@@ -91,22 +93,17 @@ if False:
     PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
                    dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
                    dirlog='plots/')
-if True:# Heatmap of Billing
-    Plot3HeatMaps(dirin='output/', 
-                  fnamein=fnamebase+'.A.billing.csv', considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv', #considerCIDs=fnamebase+'.g1c.csv', ignoreCIDs = fnamebase+'.g1i.csv',
-                  dirout='plots/', 
-                  fnameout=fnamebase+'.HeatMaps.BillingNew.pdf',
-                  dirlog='plots/')    
-#%% Plot Billing Heatmaps
-if False:
-    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
-                   considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
-                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1L.Heatmaps.pdf',
-                   dirlog='plots/')     
-    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
-                   considerCIDs =   'g1o.'+ fnamebase + '.Energy.A.groups.csv',
-                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1o.Heatmaps.pdf',
-                   dirlog='plots/') 
+    
+#%% IMB: these are replaced by CreateReports
+#if False:
+#    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
+#                   considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
+#                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1L.Heatmaps.pdf',
+#                   dirlog='plots/')     
+#    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
+#                   considerCIDs =   'g1o.'+ fnamebase + '.Energy.A.groups.csv',
+#                   dirout='plots/', fnameout=fnamebase + '.A.billing.g1o.Heatmaps.pdf',
+#                   dirlog='plots/') 
     
 #%% Grouping
 if False: # by energy component of bill
@@ -125,13 +122,18 @@ if False: # by demand component of bill
     CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
                    plotGroups = True, chargeType='Demand', energyPercentiles = [10, 30, 50, 70, 90],
                    dirout='output/', fnameout=fnamebase + '.Demand.A.groups.csv',
-                   dirlog='plots/', dirplot='plots/')   
+                   dirlog='plots/', dirplot='plots/')  
+    
+#%% Group Analysis Functions
 if False: # performs normalizing groups, delta between groups, plot delta by day, & plot delta summary (all in one function)
     GroupAnalysisMaster(dirin_raw='input/',
-                        dirout_data='output/', dirout_plots='plots/', dirlog='output/',
+                        dirout_data='output/', 
+                        dirout_plots='plots/', 
+                        dirlog='output/',
                         fnamebase=fnamebase,
                         fnamein=fnamebase+'.A.csv',
                         Ngroups=2, threshold=0.5, demandUnit='Wh') 
+    
 #%% Save Duration to CSV
 if False:# SaveDeltaByMonth
     SaveDeltaByMonth(dirin_raw='output/', 
@@ -140,43 +142,69 @@ if False:# SaveDeltaByMonth
                     Ngroups=2,
                     fnameout= fnamebase + '.durationcurves.csv',
                     dirlog='output/') 
-#%% Normalize profiles
-if False:
-    for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o'] :
-        NormalizeGroup(dirin='input/', fnamein=fnamebase + '.A.csv', dirconsider = 'output/', considerCIDs = groupName + '.'+ fnamebase + '.Energy.A.groups.csv',
-                   dirout='output/', fnameout=fnamebase + '.' + groupName + '.energyOnly.A.normalized.csv',
-                   groupName = groupName,
-                   dirlog='output/')
-if False:
-    for n in [1,2,3,4]:
-        
-        groupL = 'g' + str(n) + 'L'
-        groupo = 'g' + str(n) + 'o'
-        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
     
-        DeltaLoads(dirin='output/', # outputs
-                   fnameinL=fnamebase + '.' + groupL + '.energyOnly.A.normalized.csv',
-                   fnameino=fnamebase + '.' + groupo + '.energyOnly.A.normalized.csv',
-                   dirout='output/', # outputs 
-                   fnameout=fnameout,
-                   dirlog='output/' # outputs
-                   ) 
-        
-        PlotDeltaByDay(dirin='output/',  # outputs
-                   fnameinL=fnamebase + "." + groupL +".energyOnly.A.normalized.csv", 
-                   fnameino=fnamebase + "." + groupo +".energyOnly.A.normalized.csv", 
-                  dirout='plots/',
-                  fnameout=fnamebase + ".loads.energyOnly." + groupL + "." + groupo + ".A.pdf",
-                  dirlog='plots/'
-                  ) 
-        
-        PlotDeltaSummary(dirin='output/',  # outputs
-                  fnamein=fnameout, 
-                  dirout='plots/', 
-                  fnameout=fnameout.replace('.csv', '.FullYear.pdf'),
-                  dirlog='plots/'
-                  )  
-        
+#%% Calculate Billing of the Group of Others
+if True:
+    CalculateBilling(dirin='input/', 
+                     fnamein=fnamebase + '.g1o.normalized.csv',
+                     dirout='output/', 
+                     fnameout=fnamebase + '.g1o.billing.csv',
+                     fnameoutsummary ='summary.' + fnamebase + '.g1L.billing.csv',
+                     dirlog='output/',
+                     demandUnit='Wh',
+                     dirrate='tou_data/',
+                     varName='AvgDemand',
+                     ratein=ratefile,
+                     writeDataFile=True,
+                     writeSummaryFile=False)    
+    
+#%% Create Report for Each Leader
+if True:
+    CreateCustomerReports(dirin='input/', 
+                    fnamein=fnamebase + '.A.billing.csv', 
+                    considerCIDs=fnamebase + 'g1L.Energy.A.groups.csv',
+                    dirin_group='output/', 
+                    fnamein_group = fnamebase + '.g1o.billing.csv', 
+                    leaderFlag=True, 
+                    dirout='output/') 
+    
+#%% IMB: these are all replace by GroupAnalysisMaster
+#if False:
+#    for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o'] :
+#        NormalizeGroup(dirin='input/', fnamein=fnamebase + '.A.csv', dirconsider = 'output/', considerCIDs = groupName + '.'+ fnamebase + '.Energy.A.groups.csv',
+#                   dirout='output/', fnameout=fnamebase + '.' + groupName + '.energyOnly.A.normalized.csv',
+#                   groupName = groupName,
+#                   dirlog='output/')
+#if False:
+#    for n in [1,2,3,4]:
+#        
+#        groupL = 'g' + str(n) + 'L'
+#        groupo = 'g' + str(n) + 'o'
+#        fnameout  = fnamebase+".delta." + groupL + "." + groupo + ".csv"
+#    
+#        DeltaLoads(dirin='output/', # outputs
+#                   fnameinL=fnamebase + '.' + groupL + '.energyOnly.A.normalized.csv',
+#                   fnameino=fnamebase + '.' + groupo + '.energyOnly.A.normalized.csv',
+#                   dirout='output/', # outputs 
+#                   fnameout=fnameout,
+#                   dirlog='output/' # outputs
+#                   ) 
+#        
+#        PlotDeltaByDay(dirin='output/',  # outputs
+#                   fnameinL=fnamebase + "." + groupL +".energyOnly.A.normalized.csv", 
+#                   fnameino=fnamebase + "." + groupo +".energyOnly.A.normalized.csv", 
+#                  dirout='plots/',
+#                  fnameout=fnamebase + ".loads.energyOnly." + groupL + "." + groupo + ".A.pdf",
+#                  dirlog='plots/'
+#                  ) 
+#        
+#        PlotDeltaSummary(dirin='output/',  # outputs
+#                  fnamein=fnameout, 
+#                  dirout='plots/', 
+#                  fnameout=fnameout.replace('.csv', '.FullYear.pdf'),
+#                  dirlog='plots/'
+#                  )  
+#        
 #%% Export profiles (use this for troubleshooting)
 if False:
     ExportLoadFiles(dirin='output/', fnamein =fnamebase + '.A.normalized.csv', explist=fnamebase + '.A.ignore.csv',

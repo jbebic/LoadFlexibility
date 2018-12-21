@@ -250,8 +250,8 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
     
-    try:
-        
+#    try:
+    if True:
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')
@@ -308,15 +308,15 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         plt.close() # Closes fig to clean up memory
         successFlag = True
         
-    except:
-        successFlag = False
-        foutLog.write("\n*** Unable to create heat map for %s " %cid )
-        print("*** Unable to create heat map for %s " %cid)
-        
-        try:
-            plt.close()    
-        except:
-            pass
+#    except:
+#        successFlag = False
+#        foutLog.write("\n*** Unable to create heat map for %s " %cid )
+#        print("*** Unable to create heat map for %s " %cid)
+#        
+#        try:
+#            plt.close()    
+#        except:
+#            pass
     
     return successFlag
 
@@ -409,7 +409,6 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                    x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
         ax0.text(s='₵/kWh',
                    x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
-        
         
         pltPdf.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory

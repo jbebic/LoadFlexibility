@@ -263,10 +263,11 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
                                               vmax = cmax)
         ax0.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0])       
-        
+        df3 = df3.fillna(value=0.0)
         
         # total demand
         df5 = df2.pivot(index='hour', columns='day', values="Demand") 
+        df5 = df5.fillna(value=0.0)
         cmax = np.ceil( df5.max().max() * 4 ) / 4
         im0 = ax1.imshow(df5.iloc[:,:], interpolation='none', #'nearest'
                                               cmap='viridis',  
@@ -292,7 +293,7 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
                                               origin='lower', 
                                               vmin = cmin, 
                                               vmax = cmax)
-        
+        df4 = df4.fillna(value=0.0)
         ax2.set_aspect('auto')
         fig.colorbar(im0, ax=[ax2]) 
         try:
@@ -374,6 +375,7 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
         df3 = df0.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')
         df3 = df3.fillna(method='bfill')
+        df3 = df3.fillna(value=0.0)
         cmax = np.ceil( df3.max().max()  ) 
         im0 = ax0.imshow(df3.iloc[:,:], interpolation = 'none', #'nearest'
                                               cmap = 'viridis',  
@@ -382,7 +384,6 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                                               vmax = cmax)
         ax0.set_aspect('auto')
         fig.colorbar(im0, ax=[ax0]) 
-        
         # total charge
         df5 = df2.pivot(index='hour', columns='day', values="Demand") 
         cmax = np.ceil( df5.max().max() * 4 ) / 4
@@ -392,7 +393,8 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                                               vmin = cmin, 
                                               vmax = cmax)
         ax1.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax1])   
+        fig.colorbar(im0, ax=[ax1]) 
+        df5 = df5.fillna(value=0.0)
         try:
             ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
                        x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
@@ -411,6 +413,7 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                                               vmax = cmax)
         ax2.set_aspect('auto')
         fig.colorbar(im0, ax=[ax2])  
+        df4 = df4.fillna(value=0.0)
         try:
             ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
                        x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      

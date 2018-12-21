@@ -251,7 +251,6 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
     
 #    try:
-    if True:
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')
@@ -276,12 +275,14 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
                                               vmax = cmax)
         
         ax1.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax1]) 
-        ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-        ax1.text(s='GWh',
-                   x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
-        
+        fig.colorbar(im0, ax=[ax1])
+        try:
+            ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+            ax1.text(s='GWh',
+                       x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        except:
+            pass
         
         # total charge
         df4 = df2.pivot(index='hour', columns='day', values="EnergyCharge") 
@@ -294,29 +295,33 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
         
         ax2.set_aspect('auto')
         fig.colorbar(im0, ax=[ax2]) 
-        ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        try:
+            ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        except:
+            pass
 
-
-
-        ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-        ax0.text(s='₵/kWh',
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        try:
+            ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+            ax0.text(s='₵/kWh',
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        except:
+            pass
         
         pltPdf.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
         successFlag = True
         
-#    except:
-#        successFlag = False
-#        foutLog.write("\n*** Unable to create heat map for %s " %cid )
-#        print("*** Unable to create heat map for %s " %cid)
-#        
-#        try:
-#            plt.close()    
-#        except:
-#            pass
+    except:
+        successFlag = False
+        foutLog.write("\n*** Unable to create heat map for %s " %cid )
+        print("*** Unable to create heat map for %s " %cid)
+        
+        try:
+            plt.close()    
+        except:
+            pass
     
     return successFlag
 
@@ -387,12 +392,15 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                                               vmin = cmin, 
                                               vmax = cmax)
         ax1.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax1])         
-        ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-        ax1.text(s='GWh',
-                   x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
-
+        fig.colorbar(im0, ax=[ax1])   
+        try:
+            ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+            ax1.text(s='GWh',
+                       x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        except:
+            pass
+        
         # total charge
         df4 = df2.pivot(index='hour', columns='day', values="EnergyCharge") 
         cmax = np.ceil( df4.max().max() * 4 ) / 4
@@ -403,12 +411,19 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
                                               vmax = cmax)
         ax2.set_aspect('auto')
         fig.colorbar(im0, ax=[ax2])  
-        ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-        ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
-        ax0.text(s='₵/kWh',
-                   x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        try:
+            ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        except:
+            pass
+        
+        try:
+            ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+            ax0.text(s='₵/kWh',
+                       x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        except:
+            pass
         
         pltPdf.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory

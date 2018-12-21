@@ -21,7 +21,7 @@ import matplotlib.backends.backend_pdf as dpdf # pdf output
 import matplotlib.pylab as pl
 
 #%% Importing modules
-from SupportFunctions import getData, logTime, createLog, assignDayType, findUniqueIDs
+from SupportFunctions import getData, getDataAndLabels, logTime, createLog, assignDayType, findUniqueIDs
 
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
@@ -460,7 +460,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
                      dirout='./', fnameout='IntervalCharges.csv', fnameoutsummary=[],
                      dirlog='./', fnameLog='CalculateBilling.log',
                      tzinput = 'America/Los_Angeles',
-                     demandUnit='Wh', 
+                     demandUnit='Wh', varName='Demand',
                      writeDataFile=False,
                      writeSummaryFile=True,
                      writeRatePeriod=False):
@@ -475,8 +475,8 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     codeTstart = datetime.now()
     foutLog = createLog(codeName, 'CalculateBilling', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
-    # read data & down-select to uniqueIDs
-    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='Demand', usecols=[0, 1, 2], datetimeIndex=False)
+    # read data & down-select to uniqueIDs   
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=False)
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
     df1.loc[df1['CustomerID'].isin(UniqueIDs)]
     
@@ -531,20 +531,20 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         for mNo in (np.arange(0, 12, 1)+1):
             
             df4.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other months
-            df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod','Demand']]
+            df4 = df3[(df3['CustomerID']==cid) & (df3['datetime'].dt.month == mNo)][['datetime','RatePeriod',varName]]
             
             # adding demand charges for this month
             ratesThisMonth = list(set(df4['RatePeriod']))
             for r in ratesThisMonth:
                 if rates['DemandCost'][r]> 0:
-                    idxmax = df4[df4['RatePeriod'] == r]['Demand'].idxmax()
-                    df3.at[idxmax, 'DemandCharge'] = df3.at[idxmax,'Demand'] * rates['DemandCost'][r] * 4.
+                    idxmax = df4[df4['RatePeriod'] == r][varName].idxmax()
+                    df3.at[idxmax, 'DemandCharge'] = df3.at[idxmax,varName] * rates['DemandCost'][r] * 4.
             
             # Adding facilities related demand charge
             temp1 = rates['FacilityCost'][0] # Facility charge
             if df4.shape[0] > 0:
-                idxmax = df4['Demand'].idxmax()
-                df3.at[idxmax, 'FacilityCharge'] = df3.at[idxmax,'Demand'] * temp1 * 4.
+                idxmax = df4[varName].idxmax()
+                df3.at[idxmax, 'FacilityCharge'] = df3.at[idxmax,varName] * temp1 * 4.
             
     # Sum the energy and demand charges into total cost for each interval
     # Calculate energy charge for every interval
@@ -593,7 +593,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                      dirlog='./', fnameLog='CalculateGroups.log',
                      energyPercentiles = [0, 25, 50, 75, 100], 
                      ratePercentiles = [0,10, 100],
-                     plotGroups=False, 
+                     plotGroups=True, 
                      chargeType="Total", 
                      ignore1515=False, matchGroupLength=False):
     

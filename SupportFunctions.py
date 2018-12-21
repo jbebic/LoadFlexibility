@@ -109,6 +109,17 @@ def getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=True):
     foutLog.write('Number of interval records read: %d\n' %df1['CustomerID'].size)
 
     # read datetime
+    
+    try:
+#        print('Processing time records...')
+#        foutLog.write('Processing time records\n')
+        dstr = df1['datetimestr'].str.split(':').str[0]
+        hstr = df1['datetimestr'].str.split(':').str[1]
+        mstr = df1['datetimestr'].str.split(':').str[2]
+        temp = dstr + ' ' + hstr + ':' + mstr
+        df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
+    except:
+        pass
     try:
         df1['datetime'] = pd.to_datetime(df1['datetime'], format='%Y-%m-%d %H:%M')
     except:

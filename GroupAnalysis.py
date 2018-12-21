@@ -919,7 +919,7 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                        fnameino=fnameino,
                        threshold=threshold,
                        withDuration=False,
-                       fnameout= fnameout_raw + ".pdf")  
+                       fnameout= fnameout_raw + ".ByDay.pdf")  
             foutLogMaster.write('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted deltas by day : '  + str(datetime.now()-codeTstartx))
         
@@ -932,7 +932,7 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                        fnameino=fnameino,
                        threshold=threshold, 
                        withDuration=True,
-                       fnameout= fnameout_raw + "_wDuration.pdf" ,
+                       fnameout= fnameout_raw + ".ByDay.pdf" ,
                        fnameLog='PlotDeltaByDayWithDuration.log',)  
             foutLogMaster.write('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))
             print('\n\tPlotted deltas by day with Duration : '  + str(datetime.now()-codeTstartx))

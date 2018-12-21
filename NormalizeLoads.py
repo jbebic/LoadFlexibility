@@ -12,7 +12,7 @@ import pandas as pd # multidimensional data analysis
 import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
 import os # operating system interface
-from SupportFunctions import getData, logTime, createLog, findUniqueIDs
+from SupportFunctions import getData, getDataAndLabels, logTime, createLog, findUniqueIDs
 
 
 #%% Version and copyright info to record on the log file
@@ -262,58 +262,12 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv',
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-    if InputFormat == 'SCE':
-        df1 = pd.read_csv(os.path.join(dirin,fnamein), 
-                          header = 0, 
-                          usecols = [0, 1, 2], 
-                          names=['datetimestr', 'Demand', 'CustomerID'],
-                          dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
     
-        print('Total number of interval records read: %d' %df1['Demand'].size)
-        foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
-    
-        print('Processing time records...')
-        foutLog.write('Processing time records\n')
-        dstr = df1['datetimestr'].str.split(':').str[0]
-        hstr = df1['datetimestr'].str.split(':').str[1]
-        mstr = df1['datetimestr'].str.split(':').str[2]
-        temp = dstr + ' ' + hstr + ':' + mstr
-        df1['datetime'] = pd.to_datetime(temp, format='%d%b%Y %H:%M')
-        
-    else:
-        
-        df1 = pd.read_csv(os.path.join(dirin,fnamein), header = 0, usecols = [0, 1, 2], names=['CustomerID', 'datetimestr', 'Demand'])
-        foutLog.write('Number of interval records read: %d\n' %df1['Demand'].size)
-        df1['datetime'] = pd.to_datetime(df1['datetimestr'], format='%Y-%m-%d %H:%M')
-        
-    # moved this line of code to before CustomerID is set to the index
-    UniqueIDs = df1['CustomerID'].unique().tolist() 
-
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=False)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs='', considerCIDs=considerCIDs)
     df1 = df1.sort_values(by=['CustomerID', 'datetime'])
-    df1.drop(['datetimestr'], axis=1, inplace=True) # drop redundant column
 
-    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
-
-    if considerCIDs != '':
-        print('Reading group IDs from: %s' %os.path.join(dirconsider,considerCIDs))
-        foutLog.write('Reading group IDs: %s\n' %os.path.join(dirconsider,considerCIDs))
-        df9 = pd.read_csv(os.path.join(dirconsider,considerCIDs), 
-                          header = 0, 
-                          usecols = [0],
-                          comment = '#',
-                          names=['CustomerID'],
-                          dtype={'CustomerID':np.str})
-        considerIDs = df9['CustomerID'].tolist()
-        considerIDs = list(set(considerIDs))
-        considerIDs = [x.replace(" ", "") for x in considerIDs]
-        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
-    else:
-        considerIDs = list(set(UniqueIDs))
-        UniqueIDs = list(set(UniqueIDs).intersection(considerIDs))
-
-    foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
-    print('Number of customer IDs after consider/ignore: %d' %len(UniqueIDs))
-    
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))    
     
     # update units into MWh
     if "kW" in demandUnit:
@@ -337,6 +291,7 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv',
     df1['DailyAverage'] = 0.0 # Add column of normalized demand to enable setting it with slice index later
     df1['NormDmnd'] = 0.0 # Add column of normalized demand to enable setting it with slice index later
     df2 = df1.loc[df1['CustomerID'].isin(UniqueIDs)]
+    print(UniqueIDs)
     df2pivot = pd.pivot_table(df2, values=[ 'Demand',  'NormDmnd'], index= ['datetime'], columns=None, aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
     df2count = pd.pivot_table(df2, values=[ 'Demand',  'NormDmnd'], index= ['datetime'], columns=None, aggfunc=len, fill_value=0.0, margins=False, dropna=True, margins_name='All')
     df3 = pd.DataFrame(df2pivot.to_records())    
@@ -393,7 +348,7 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv',
     # write to data file and to log
     print('Writing: %s' %os.path.join(dirout,fnameout))
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd', 'DailyAverage', 'Demand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
+    df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'NormDmnd', 'DailyAverage', 'Demand', 'AvgDemand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
 

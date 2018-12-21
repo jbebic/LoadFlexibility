@@ -165,6 +165,7 @@ def outputBillingHeatmap(pltPdf, df1,  title, cid, foutLog):
     try:
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')
+        df3 = df3.fillna(method='bfill')
         cmax = np.ceil( df3.max().max() * 4 ) / 4
         im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
                                               cmap= 'viridis',  
@@ -207,14 +208,130 @@ def outputBillingHeatmap(pltPdf, df1,  title, cid, foutLog):
 def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     """ creates an annual heatmap with daily bar charts for a single customer"""
     
-    df2 = df1[df1['CustomerID']==cid]
+    if len(set(df1['CustomerID']))>1:
+        df2 = df1[df1['CustomerID']==cid]
+    else:
+        df2 = df1.copy()
     
     # figure creation & formatting
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
-#    fig.tight_layout()
     fig.suptitle(title) # This titles the figure
-    plt.subplots_adjust(wspace=0.3,hspace=0.5 )   
+    plt.subplots_adjust(wspace=0.25,hspace=0.5, left=0.1, right = 0.75 )   
     
+    # formatting for upper plot
+    ax0.set_title('Price [c/kWh]') 
+    ax0.set_ylabel('Hour')
+    ax0.set_ylim([0,24*4])
+    ax0.set_yticks(np.linspace(0, 96, num=5).tolist())
+    ax0.set_yticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
+    ax0.set_yticklabels(['0', '6', '12', '18', '24'])     
+    ax0.set_xlim([0,365])
+    
+    # formatting for upper plot
+    ax1.set_title('Demand [MWh]') 
+    ax1.set_ylabel('Hour')
+    ax1.set_ylim([0,24*4])
+    ax1.set_yticks(np.linspace(0, 96, num=5).tolist())
+    ax1.set_yticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
+    ax1.set_yticklabels(['0', '6', '12', '18', '24'])     
+    ax1.set_xlim([0,365])
+    
+    # formatting for lower plot
+    ax2.set_title('Energy Charge [$]') 
+    ax2.set_ylabel('Hour')
+    ax2.set_ylim([0,24*4])
+    ax2.set_yticks(np.linspace(0, 96, num=5).tolist())
+    ax2.set_yticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
+    ax2.set_yticklabels(['0', '6', '12', '18', '24'])        
+    ax2.set_xlabel('Day of Year')
+    ax2.set_xlim([0,365])
+    
+    cmin = 0.0
+    df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
+    df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
+    
+    try:
+        
+        # cost from TOU
+        df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
+        df3 = df3.fillna(method='ffill')
+        df3 = df3.fillna(method='bfill')
+        cmax = np.ceil( df3.max().max()  ) 
+        im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
+                                              cmap= 'viridis',  
+                                              origin='lower', 
+                                              vmin = cmin, 
+                                              vmax = cmax)
+        ax0.set_aspect('auto')
+        fig.colorbar(im0, ax=[ax0])       
+        
+        
+        # total demand
+        df5 = df2.pivot(index='hour', columns='day', values="Demand") 
+        cmax = np.ceil( df5.max().max() * 4 ) / 4
+        im0 = ax1.imshow(df5.iloc[:,:], interpolation='none', #'nearest'
+                                              cmap='viridis',  
+                                              origin='lower', 
+                                              vmin = cmin, 
+                                              vmax = cmax)
+        
+        ax1.set_aspect('auto')
+        fig.colorbar(im0, ax=[ax1]) 
+        ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        ax1.text(s='GWh',
+                   x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        
+        
+        # total charge
+        df4 = df2.pivot(index='hour', columns='day', values="EnergyCharge") 
+        cmax = np.ceil( df4.max().max() * 4 ) / 4
+        im0 = ax2.imshow(df4.iloc[:,:], interpolation='none', #'nearest'
+                                              cmap='viridis',  
+                                              origin='lower', 
+                                              vmin = cmin, 
+                                              vmax = cmax)
+        
+        ax2.set_aspect('auto')
+        fig.colorbar(im0, ax=[ax2]) 
+        ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+
+
+
+        ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        ax0.text(s='₵/kWh',
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+        
+        pltPdf.savefig() # Saves fig to pdf
+        plt.close() # Closes fig to clean up memory
+        successFlag = True
+        
+    except:
+        successFlag = False
+        foutLog.write("\n*** Unable to create heat map for %s " %cid )
+        print("*** Unable to create heat map for %s " %cid)
+        
+        try:
+            plt.close()    
+        except:
+            pass
+    
+    return successFlag
+
+def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
+    """ creates an annual heatmap with daily bar charts for a single customer"""
+    
+    cids = list(set(df0['CustomerID']))
+    df0 = df0[df0['CustomerID']==cids[0]]
+    df2 = df1.copy()
+    
+    # figure creation & formatting
+    fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, ncols=1,figsize=(8,6),sharex=True)
+    fig.suptitle(title) # This titles the figure
+    plt.subplots_adjust(wspace=0.25,hspace=0.5, left=0.1, right = 0.75 )   
+        
     # formatting for upper plot
     ax0.set_title('Price [c/kWh]') 
     ax0.set_ylabel('Hour')
@@ -249,63 +366,65 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     try:
         
         # cost from TOU
-        df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
+        df3 = df0.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')
+        df3 = df3.fillna(method='bfill')
         cmax = np.ceil( df3.max().max()  ) 
-        im0 = ax0.imshow(df3.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap= 'viridis',  
-                                              origin='lower', 
+        im0 = ax0.imshow(df3.iloc[:,:], interpolation = 'none', #'nearest'
+                                              cmap = 'viridis',  
+                                              origin = 'lower', 
                                               vmin = cmin, 
                                               vmax = cmax)
         ax0.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax0])
-        
+        fig.colorbar(im0, ax=[ax0]) 
         
         # total charge
         df5 = df2.pivot(index='hour', columns='day', values="Demand") 
         cmax = np.ceil( df5.max().max() * 4 ) / 4
-        im0 = ax1.imshow(df5.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap='viridis',  
-                                              origin='lower', 
+        im0 = ax1.imshow(df5.iloc[:,:], interpolation = 'none', #'nearest'
+                                              cmap = 'viridis',  
+                                              origin = 'lower', 
                                               vmin = cmin, 
                                               vmax = cmax)
-        
         ax1.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax1]) 
-        
-        
-        
+        fig.colorbar(im0, ax=[ax1])         
+        ax1.text(s=str(round(np.sum(df5.values)/1000,1) ) ,
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        ax1.text(s='GWh',
+                   x=365*0.9/0.6, y=96*0.54,verticalalignment="top",horizontalalignment="center",fontsize=12)      
+
         # total charge
         df4 = df2.pivot(index='hour', columns='day', values="EnergyCharge") 
         cmax = np.ceil( df4.max().max() * 4 ) / 4
-        im0 = ax2.imshow(df4.iloc[:,:], interpolation='none', #'nearest'
-                                              cmap='viridis',  
-                                              origin='lower', 
+        im0 = ax2.imshow(df4.iloc[:,:], interpolation = 'none', #'nearest'
+                                              cmap = 'viridis',  
+                                              origin = 'lower', 
                                               vmin = cmin, 
                                               vmax = cmax)
-        
         ax2.set_aspect('auto')
-        fig.colorbar(im0, ax=[ax2]) 
-        
+        fig.colorbar(im0, ax=[ax2])  
+        ax2.text(s="$" + "{:,}".format(int(round(np.sum(df4.values),0))),
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        ax0.text(s=str(round(np.sum(df4.values)/np.sum(df5.values)*100,1)),
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="bottom",horizontalalignment="center",fontsize=30)      
+        ax0.text(s='₵/kWh',
+                   x=365*0.9/0.6, y=96*0.55,verticalalignment="top",horizontalalignment="center",fontsize=12)      
         
         
         pltPdf.savefig() # Saves fig to pdf
         plt.close() # Closes fig to clean up memory
         successFlag = True
         
-        
     except:
         successFlag = False
-        foutLog.write("\n*** Unable to create duration plot for %s " %cid )
-        print("*** Unable to create duration plot for %s " %cid)
-        
+        foutLog.write("\n*** Unable to create heat map for %s " %cid )
+        print("*** Unable to create heat map for %s " %cid)
         try:
             plt.close()    
         except:
             pass
     
     return successFlag
-
 
 #%% External-Facing Fuctions Definitions
 def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
@@ -364,7 +483,7 @@ def Plot3HeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs=
     foutLog = createLog(codeName, "Plot3HeatMaps", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # load data from file, find initial list of unique IDs. Update log file
-    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName=["Demand", "EnergyCharge"], usecols=[0,1,2,3])
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin, fnamein, foutLog) #, varName=["Demand", "EnergyCharge"], usecols=[0,1,2,3])
     df1['day'] = df1.index.dayofyear
     df1['hour'] = df1.index.hour + df1.index.minute/60.
     df1['EnergyCost'] = df1['EnergyCharge'].values / df1['Demand'].values * 100

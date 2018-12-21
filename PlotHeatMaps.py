@@ -250,7 +250,7 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     df3 = pd.DataFrame(index=np.arange(0, 24, 0.25), columns=np.arange(0,367))
     df3.iloc[:] = np.nan # resetting all values to nan to prevent backfilling from other customers
     
-#    try:
+    try:
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
         df3 = df3.fillna(method='ffill')

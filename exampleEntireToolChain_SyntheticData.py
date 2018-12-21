@@ -81,7 +81,7 @@ if False:  # PlotHeatMaps
     # testdata/synthetic30.HeatMaps.pdf
     
 #%% Calculate Billing
-if True: # CalculateBilling
+if False: # CalculateBilling
     CalculateBilling(dirin='testdata/', 
                      fnamein=fnamebase+'.csv',
                      dirout='testdata/', 
@@ -102,7 +102,7 @@ if True: # CalculateBilling
     # testdata/summary.synthetic30.billing.csv
     
 #%% Group Customers
-if True: #  CalculateGroups
+if False: #  CalculateGroups
     CalculateGroups(dirin='testdata/', 
                     fnamein="summary." + fnamebase+'.billing.csv',
                     dirout='testdata/', 
@@ -135,7 +135,9 @@ if False:  # full chain using synthetic data, e.g. for GE
                      demandUnit = 'Wh' # unit of the raw interval data
                      )
  # example inputs:    
-    
+     # testdata/synthetic30.csv
+    # testdata/synthetic30.g1L.groupIDs.csv
+    # testdata/synthetic30.g1o.groupIDs.csv"
 # see example outputs:
 # from step #1: Normalize Leaders of each group
     # testdata/synthetic30.g1L.normalized.csv
@@ -156,7 +158,7 @@ if False: # CalculateBilling
                      fnameout='synthetic30.g1L.billing.csv',
                      fnameoutsummary ='summary.synthetic30.g1L.billing.csv',
                      dirlog='testdata/',
-                     demandUnit='MWh',
+                     demandUnit='Wh',
                      dirrate='tou_data/',
                      varName='AvgDemand',
                      ratein=ratein,
@@ -168,7 +170,7 @@ if False: # CalculateBilling
     # testdata/synthetic30.g1L.billing.csv
     
 #%% Customer Report vs the leaders/others
-if False:
+if True:
     CreateCustomerReports(dirin='testdata/', 
                     fnamein='synthetic30.billing.csv', 
                     considerCIDs='synthetic30.g1o.groupIDs.csv',
@@ -185,7 +187,7 @@ if False:
     # e.g., testdata/CustomerReport_GJI1PT.pdf
     
 #%% Save Duration to CSV
-if True:# SaveDeltaByMonth
+if False:# SaveDeltaByMonth
     SaveDeltaByMonth(dirin_raw = 'testdata/', 
                     dirout ='testdata/', 
                     fnamebase=fnamebase,

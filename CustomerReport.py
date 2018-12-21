@@ -5,15 +5,10 @@ Created on Fri Dec  7 15:57:51 2018
 @author: 200018380
 """
 #%% Importing all the necessary Python packages
-import pandas as pd # multidimensional data analysis
-import numpy as np # vectorized calculations
 from datetime import datetime # time stamps
-from datetime import date # date
 import os # operating system interface
-import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
-from copy import copy as copy
-import pylab
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -30,15 +25,17 @@ codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Res
 codeAuthors = "Irene Berry, GE Global Research\n"
 
 
-#%% Individual Report
-#def singleReport()
-
-
 #%% Create Reports by considerCIDs list
-def CreateCustomerReports(dirin='./', fnamein='IntervalData.normalized.csv', considerCIDs='',
-                    dirin_group='./', fnamein_group = 'GroupData.normalized.csv', leaderFlag=True, 
-                    dirout='./', fnameout='CustomerReport.pdf', 
-                    dirlog='./', fnameLog='CreateCustomerReport.log'):
+def CreateCustomerReports(dirin='./', 
+                    fnamein='IntervalData.normalized.csv', 
+                    considerCIDs='', # this list of customers to generate a report on
+                    dirin_group='./', 
+                    fnamein_group = 'GroupData.normalized.csv', # the group to compare against
+                    leaderFlag=True,  # if the consider list is of leaders
+                    dirout='./', 
+                    fnameout='CustomerReport.pdf', 
+                    dirlog='./', 
+                    fnameLog='CreateCustomerReport.log'):
 
     # Capture start time of code execution
     codeTstart = datetime.now()
@@ -74,10 +71,14 @@ def CreateCustomerReports(dirin='./', fnamein='IntervalData.normalized.csv', con
         foutLog.write('Opening plot file: %s\n' %(os.path.join(dirout, fnameout.replace('.pdf', '_' + cid + '.pdf'))))
         pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout.replace('.pdf', '_' + cid + '.pdf')))
         
-        
+        # heatmaps of rate, demand, and total charge for this customer
         outputThreeHeatmaps(pltPdf1, df1=df1,  title=cid, cid=cid, foutLog=foutLog)
         
+        # for the group it should be compared against
         outputThreeHeatmapsGroup(pltPdf1, df0=df1, df1=df_group, title=groupName, cid=groupName, foutLog=foutLog)
+        
+        # showing what would happen if the others behaved as leaders
+        # or how much better the leaders are than the others
         
         # Closing plot files
         print('Closing plot files')

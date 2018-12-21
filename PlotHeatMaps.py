@@ -253,6 +253,8 @@ def outputThreeHeatmaps(pltPdf, df1,  title, cid, foutLog):
     try:
         # cost from TOU
         df3 = df2.pivot(index='hour', columns='day', values="EnergyCost") 
+#%% IMB: these next lines of code are a short-cut to fill in where there is no demand data,
+# which caues the $/kWh to be NAN since I calclate $/kWh instead of it being part of the raw data
         df3 = df3.fillna(method='ffill')
         df3 = df3.fillna(method='bfill')
         cmax = np.ceil( df3.max().max()  ) 
@@ -373,6 +375,8 @@ def outputThreeHeatmapsGroup(pltPdf,df0,  df1,  title, cid, foutLog):
         
         # cost from TOU
         df3 = df0.pivot(index='hour', columns='day', values="EnergyCost") 
+#%% IMB: these next lines of code are a short-cut to fill in where there is no demand data,
+# which caues the $/kWh to be NAN since I calclate $/kWh instead of it being part of the raw data
         df3 = df3.fillna(method='ffill')
         df3 = df3.fillna(method='bfill')
         df3 = df3.fillna(value=0.0)

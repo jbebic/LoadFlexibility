@@ -249,8 +249,8 @@ def PlotDurationCurveSequence(dirin='./', fnamein='IntervalData.csv',
     codeTstart = datetime.now()
     
     # open log file
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-    
+    foutLog = createLog(codeName, "PlotDurationCurveSequence", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
     # load data from file, find initial list of unique IDs. Update log file
 #    df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog)
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName=["NormDmnd", "DailyAverage", "Demand"],usecols=[0,1,2,3,4], datetimeIndex=False)
@@ -313,7 +313,7 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     codeTstart = datetime.now()
     
     # open log file
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "PlotDurationCurves", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # load data from file, find initial list of unique IDs. Update log file
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[0,1,2])
@@ -361,7 +361,7 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     """ Create pdf with one page showing a plot with a duration curve for each customer """
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "PlotFamilyOfDurationCurves", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # load data from file, find initial list of unique IDs. Update log file
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='NormDmnd', usecols=[0,1,2])

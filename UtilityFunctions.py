@@ -53,7 +53,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
     foutLog = createLog(codeName, 'AnonymizeCIDs', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-    
+
     # load data from file, find initial list of unique IDs. Update log file
     df1 = pd.read_csv(os.path.join(dirin,fnamein))
     foutKeys = open(os.path.join(dirout, fnameKeys), 'w')
@@ -102,7 +102,7 @@ def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, 'ExportLoadFiles', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     print('Reading: %s' %os.path.join(dirin,explist))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,explist))
@@ -154,8 +154,8 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-
+    foutLog = createLog(codeName, 'FixDST', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+              
     # Prep DST transition times dataframe
     tz = timezone(tzinput)
     tzTransTimes = tz._utc_transition_times
@@ -268,7 +268,7 @@ def ConvertFeather(dirin='./', fnamein='IntervalData.feather',
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, 'ConvertFeather', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -307,8 +307,8 @@ def SplitToGroups(ngroups,
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
-    
+    foutLog = createLog(codeName, 'SplitToGroups', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
     # Output information to log file
     print("Reading input file")
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))

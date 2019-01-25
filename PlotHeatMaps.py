@@ -457,7 +457,7 @@ def PlotHeatMaps(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='
 
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, 'PlotHeatMaps', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "PlotHeatMaps", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # load data from file, find initial list of unique IDs. Update log file
 #    df1, UniqueIDs, foutLog = getDataWithLabels(dirin, fnamein, foutLog, varName=varName, usecols=[0,1,column])

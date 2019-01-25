@@ -310,7 +310,7 @@ def findMissingData(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', consi
     
     # Capture start time of code execution and open log file
     codeTstart = datetime.now()
-    foutLog = createLog(codeName, codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "findMissingData", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     # read data & down-select to uniqueIDs
     df1, UniqueIDs, foutLog = getData(dirin, fnamein, foutLog, varName='Demand', usecols=[0, 1, 2], datetimeIndex=False)

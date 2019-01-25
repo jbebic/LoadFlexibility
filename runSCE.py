@@ -12,7 +12,7 @@ from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
 
-if True:
+if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
     ratefile = 'SCE-TOU-PA-2-B.csv' # name of TOU rate profile
 
@@ -20,6 +20,10 @@ if False:
     fnamebase = 'largeOfficesAll' # Name your input files here
     ratefile = 'SCE-TOU-GS2-B.csv' # name of TOU rate profile
     ignoreCIDs_forGrouping = 'largeOfficesAll.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
+
+if True:
+    fnamebase = 'synthetic4' # Name your input files here
+    ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
 
 #%% Create profiles
 if False:
@@ -38,7 +42,7 @@ if False:
                    writeOutput = True)
 
 #%% AnonymizeCIDs #CAREFULL when running this function - it overwrites existing CIDs completely and require to re-do all the steps.
-if False:
+if True:
     AnonymizeCIDs(dirin='private/', fnamein=fnamebase + '.csv', 
                   dirout='input/', fnameout=fnamebase + '.A.csv', fnameKeys=fnamebase + '.lookup.csv',
                   dirlog='private/', fnameLog='AnonymizeCIDs.log')#,IDlen=6)
@@ -49,7 +53,7 @@ if False:
 #  2) Copy the anonymized file from private to input directory
 
 #%% Fix DST # Correct calculated billings to use DST adjusted times.
-if False:
+if True:
     FixDST(dirin='input/', fnamein=fnamebase + '.A.csv',
                    dirout='input/', fnameout=fnamebase + '.A.csv',
                    dirlog='input/',
@@ -57,17 +61,17 @@ if False:
                    OutputFormat = 'ISO')
 
 #%% Review load profiles
-if False:
+if True:
     ReviewLoads(dirin='input/', fnamein=fnamebase + '.A.csv',
                    dirout='input/', fnameout=fnamebase+'A.summary.csv',
                    dirlog='input/')
 #%% Normalize profiles
-if False:
+if True:
     NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', #ignoreCIDs=fnamebase + '.A.ignore.csv',
                    dirout='output/', fnameout=fnamebase + '.A.normalized.csv',
                    dirlog='output/')
 #%% Plot heatmaps, Re-define the ignore list(10-12-2018)
-if False:    
+if True:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
                  #considerCIDs = 'largeOfficesConsider.csv',
                  dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
@@ -80,14 +84,14 @@ if False:
                 dirout='plots/', fnameout=fnamebase + ".g" + str(n) + 'L.A.HeatMaps.pdf',
                 dirlog='plots/')
 #%% Calculate Billing
-if False:
+if True:
     CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
                     dirrate = 'tou_data', ratein = ratefile, 
                    dirout='output/', fnameout=fnamebase + '.A.billing.csv',
                    dirlog='output/', writeDataFile=True)
     
 #%% Plot Billing
-if False:
+if True:
     PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
                    dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
                    dirlog='plots/')
@@ -104,7 +108,7 @@ if False:
                    dirlog='plots/') 
     
 #%% Grouping
-if False: # by energy component of bill
+if True: # by energy component of bill
     CalculateGroups(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', #considerCIDs = fnamebase + '.g1c.csv',
                    plotGroups = True, chargeType='Energy', energyPercentiles = [0, 25, 50, 75, 100 ],
                    dirout='output/', fnameout=fnamebase + '.Energy.A.groups.csv',
@@ -129,13 +133,13 @@ if True: # performs normalizing groups, delta between groups, plot delta by day,
                         fnamein=fnamebase+'.A.csv',
                         Ngroups=2, threshold=0.5, demandUnit='Wh') 
 #%% Normalize profiles
-if False:
+if True:
     for groupName in [ 'g1L' , 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o'] :
         NormalizeGroup(dirin='input/', fnamein=fnamebase + '.A.csv', dirconsider = 'output/', considerCIDs = groupName + '.'+ fnamebase + '.Energy.A.groups.csv',
                    dirout='output/', fnameout=fnamebase + '.' + groupName + '.energyOnly.A.normalized.csv',
                    groupName = groupName,
                    dirlog='output/')
-if False:
+if True:
     for n in [1,2,3,4]:
         
         groupL = 'g' + str(n) + 'L'

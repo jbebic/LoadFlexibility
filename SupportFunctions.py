@@ -152,8 +152,31 @@ def getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=True):
     return df1, UniqueIDs, foutLog
 
 
+def readHighlightIDs(dirin, UniqueIDs, foutLog, highlightCIDs=''):
+    """ reads the file of highlightCIDs and places their customerIDs into the output list """
+    HighlightIDs = []
+    if highlightCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,highlightCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,highlightCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,highlightCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        highlightIDs = df9['CustomerID'].tolist()
+        highlightIDs = [x.replace(" ", "") for x in highlightIDs]
+        foutLog.write('Number of customer IDs to highlight: %d\n' %len(highlightIDs))
+        print('Number of customer IDs to highlight: ' + str(len(highlightIDs)))
+
+        HighlightIDs = list(set(UniqueIDs).intersection(highlightIDs))
+        foutLog.write('Number remaining after checking against the datafile: %d\n' %len(HighlightIDs))
+        print('Number remaining after checking against the datafile: ' + str(len(HighlightIDs)))
+
+    return HighlightIDs, foutLog
+
 def findUniqueIDs(dirin, UniqueIDs,foutLog, ignoreCIDs='', considerCIDs=''):
-    """ applys considerCIDs and ignoreCIDs to calculate list of UniqueIDS in the data"""
+    """ applies considerCIDs and ignoreCIDs to calculate list of UniqueIDS in the data"""
 
     if considerCIDs!='' or ignoreCIDs!='':
 

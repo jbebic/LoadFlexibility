@@ -10,8 +10,10 @@ testdata/*.log
 # working directories
 private/**
 output/**
+output2/**
 input/**
 plots/**
+plots2/**
 
 # log files
 *.log

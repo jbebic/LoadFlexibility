@@ -21,7 +21,7 @@ import matplotlib.backends.backend_pdf as dpdf # pdf output
 import matplotlib.pylab as pl
 
 #%% Importing modules
-from SupportFunctions import getData, getDataAndLabels, logTime, createLog, assignDayType, findUniqueIDs
+from SupportFunctions import getData, getDataAndLabels, logTime, createLog, assignDayType, findUniqueIDs, readHighlightIDs
 
 #%% Version and copyright info to record on the log file
 codeName = 'UtilityFunctions.py'
@@ -587,7 +587,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     print('Finished')
     
     return 
-def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='',
+def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='', highlightCIDs='',
                      dirout='./', fnamebase='naics',
                      dirplot='./',
                      dirlog='./', fnameLog='CalculateGroups.log',
@@ -619,6 +619,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     print('Processing...')
     UniqueIDs = df1.index.unique().tolist()
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
+
+    HighlightIDs, foutlog = readHighlightIDs(dirin, UniqueIDs, foutLog, highlightCIDs)
 
     # only consider customers within UniqueID
     df_summary = df1.loc[UniqueIDs]
@@ -785,8 +787,9 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     if plotGroups:
         
         print("\nPlotting Energy Consumption vs Total Cost of Energy")
-        pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnamebase + ". groups.pdf"))
+        pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnamebase + ".groups.pdf"))
                 
+        # set marker edge width (ew) and size (ms)
         if len(UniqueIDs)<100:
             ew = 2
             ms = 7
@@ -813,16 +816,24 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
             ax.set_title("Entire Year - All Charges")
             
         ax.set_ylabel('Total Energy [' + unitEnergy + ']')
-        colorsV = ['blue', 'limegreen','gold', 'red']
-        if N>3:
-            colorsV = pl.cm.jet(np.linspace(0,1,N+1))
+
+        if len(HighlightIDs) > 0:
+            colorsV = ['#d3d3d3'] * (N+1)
+        else:
+            colorsV = ['blue', 'limegreen','gold', 'red']
+            if N>3:
+                colorsV = pl.cm.jet(np.linspace(0,1,N+1))
         
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Leaders[n],'ChargePerUnitYear' ], df_summary.loc[Leaders[n],'Energy']*scaleEnergy, '^', color=colorsV[n], ms=ms, label="G" + str(n))        
         
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Others[n],'ChargePerUnitYear'], df_summary.loc[Others[n],'Energy']*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
+
         ax.plot(df_summary.loc[Excluded,'ChargePerUnitYear'], df_summary.loc[Excluded,'Energy' ]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+
+        if len(HighlightIDs) > 0:
+            ax.plot(df_summary.loc[HighlightIDs,'ChargePerUnitYear'], df_summary.loc[HighlightIDs,'Energy' ]*scaleEnergy, 'd', color='blue' , ms=ms, markerfacecolor='blue', markeredgewidth=ew)
         
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
@@ -877,6 +888,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
                 ax.plot(df_summary.loc[Others[n],'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Others[n],'Energy' + "." + str(mNo)]*scaleEnergy, 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
             
             ax.plot(df_summary.loc[Excluded,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[Excluded,'Energy' + "." + str(mNo)]*scaleEnergy, 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+            if len(HighlightIDs) > 0:
+                ax.plot(df_summary.loc[HighlightIDs,'ChargePerUnit' + "." + str(mNo)], df_summary.loc[HighlightIDs,'Energy' + "." + str(mNo)]*scaleEnergy, 'd', color='blue' , ms=ms, markerfacecolor='blue', markeredgewidth=ew)
             
             chartBox = ax.get_position()
             ax.set_position([chartBox.x0, chartBox.y0*1.5, chartBox.width, chartBox.height*0.95])
@@ -891,16 +904,23 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         ax.set_ylabel('Demand Only Average Cost [₵/kWh]') 
         ax.set_title("Entire Year - Demand vs Energy Cost")
         
-        colorsV = ['blue', 'limegreen','gold', 'red']
-        if N>3:
-            colorsV = pl.cm.jet(np.linspace(0,1,N+1))
+        if len(HighlightIDs) > 0:
+            colorsV = ['#d3d3d3'] * (N+1)
+        else:
+            colorsV = ['blue', 'limegreen','gold', 'red']
+            if N>3:
+                colorsV = pl.cm.jet(np.linspace(0,1,N+1))
         
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Leaders[n],'EnergyChargePerUnitYear' ], df_summary.loc[Leaders[n],'DemandChargePerUnitYear' ], '^', color=colorsV[n], ms=ms, label="G" + str(n))        
         
         for n in range(0,N+1,1):
             ax.plot(df_summary.loc[Others[n],'EnergyChargePerUnitYear'], df_summary.loc[Others[n],'DemandChargePerUnitYear' ], 'o', color=colorsV[n] , ms=ms, markerfacecolor='none', markeredgewidth=ew)
+
         ax.plot(df_summary.loc[Excluded,'EnergyChargePerUnitYear'], df_summary.loc[Excluded,'DemandChargePerUnitYear' ], 'x', color="#d3d3d3" , ms=ms, markerfacecolor='#d3d3d3', markeredgewidth=ew)
+
+        if len(HighlightIDs) > 0:
+            ax.plot(df_summary.loc[HighlightIDs,'EnergyChargePerUnitYear'], df_summary.loc[HighlightIDs,'DemandChargePerUnitYear' ], 'd', color='blue' , ms=ms, markerfacecolor='blue', markeredgewidth=ew)
         
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
@@ -916,8 +936,8 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
         plt.close() # Closes fig to clean up memory       
         
         # save figures to pdf file
-        print('Writing: %s' %os.path.join(dirplot,fnamebase + ". groups.pdf"))
-        foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnamebase + ". groups.pdf"))
+        print('Writing: %s' %os.path.join(dirplot,fnamebase + ".groups.pdf"))
+        foutLog.write('\n\nWriting: %s' %os.path.join(dirplot,fnamebase + ".groups.pdf"))
         pltPdf1.close()
         
     logTime(foutLog, '\n\nRunFinished at: ', codeTstart)

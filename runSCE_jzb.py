@@ -123,7 +123,7 @@ if True: # by energy component of bill
                     fnamebase="largeOfficesAll" + fnamebase,
                     dirlog='plots2/',  
                     ignore1515=True,
-                    energyPercentiles = [0, 25, 50, 75, 100], # [0, 100], 
+                    energyPercentiles = [5, 27.5,  50, 72.5, 95], # [0, 25, 50, 75, 100], # [0, 100], 
                     chargeType="Energy")
 
   
@@ -146,7 +146,7 @@ if True: # by demand component of bill
                     fnamebase="largeOfficesAll." + fnamebase,
                     dirlog='plots2/',
                     ignore1515=True,
-                    energyPercentiles = [0, 25, 50, 75, 100], # [0, 100], 
+                    energyPercentiles = [5, 27.5,  50, 72.5, 95], # [0, 25, 50, 75, 100], # [0, 100], 
                     chargeType="Demand")
 
 if False: # performs normalizing groups, delta between groups, plot delta by day, & plot delta summary (all in one function)

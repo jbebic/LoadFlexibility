@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt # plotting
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 
 #%% Importing modules
-from SupportFunctions import getData, logTime, createLog, findUniqueIDs
+from SupportFunctions import getData, logTime, createLog, findUniqueIDs, readHighlightIDs
 
 #%%  Version and copyright info to record on the log file
 codeName = 'PlotDurationCurves.py'
@@ -154,29 +154,42 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid, foutLog):
     """ creates duration curve for entire year for one customer, showing monthly segments """
     
     ymin = 0.0
-    monthsList = [ date(2016, i,1).strftime('%b') for i in range(1,13,1)]
-        
-    fig, (ax0) = plt.subplots(nrows=1, ncols=1,figsize=(8,6),sharex=True)
+    # x-axis labels: If more than one year of data is given use "Mmm 'yy", otherwise use "Mmm"
+    if df.index.year.unique().shape[0] > 1:
+        xlabels = df.index.strftime("%b '%y").unique().tolist()
+    else:
+        xlabels = df.index.strftime("%b").unique().tolist()
+            
+    fig, (ax0) = plt.subplots(nrows=1, ncols=1, figsize=(8,6), sharex=True) 
     fig.suptitle(fnamein + "/" + cid)
     ax0.set_title('Normalized Load')
     ax0.set_ylabel('Load [pu]')
-    ax0.set_xlim([0,8760*4])
-    ax0.set_xticklabels(monthsList)
-    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)    
+    ax0.set_xlim([0, pd.date_range(df.index.min(), df.index.max(), freq='15min').shape[0]])
+    ax0.set_xticklabels(xlabels)
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
     ax0.set_aspect('auto')
+    ymax = np.ceil(df['NormDmnd'].max()*2)/2
+    
+    color='blue'
+    alpha = 0.5
     
     try:
-        ymax = np.ceil(df['NormDmnd'].max()*2)/2    
-        df = df.assign(month=pd.Series(np.asarray( df.index.month ), index=df.index))
-        months = np.asarray(df['month'])
+        tickindex = []
+        # Go month by month: create a placeholder for full month, and fill with values sorted in the descending order
+        for year in df.index.year.unique().tolist():
+            for month in df[df.index.year == year].index.month.unique().tolist():
+                try:
+                    df2 = df[(df.index.year == year) & (df.index.month == month)]
+                    index2 = pd.date_range(df2.index.min(), df2.index.max(), freq='15min').values
+                    df2 = df2.reindex(index=index2, method='ffill')
+                    df3 = pd.DataFrame(data = df2.sort_values(['NormDmnd'], ascending=False)['NormDmnd'].values, columns=['NormDmnd'], index = None)
+                    xshift = pd.date_range(df.index.min(), df2.index.min(), freq='15min').shape[0]
+                    ax0.step(xshift+np.arange(df3.shape[0]), (df3['NormDmnd']), color=color, alpha=alpha)
+                    tickindex.append(xshift)
+                except:
+                    pass
 
-        df = df.assign(monthInverse=pd.Series(12 - np.asarray( df.index.month ), index=df.index))
-        df1 = df.sort_values(['monthInverse', 'NormDmnd'], ascending=False)
-        ax0.step(np.arange(df1.shape[0]), (df1['NormDmnd']),  label='Normalized Demand [pu]')
-        ax0.plot([0, df1.shape[0]], [1.0, 1.0], lw=1, color='gray', alpha=0.25)
-        ax0.set_ylim([ymin,ymax])  
-        
-        tickindex = [ np.asarray(np.where(months==i))[0][0] for i in range(1,13,1)]
+        ax0.set_ylim([ymin,ymax])
         ax0.set_xticks(tickindex)
         
         pltPdf.savefig() 
@@ -195,8 +208,156 @@ def outputDurationCurveByMonth(pltPdf, df, fnamein, cid, foutLog):
     
     return
 
+# individual ID: create duration curve for entire year, one month after another "
+def outputDurationCurveByMonthWithDailyProfiles(pltPdf, df, fnamein, cid, foutLog):
+    """ creates duration curve for entire year for one customer, showing monthly segments with daily profiles"""
+    
+    ymin = 0.0
+    # x-axis labels: If more than one year of data is given use "Mmm 'yy", otherwise use "Mmm"
+    if df.index.year.unique().shape[0] > 1:
+        xlabels = df.index.strftime("%b '%y").unique().tolist()
+    else:
+        xlabels = df.index.strftime("%b").unique().tolist()
+            
+    fig, (ax1, ax0) = plt.subplots(nrows=2, ncols=1, figsize=(8,6), sharex=True) 
+    fig.suptitle(fnamein + "/" + cid)
+    ax0.set_title('Daily Duration Curves')
+    ax0.set_ylabel('Load [pu]')
+    ax0.set_xlim([0, pd.date_range(df.index.min(), df.index.max(), freq='1M').shape[0]*24*4]) # Each month will have 24*4 x axis
+    ax0.set_xticklabels(xlabels)
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
+    ax0.set_aspect('auto')
+
+    ax1.set_title('Daily Load Curves')
+    ax1.set_ylabel('Load [pu]')
+    ax1.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
+    ax1.set_aspect('auto')
+    
+    ymax = np.ceil(df['NormDmnd'].max()*2)/2
+
+    color='blue'
+    alpha = 0.5
+    
+    try:
+        tickindex = []
+        shiftYear = 0
+        shiftMon  = 0
+        # Go month by month: create a placeholder for full month, and fill with values sorted in the descending order
+        for year in df.index.year.unique().tolist():
+            for month in df[df.index.year == year].index.month.unique().tolist():
+                try:
+                    df2 = df[(df.index.year == year) & (df.index.month == month)]
+                    index2 = pd.date_range(df2.index.min(), df2.index.max(), freq='15min').values
+                    df2 = df2.reindex(index=index2, method='ffill')
+                    xshift = (shiftYear*12 + shiftMon)* 24*4
+                    for day in df2.index.day.unique().tolist():
+                        df3 = df2[df2.index.day == day]
+                        df4 = pd.DataFrame(data = df3.sort_values(['NormDmnd'], ascending=False)['NormDmnd'].values, columns=['NormDmnd'], index = None)
+                        ax1.step(xshift+np.arange(df3.shape[0]), (df3['NormDmnd']), color=color, alpha=alpha)
+                        ax0.step(xshift+np.arange(df4.shape[0]), (df4['NormDmnd']), color=color, alpha=alpha)
+                except:
+                    pass
+                tickindex.append(xshift)
+                shiftMon += 1
+            shiftYear += 1
+
+        ax0.set_ylim([ymin,ymax])
+        ax0.set_xticks(tickindex)
+        
+        pltPdf.savefig() 
+        plt.close()    
+        
+    except:
+        foutLog.write("\n*** Unable to create duration plot for %s " %cid )
+        print("*** Unable to create duration plot for %s " %cid)
+        
+        try:
+            plt.close()    
+        except:
+            pass
+        
+    
+    return
+
+
+def outputFamilyOfDurationCurvesByMonth(pltPdf, df, foutLog, title='', skipLegend=False, hIDs=[]):
+    """ creates duration curve for entire year for one customer, showing monthly segments """
+    
+    ymin = 0.0
+    # x-axis labels: If more than one year of data is given use "Mmm 'yy", otherwise use "Mmm"
+    if df.index.year.unique().shape[0] > 1:
+        xlabels = df.index.strftime("%b '%y").unique().tolist()
+    else:
+        xlabels = df.index.strftime("%b").unique().tolist()
+            
+    fig, (ax0) = plt.subplots(nrows=1, ncols=1, figsize=(8,6), sharex=True) 
+    fig.suptitle(title)
+    ax0.set_title('Normalized Load')
+    ax0.set_ylabel('Load [pu]')
+    ax0.set_xlim([0, pd.date_range(df.index.min(), df.index.max(), freq='15min').shape[0]])
+    ax0.set_xticklabels(xlabels)
+    ax0.xaxis.grid(which="major", color='#A9A9A9', linestyle='-', linewidth=0.5)
+    ax0.set_aspect('auto')
+    ymax = np.ceil(df['NormDmnd'].max()*2)/2
+
+    try:
+        tickindex = []
+        # Go month by month: create a placeholder for full month, and fill with values sorted in the descending order
+        for year in df.index.year.unique().tolist():
+            for month in df[df.index.year == year].index.month.unique().tolist():
+                df2a = df[(df.index.year == year) & (df.index.month == month)]
+                print("Plotting %d-%02d" %(year,month))
+                xshift = pd.date_range(df.index.min(), df2a.index.min(), freq='15min').shape[0]
+                tickindex.append(xshift)
+                if len(hIDs) > 0:
+                    color = '#d3d3d3'
+                    alpha = 1
+                else:
+                    color = 'blue'
+                    alpha = 0.5
+                for cid in df['CustomerID'].unique().tolist():
+                    try:
+                        df2 = df2a[df2a['CustomerID'] == cid]
+                        index2 = pd.date_range(df2.index.min(), df2.index.max(), freq='15min').values
+                        df2 = df2.reindex(index=index2, method='ffill')
+                        df3 = pd.DataFrame(data = df2.sort_values(['NormDmnd'], ascending=False)['NormDmnd'].values, columns=['NormDmnd'], index = None)
+                        ax0.step(xshift+np.arange(df3.shape[0]), (df3['NormDmnd']), color=color, alpha=alpha)
+                    except:
+                        foutLog.write("\n*** Unable to create duration plot for %s " %cid )
+                        print("*** Unable to create duration plot for %s " %cid)
+                if len(hIDs) > 0:
+                    color = 'blue'
+                    alpha = 0.5
+                    for cid in hIDs:
+                        try:
+                            df2 = df2a[df2a['CustomerID'] == cid]
+                            index2 = pd.date_range(df2.index.min(), df2.index.max(), freq='15min').values
+                            df2 = df2.reindex(index=index2, method='ffill')
+                            df3 = pd.DataFrame(data = df2.sort_values(['NormDmnd'], ascending=False)['NormDmnd'].values, columns=['NormDmnd'], index = None)
+                            ax0.step(xshift+np.arange(df3.shape[0]), (df3['NormDmnd']), color=color, alpha=alpha)
+                        except:
+                            foutLog.write("\n*** Unable to create duration plot for %s " %cid )
+                            print("*** Unable to create duration plot for %s " %cid)
+
+        ax0.set_ylim([ymin,ymax])
+        ax0.set_xticks(tickindex)
+        if skipLegend:
+            legend = ax0.legend()
+            legend.remove()
+        
+        pltPdf.savefig() 
+        plt.close()    
+    except:
+        try:
+            plt.close()    
+        except:
+            pass
+        
+    
+    return
+
 # family: create group of duration curves "
-def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
+def outputFamilyOfDurationCurves(pltPdf, df, foutLog, title='', skipLegend=False, hIDs=[]):
     """ Creates one figure with an annual duration curve for each customer """
     
     fig, (ax0) = plt.subplots(nrows=1,ncols=1,figsize=(8,6),sharex=True)    
@@ -215,6 +376,13 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
     ax0.set_xlabel('Hour')
     ax0.set_aspect('auto')
  
+    if len(hIDs) > 0:
+        color = '#d3d3d3'
+        alpha = 1
+    else:
+        color = 'blue'
+        alpha = 0.5
+    
     UniqueIDs = df['CustomerID'].unique()
     i = 1
     for cID in UniqueIDs:
@@ -223,13 +391,29 @@ def outputFamilyOfDurationCurves(pltPdf, df, title, skipLegend):
         try:
             df1 = df[df['CustomerID']==cID]
             df2 = df1.sort_values('NormDmnd', ascending=False)
-            ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID)
+            ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID, color=color, alpha = alpha)
         except:
+            foutLog.write("\n*** Unable to create duration plot for %s " %cID)
             print("*** Unable to create duration plot for %s " %cID)
-    
-    if skipLegend:
-        legend = ax0.legend() # plt.legend()
-        legend.remove()
+
+    if len(hIDs) > 0:
+        i = 1
+        color = 'blue'
+        alpha = 0.5
+        for cID in hIDs:
+            print ('Highlighting %s (%d of %d) ' %(cID, i, len(hIDs)))
+            i +=1
+            try:
+                df1 = df[df['CustomerID']==cID]
+                df2 = df1.sort_values('NormDmnd', ascending=False)
+                ax0.step(np.arange(df2.shape[0]), (df2['NormDmnd']), label=cID, color=color, alpha = alpha)
+            except:
+                foutLog.write("\n*** Unable to create duration plot for %s " %cID)
+                print("*** Unable to create duration plot for %s " %cID)
+        
+        if skipLegend:
+            legend = ax0.legend() # plt.legend()
+            legend.remove()
     
     pltPdf.savefig() # Saves fig to pdf
     plt.close() # Closes fig to clean up memory
@@ -305,7 +489,8 @@ def PlotDurationCurveSequence(dirin='./', fnamein='IntervalData.csv',
 def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignoreCIDs='', considerCIDs='',
                  dirout='plots/', fnameout='DurationCurves.pdf', 
                  dirlog='./', fnameLog='PlotDurationCurves.log',
-                 byMonthFlag = False):
+                 byMonthFlag=False, 
+                 withDailyProfiles=False):
     
     """ Create pdf with one page per customer showing annual duration curve, with or without monthly segments """
     
@@ -334,7 +519,10 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
         i += 1
         df2 = df1[df1['CustomerID']==cID]
         if byMonthFlag:
-            outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID, foutLog)
+            if withDailyProfiles:
+                outputDurationCurveByMonthWithDailyProfiles(pltPdf1, df2, fnamein, cID, foutLog)
+            else:
+                outputDurationCurveByMonth(pltPdf1, df2, fnamein, cID, foutLog)
             figN += 1
         else:
             outputDurationCurve(pltPdf1, df2, fnamein, cID, foutLog)
@@ -345,18 +533,20 @@ def PlotDurationCurves(dirin='./', fnamein='IntervalData.normalized.csv', ignore
     pltPdf1.close()
     
     foutLog.write('\nNumber of customer IDs for which figures were generated: %d\n' % figN)
-    print('Number of customer IDs for which figures were generated: ' + str( figN))
+    print('Number of customer IDs for which figures were generated: ' + str(figN))
 
     # finish log with run time
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
 
-def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', ignoreCIDs='', considerCIDs='',
+def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.normalized.csv', 
+                               ignoreCIDs='', considerCIDs='', highlightCIDs = '',
                                dirout='./', fnameout='DurationCurvesFamily.pdf', 
                                dirlog='./', fnameLog='PlotFamilyOfDurationCurves.log',
                                skipPlots = False,
-                               skipLegend = True):
+                               skipLegend = True,
+                               byMonthFlag = False):
     
     """ Create pdf with one page showing a plot with a duration curve for each customer """
     # Capture start time of code execution and open log file
@@ -369,6 +559,8 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     # apply ignore and consider CIDs to the list of UniqueIDs. Update log file.
     UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
     df1a = df1[df1['CustomerID'].isin(UniqueIDs)]
+    
+    HighlightIDs, foutlog = readHighlightIDs(dirin, UniqueIDs, foutLog, highlightCIDs)
 
     # foutLog.write('Number of interval records after re-indexing: %d\n' %df1['NormDmnd'].size)
     foutLog.write('Time records start on: %s\n' %df1.index[0].strftime('%Y-%m-%d %H:%M'))
@@ -378,7 +570,10 @@ def PlotFamilyOfDurationCurves(dirin='./', fnamein='IntervalDataMultipleIDs.norm
     
     print("Opening plot files")
     pltPdf1  = dpdf.PdfPages(os.path.join(dirout, fnameout))
-    outputFamilyOfDurationCurves(pltPdf1, df1a, fnamein, skipLegend)
+    if byMonthFlag:
+        outputFamilyOfDurationCurvesByMonth(pltPdf1, df1a, foutlog, title=fnamein, skipLegend=skipLegend, hIDs=HighlightIDs)
+    else:
+        outputFamilyOfDurationCurves(pltPdf1, df1a, foutlog, title=fnamein, skipLegend=skipLegend, hIDs=HighlightIDs)
 
     # Closing plot files
     print("Closing plot files")

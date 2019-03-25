@@ -16,13 +16,13 @@ if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
     ratefile = 'SCE-TOU-PA-2-B.csv' # name of TOU rate profile
 
-if True:
+if False:
     fnamebase = 'largeOfficesAll' # Name your input files here
     ratefile = 'SCE-TOU-GS2-B.csv' # name of TOU rate profile
     ignoreCIDs_forGrouping = 'largeOfficesAll.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
 
-if False:
-    fnamebase = 'synthetic2_old' # Name your input files here
+if True:
+    fnamebase = 'synthetic20' # Name your input files here
     ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
 
 # =============================================================================
@@ -114,7 +114,7 @@ if False:
                    dirlog='plots/') 
     
 #%% Grouping
-if True: # by energy component of bill
+if False: # by energy component of bill
     CalculateGroups(dirin='output2/', 
                     fnamein="summary." + fnamebase+'.A.billing.csv',
                     highlightCIDs = 'OfficesJovan.csv', 
@@ -137,7 +137,7 @@ if True: # by energy component of bill
 #                    energyPercentiles = [5, 27.5,  50, 72.5, 95], 
 #                    chargeType="Total")
     
-if True: # by demand component of bill   
+if False: # by demand component of bill   
     CalculateGroups(dirin='output2/', 
                     fnamein="summary." + fnamebase+'.A.billing.csv',
                     highlightCIDs = 'OfficesJovan.csv', 
@@ -201,14 +201,18 @@ if False:
                    dirout='output/', 
                    dirlog='output/')
 #%% Plot duration curves
-if False:
-    PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
+if True:
+    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
                        #considerCIDs = 'largeOfficesConsider.csv',
                        byMonthFlag=True,
-                       dirout='plots/', fnameout=fnamebase + '.A.duration.monthly.test.pdf',
-                       dirlog='plots/')
+                       withDailyProfiles=True,
+                       dirout='testdata/', fnameout=fnamebase + '.A.duration.monthly.test.pdf',
+                       dirlog='testdata/')
 if False:   
-    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf',
-                               dirlog='plots/')
+    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', #'.A.normalized.csv', 
+                               highlightCIDs = fnamebase + '.HighlightIDs.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                               dirout='testdata/', 
+                               fnameout=fnamebase + '.A.FamilyOfDurationCurves.monthly.pdf',
+                               dirlog='testdata/',
+                               byMonthFlag = True)
     

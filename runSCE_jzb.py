@@ -11,6 +11,7 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
+from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers
 
 if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -201,18 +202,35 @@ if False:
                    dirout='output/', 
                    dirlog='output/')
 #%% Plot duration curves
-if True:
+if False:
     PlotDurationCurves(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
                        #considerCIDs = 'largeOfficesConsider.csv',
                        byMonthFlag=True,
                        withDailyProfiles=True,
                        dirout='testdata/', fnameout=fnamebase + '.A.duration.monthly.test.pdf',
                        dirlog='testdata/')
+
 if False:   
-    PlotFamilyOfDurationCurves(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', #'.A.normalized.csv', 
-                               highlightCIDs = fnamebase + '.HighlightIDs.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
+    PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                               #considerCIDs = fnamebase + '.A.consider.csv', 
+                               # ignoreCIDs = fnamebase + '.A.ignore.csv', 
                                dirout='testdata/', 
-                               fnameout=fnamebase + '.A.FamilyOfDurationCurves.monthly.pdf',
-                               dirlog='testdata/',
-                               byMonthFlag = True)
-    
+                               fnameout=fnamebase + '.A.boxplots.pdf', 
+                               dirlog='testdata/')
+
+if False:   
+    PlotAnnualSummaries(dirin='testdata/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                               #considerCIDs = fnamebase + '.A.consider.csv', 
+                               # ignoreCIDs = fnamebase + '.A.ignore.csv', 
+                               dirout='testdata/', 
+                               fnameout=fnamebase + '.A.piecharts.pdf', 
+                               dirlog='testdata/')
+
+if True:   
+    PlotAnnualWhiskers(dirin='testdata/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                               # considerCIDs = fnamebase + '.A.consider.csv', 
+                               # ignoreCIDs = fnamebase + '.A.ignore.csv', 
+                               highlightCIDs = fnamebase + '.A.HighlightIDs.csv', 
+                               dirout='testdata/', 
+                               fnameout=fnamebase + '.A.whiskercharts.pdf', 
+                               dirlog='testdata/')

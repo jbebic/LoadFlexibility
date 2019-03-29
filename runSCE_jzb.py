@@ -70,6 +70,13 @@ if False:
     ReviewLoads(dirin='input/', fnamein=fnamebase + '.A.csv',
                    dirout='input/', fnameout=fnamebase+'A.summary.csv',
                    dirlog='input/')
+
+#%% Export load files
+if True:
+    ExportLoadFiles(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', explist=fnamebase + '.A.HighlightIDs.csv',
+           dirout='testdata/', # fnameout derived from customer IDs
+           dirlog='testdata/')
+
 #%% Normalize profiles
 if False:
     NormalizeLoads(dirin='input/', fnamein=fnamebase + '.A.csv', #ignoreCIDs=fnamebase + '.A.ignore.csv',
@@ -226,7 +233,7 @@ if False:
                                fnameout=fnamebase + '.A.piecharts.pdf', 
                                dirlog='testdata/')
 
-if True:   
+if False:   
     PlotAnnualWhiskers(dirin='testdata/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
                                # considerCIDs = fnamebase + '.A.consider.csv', 
                                # ignoreCIDs = fnamebase + '.A.ignore.csv', 

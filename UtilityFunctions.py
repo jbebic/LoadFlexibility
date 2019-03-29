@@ -97,7 +97,7 @@ def AnonymizeCIDs(dirin='./', fnamein='IntervalData.SCE.csv',
 
 def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.csv',
            dirout='./', # fnameout derived from customer IDs
-           dirlog='./', fnameLog='ExportLoadFiles.log',):
+           dirlog='./', fnameLog='ExportLoadFiles.log'):
     
     
     # Capture start time of code execution and open log file
@@ -117,14 +117,16 @@ def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
     foutLog.write('Reading: %s\n' %os.path.join(dirin,fnamein))
-    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
-                      header = 0, 
-                      usecols = [0, 1, 2], 
-                      names=['datetimestr', 'Demand', 'CustomerID'],
-                      dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
+#    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+#                      header = 0, 
+#                      usecols = [1, 2, 0], 
+#                      names=['datetimestr', 'Demand', 'CustomerID'],
+#                      dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str})
 
-    print('Total number of interval records read: %d' %df1['Demand'].size)
-    foutLog.write('Total number of interval records read: %d\n' %df1['Demand'].size)
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
+    
+    print('Total number of interval records read: %d' %df1.shape[0])
+    foutLog.write('Total number of interval records read: %d\n' %df1.shape[0])
     
     export_list = df9['CustomerID'].tolist()
     for cid in export_list:
@@ -134,7 +136,7 @@ def ExportLoadFiles(dirin='./', fnamein='IntervalData.csv', explist='ExportCIDs.
             fnameout = str(cid)+'.csv'
             print('Writing: %s' %os.path.join(dirout,fnameout))
             foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-            df2.to_csv(os.path.join(dirout,fnameout), float_format='%.1f', index=False) 
+            df2.to_csv(os.path.join(dirout,fnameout), index=True) # float_format='%.1f', 
         else: 
             print('%s not found in input file, skipping' %str(cid))
             foutLog.write('%s not found in input file, skipping\n' %str(cid))

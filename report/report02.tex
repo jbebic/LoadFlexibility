@@ -55,14 +55,14 @@ The analysis is performed by back-casting your last year's consumption to the ra
 The electric bill has three main components: facility charges, energy charges, and demand charges. The makeup of these charges for the year and by month are shown in Figures~\ref{fig:pie} and \ref{fig:bars}, respectively.
 \begin{figure}[!h]
 \centering
-\includegraphics[height=3in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/jzb1.pdf} %{visuals/synthetic20.A.piechart.pdf}
+\includegraphics[height=3in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.piecharts.pdf}
 \caption{Makeup of annual charges}
 \label{fig:pie}
 \end{figure}
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/jzb2.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.boxplots.pdf}
 \caption{Makeup of monthly charges}
 \label{fig:bars}
 \end{figure}
@@ -88,11 +88,100 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
 \pagestyle{energy}
-\lipsum[1-5]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.heatmaps.pdf}
+\caption{Normalized consumption for <CustomerID>}
+\label{fig:heatmap}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 3in 0in 0.45in, clip]{visuals/synthetic20.A.billing.Heatmaps.pdf}
+\caption{Energy price on <RateCode>}
+\label{fig:heatmap}
+\end{figure}
+
+\lipsum[1][1-7]
+
+\begin{table}[th!]
+  \centering
+  \caption{Components of annual electric bill}
+  \vspace{1.5ex}
+  \label{tab:annual}
+  \begin{tabular}{llll}
+    Month & Avg price [\$] & Month & Avg price [\$] \\
+    \midrule
+    Jan & <EnAvg01> & Jul & <EnAvg07> \\
+    Feb & <EnAvg02> & Aug & <EnAvg08> \\
+    Mar & <EnAvg03> & Sep & <EnAvg09> \\
+    Apr & <EnAvg04> & Oct & <EnAvg10> \\
+    Jun & <EnAvg06> & Nov & <EnAvg11> \\
+    May & <EnAvg05> & Dec & <EnAvg12> \\
+    \midrule
+    Annual average & <EnAvgAnnual>
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large Peer performance}
+\vspace{1ex}
+
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 2.1in 0in 2.25in, clip]{visuals/synthetic20.A.whisker.pdf}
+\caption{Average annual energy price for <CustomerID> compared to peers}
+\label{fig:PeerCompEn}
+\end{figure}
+
 \clearpage
 
 \newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
 \pagestyle{demand}
-\lipsum[1-5]
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.duration.monthly.pdf}
+\caption{Normalized consumption for <CustomerID>}
+\label{fig:heatmap}
+\end{figure}
+
+\lipsum[1][1-7]
+
+\begin{table}[th!]
+  \centering
+  \caption{Monthly Demand Charges}
+  \vspace{1.5ex}
+  \label{tab:annual}
+  \begin{tabular}{llll}
+    Month & Avg price [\$] & Month & Avg price [\$] \\
+    \midrule
+    Jan & <EnAvg01> & Jul & <EnAvg07> \\
+    Feb & <EnAvg02> & Aug & <EnAvg08> \\
+    Mar & <EnAvg03> & Sep & <EnAvg09> \\
+    Apr & <EnAvg04> & Oct & <EnAvg10> \\
+    Jun & <EnAvg06> & Nov & <EnAvg11> \\
+    May & <EnAvg05> & Dec & <EnAvg12> \\
+    \midrule
+    Annual average & <DmndAvgAnnual>
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large Peer performance}
+\vspace{1ex}
+
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 4.25in, clip]{visuals/synthetic20.A.whisker.pdf}
+\caption{Average annual energy price for <CustomerID> compared to peers}
+\label{fig:PeerCompDmnd}
+\end{figure}
 
 \end{document}

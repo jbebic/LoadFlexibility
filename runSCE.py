@@ -270,9 +270,10 @@ if False:
 considerfname = 'largeOffices_CustomerI.csv'
 ReplaceDict = {'<RateCode>':'TOU}
 if False:
-    PopulateLaTeX(dirin='report/', fnamein= 'report03t.tex', 
-                               considerCIDs = considerfname, 
-                               ReplaceDict = ReplaceDict,
-                               dirout='report/', 
-                               fnameout = '.report03t.tex',
-                               dirlog='report/')
+    PopulateLaTeX(dirin='testdata/', fnamein= 'summary.'fnamebase + '.A.billing.csv', 
+                  template = 'report03.tex', 
+                  considerCIDs = considerfname,, 
+                  dirout='testdata/',
+                  fnameout = '.report03.tex',
+                  ReplaceDict = ReplaceDict,
+                  dirlog='report/')

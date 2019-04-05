@@ -235,32 +235,32 @@ if False:
 
 #%% Extracting relevant plot pages for custoemrs listed in considerIDs
 considerfname = 'largeOffices_CustomerI.csv'
-if True:
-    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.piecharts.pdf', 
+if False:
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.piecharts.pdf', 
                                considerCIDs = considerfname, 
                                dirout='report/visuals/', 
                                fnameout = '.piechart.pdf',
                                dirlog='output/')
-if True:
-    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.boxplots.pdf', 
+if False:
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.boxplots.pdf', 
                                considerCIDs = considerfname, 
                                dirout='report/visuals/', 
                                fnameout = '.boxplot.pdf',
                                dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.whiskercharts.pdf', 
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.whiskercharts.pdf', 
                                considerCIDs = considerfname, 
                                dirout='report/visuals/', 
                                fnameout = '.whiskerchart.pdf',
                                dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.heatmaps.pdf', 
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.heatmaps.pdf', 
                                considerCIDs = considerfname, 
                                dirout='report/visuals/', 
                                fnameout = '.heatmap.pdf',
                                dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.duration.monthly.test.pdf', 
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.duration.monthly.test.pdf', 
                                considerCIDs = considerfname, 
                                dirout='report/visuals/', 
                                fnameout = '.duration.monthly.test.pdf',
@@ -268,12 +268,12 @@ if False:
 
 #%% Generating LaTeX files for custoemrs listed in considerIDs using latex template file as input
 considerfname = 'largeOffices_CustomerI.csv'
-ReplaceDict = {'<RateCode>':'TOU}
-if False:
-    PopulateLaTeX(dirin='testdata/', fnamein= 'summary.'fnamebase + '.A.billing.csv', 
-                  template = 'report03.tex', 
-                  considerCIDs = considerfname,, 
-                  dirout='testdata/',
-                  fnameout = '.report03.tex',
+ReplaceDict = {'<RateCode>':'TOU'}
+if True:
+    PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
+                  template = 'report03t.tex', 
+                  considerCIDs = considerfname,
+                  dirout='report/',
+                  fnameout = '.report03t.tex',
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')

@@ -11,7 +11,7 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
-from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers
+from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX
 
 if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -72,7 +72,7 @@ if False:
                    dirlog='input/')
 
 #%% Export load files
-if True:
+if False:
     ExportLoadFiles(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', explist=fnamebase + '.A.HighlightIDs.csv',
            dirout='testdata/', # fnameout derived from customer IDs
            dirlog='testdata/')
@@ -99,10 +99,18 @@ if False:
 # =============================================================================
 #%% Calculate Billing
 if False:
-    CalculateBilling(dirin='input/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
-                    dirrate = 'tou_data', ratein = ratefile, 
-                   dirout='output/', fnameout=fnamebase + '.A.billing.csv',
-                   dirlog='output/', writeDataFile=True)
+    CalculateBilling(dirin='testdata/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
+                    dirrate = 'tou_data/', ratein = ratefile, 
+                   dirout='testdata/', fnameout=fnamebase + '.A.billing.csv',
+                   dirlog='testdata/', writeDataFile=True)
+
+#%% Plot heatmap of TOU Price
+if False:
+    PlotHeatMapOfBilling(dirin='testdata/', fnamein=fnamebase + '.A.billing.csv', 
+                   # considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
+                   dirout='testdata/', fnameout=fnamebase + '.A.billing.Heatmaps.pdf',
+                   dirlog='testdata/')     
+
     
 #%% Plot Billing (optional)
 if False:
@@ -208,9 +216,17 @@ if False:
     ExportLoadFiles(dirin='output/', fnamein =fnamebase + '.A.normalized.csv', explist=fnamebase + '.A.ignore.csv',
                    dirout='output/', 
                    dirlog='output/')
+#%% Plot HeatMaps
+if False:    
+    PlotHeatMaps(dirin='testdata/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                 #considerCIDs = 'largeOfficesConsider.csv',
+                 dirout='testdata/', fnameout=fnamebase + '.A.HeatMaps.pdf',
+                 dirlog='testdata/')
+
+
 #%% Plot duration curves
 if False:
-    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase + '.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
+    PlotDurationCurves(dirin='testdata/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
                        #considerCIDs = 'largeOfficesConsider.csv',
                        byMonthFlag=True,
                        withDailyProfiles=True,
@@ -240,4 +256,17 @@ if False:
                                highlightCIDs = fnamebase + '.A.HighlightIDs.csv', 
                                dirout='testdata/', 
                                fnameout=fnamebase + '.A.whiskercharts.pdf', 
+                               dirlog='testdata/')
+
+if False:
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf', 
+                               considerCIDs = 'synthetic20.A.HighlightIDs.csv', 
+                               dirout='testdata/', 
+                               fnameout = '.boxplot.pdf',
+                               dirlog='testdata/')
+if True:
+    PopulateLaTeX(dirin='testdata/', fnamein= 'report02.tex', 
+                               considerCIDs = 'synthetic20.A.HighlightIDs.csv', 
+                               dirout='testdata/', 
+                               fnameout = '.report02.tex',
                                dirlog='testdata/')

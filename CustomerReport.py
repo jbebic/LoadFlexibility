@@ -11,6 +11,8 @@ from datetime import datetime # time stamps
 import os # operating system interface
 import matplotlib.pyplot as plt # plotting 
 import matplotlib.backends.backend_pdf as dpdf # pdf output
+from PyPDF2 import PdfFileReader, PdfFileWriter
+import re
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -23,10 +25,154 @@ from PlotHeatMaps import outputThreeHeatmaps, outputThreeHeatmapsGroup
 
 #%% Version and copyright info to record on the log file
 codeName = 'CustomerReports.py'
-codeVersion = '1.1'
+codeVersion = '1.2'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Irene M. Berry, Jovan Z. Bebic, GE Global Research\n"
 
+def getPrices(cid, foutLog, df1):
+    # fetch data from input file
+        
+    return PricesDict
+    
+def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv', 
+                  template = 'report02.tex', 
+                  considerCIDs = '', 
+                  dirout='testdata/',
+                  fnameout = '.report02.tex',
+                  ReplaceDict = {},
+                  dirlog='testdata/',
+                  fnameLog='PopulateLaTeX.log'):
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    # open log file
+    foutLog = createLog(codeName, "PopulateLaTeX", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
+    else:
+        foutLog.write("\n*** considerCIDs must be specified")
+        print("*** considerCIDs must be specified")
+
+    # fetch data from input file
+    df1 = pd.read_csv(os.path.join(dirin,fnamein), 
+                      skiprows = 3,
+                      header = None,
+                      # usecols = [0, 1, 2], 
+                      # names=['datetimestr', 'Demand', 'CustomerID'],
+                      # dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str}
+                      )
+    UniqueIDs = df1[0].unique().tolist()
+
+    print('Total number of records read: %d' %df1[0].size)
+    foutLog.write('Total number of interval records read: %d\n' %df1[0].size)
+
+    try: # Read in the LaTeX template file
+        with open(os.path.join(dirin, template), 'r') as file :
+            filetemplate = file.read()
+    except:
+        foutLog.write("\n*** Couldn't open %s" %(os.path.join(dirin,template)))
+        print("*** Couldn't open %s" %(os.path.join(dirin,template)))
+        
+    # Replace the target strings
+
+    for cid in considerIDs:
+        try:
+            foutLog.write("\nGenerating report for %s " %cid )
+            print("Generating report for %s " %cid)
+            filedata = filetemplate.replace('<CustomerID>', cid)
+
+            ix_mdc = 5+1*12+1 # monthly demand charges
+            ix_mec = 5+2*12+1 # monthly energy charges
+            ix_mfc = 5+3*12+1 # monthly facility charges
+            ix_mtc = 5+4*12+1 # monthly total charges
+    
+            try:
+                df2 = df1[df1[0]==cid]
+                x = np.arange(1, 13)
+                y1 = df2.iloc[0,ix_mfc:ix_mfc+12].values
+                y2 = df2.iloc[0,ix_mec:ix_mec+12].values
+                y3 = df2.iloc[0,ix_mdc:ix_mdc+12].values
+                # for ix in x:
+                    # filedata = filedata.replace('<EnAvg'+, cid)
+            except:
+                foutLog.write("\n*** Unable to find billing data for %s " %cid )
+                print("*** Unable to find billing data for %s " %cid)
+
+            # Write the file out again
+            with open(os.path.join(dirout, cid+fnameout), 'w') as file:
+              file.write(filedata)
+        except:
+            foutLog.write("\n*** Something failed for customer %s " %cid )
+            print("*** Something failed for customer %s " %cid)
+
+    return
+
+def ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf', 
+                               considerCIDs = '', 
+                               dirout='testdata/', 
+                               fnameout = '.boxplot.pdf',
+                               dirlog='testdata/',
+                               fnameLog='ExtractPlotsFromPDF.log'):
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    # open log file
+    foutLog = createLog(codeName, "ExtractPlotsFromPDF", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
+    else:
+        foutLog.write("\n*** considerCIDs must be specified")
+        print("*** considerCIDs must be specified")
+    
+    # open pdf with figures
+    print('Opening plot file: %s' %(os.path.join(dirin, fnamein)))
+    foutLog.write('Opening plot file: %s\n' %(os.path.join(dirin, fnamein)))
+
+    try:
+        pltPdf1 = PdfFileReader(os.path.join(dirin, fnamein))
+        NumPages = pltPdf1.getNumPages()
+
+        for cid in considerIDs:
+            try:
+                for i in range(0, NumPages):
+                    PageObj = pltPdf1.getPage(i)
+                    Text = PageObj.extractText() 
+                    # print(Text)
+                    ResSearch = re.search(cid, Text)
+                    if ResSearch != None:
+                        foutLog.write("\nCustomer %s found on page %d" %(cid, i))
+                        print("Customer %s found on page %d" %(cid, i))
+                        pdf_writer = PdfFileWriter()
+                        pdf_writer.addPage(pltPdf1.getPage(i))
+                        with open(os.path.join(dirout, cid+fnameout), 'wb') as fout:
+                            pdf_writer.write(fout)
+            except:
+                foutLog.write("\n*** Unable to find customer %s " %cid )
+                print("*** Unable to find customer %s " %cid)
+        
+    except:
+        foutLog.write("\n*** Unable to open plot file %s " %(os.path.join(dirin, fnamein)))
+        print("*** Unable to open plot file %s " %(os.path.join(dirin, fnamein)))
+
+    return
 
 def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv', 
                                considerCIDs = '', 
@@ -34,7 +180,8 @@ def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.bill
                                dirout='testdata/', 
                                fnameout='synthetic20.A.boxplots.pdf',
                                dirlog='testdata/',
-                               fnameLog='PlotMonthlySummaries.log'):
+                               fnameLog='PlotMonthlySummaries.log',
+                               ymaxAll=False):
 
     # Capture start time of code execution
     codeTstart = datetime.now()
@@ -65,7 +212,7 @@ def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.bill
     ix_mdc = 5+1*12+1 # monthly demand charges
     ix_mec = 5+2*12+1 # monthly energy charges
     ix_mfc = 5+3*12+1 # monthly facility charges
-    ix_mtc = 5+4*12+1 # monthly facility charges
+    ix_mtc = 5+4*12+1 # monthly total charges
 
     for cid in UniqueIDs:
         fig, (ax0) = plt.subplots(nrows=1, ncols=1, figsize=(8,6), sharex=True) 
@@ -75,7 +222,8 @@ def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.bill
         # ax0.set_xlim([0, 12])
 
         ymin = 0
-        ymax = np.ceil(df1.iloc[:,ix_mtc:ix_mtc+12].max().max()*2)/2
+        if ymaxAll:
+            ymax = np.ceil(df1.iloc[:,ix_mtc:ix_mtc+12].max().max()*2)/2
         
         alpha = 1.0
         
@@ -86,13 +234,16 @@ def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.bill
                 y1 = df2.iloc[0,ix_mfc:ix_mfc+12].values
                 y2 = df2.iloc[0,ix_mec:ix_mec+12].values
                 y3 = df2.iloc[0,ix_mdc:ix_mdc+12].values
-                ax0.bar(x, y1, label = 'Facility', alpha=alpha)
-                ax0.bar(x, y2, bottom = y1, label = 'Energy', alpha=alpha)
-                ax0.bar(x, y3, bottom = y1+y2, label = 'Demand', alpha=alpha)
+                ax0.bar(x, y1, color='C2', label = 'Facility', alpha=alpha)
+                ax0.bar(x, y2, color='C1', bottom = y1, label = 'Energy', alpha=alpha)
+                ax0.bar(x, y3, color='C0', bottom = y1+y2, label = 'Demand', alpha=alpha, )
+                if not ymaxAll:
+                    ymax = (np.floor(df2.iloc[:,ix_mtc:ix_mtc+12].max().max()/500.)+1)*500
+                ax0.set_ylim([ymin,ymax])
             except:
-                pass
-    
-            ax0.set_ylim([ymin,ymax])
+                foutLog.write("\n*** Unable to create box plot for %s " %cid )
+                print("*** Unable to create box plot for %s " %cid)
+
             ax0.set_xticks(np.arange(1,13))
             handles, labels = ax0.get_legend_handles_labels()
             ax0.legend(reversed(handles), reversed(labels))

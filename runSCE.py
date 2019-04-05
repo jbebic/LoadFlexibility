@@ -11,7 +11,7 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
-from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers 
+from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX
 
 if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -66,7 +66,7 @@ if False:
                    OutputFormat = 'ISO')
 
 #%% Review load profiles
-if True:
+if False:
     ReviewLoads(dirin='input/', fnamein=fnamebase + '.A.csv', considerCIDs ='troubleShootCIDs.csv',
                    dirout='input/', fnameout=fnamebase+'A.summary.csv',
                    dirlog='input/')
@@ -232,3 +232,47 @@ if False:
     PlotAnnualWhiskers(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
                                dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = 'largeOffices_CustomerI.csv',
                                dirlog='plots/') # to plot fewer groups, use 'consderCIDs'
+
+#%% Extracting relevant plot pages for custoemrs listed in considerIDs
+considerfname = 'largeOffices_CustomerI.csv'
+if True:
+    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.piecharts.pdf', 
+                               considerCIDs = considerfname, 
+                               dirout='report/visuals/', 
+                               fnameout = '.piechart.pdf',
+                               dirlog='output/')
+if True:
+    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.boxplots.pdf', 
+                               considerCIDs = considerfname, 
+                               dirout='report/visuals/', 
+                               fnameout = '.boxplot.pdf',
+                               dirlog='output/')
+if False:
+    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.whiskercharts.pdf', 
+                               considerCIDs = considerfname, 
+                               dirout='report/visuals/', 
+                               fnameout = '.whiskerchart.pdf',
+                               dirlog='output/')
+if False:
+    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.heatmaps.pdf', 
+                               considerCIDs = considerfname, 
+                               dirout='report/visuals/', 
+                               fnameout = '.heatmap.pdf',
+                               dirlog='output/')
+if False:
+    ExtractPlotsFromPDF(dirin='output/', fnamein= fnamebase + '.A.duration.monthly.test.pdf', 
+                               considerCIDs = considerfname, 
+                               dirout='report/visuals/', 
+                               fnameout = '.duration.monthly.test.pdf',
+                               dirlog='output/')
+
+#%% Generating LaTeX files for custoemrs listed in considerIDs using latex template file as input
+considerfname = 'largeOffices_CustomerI.csv'
+ReplaceDict = {'<RateCode>':'TOU}
+if False:
+    PopulateLaTeX(dirin='report/', fnamein= 'report03t.tex', 
+                               considerCIDs = considerfname, 
+                               ReplaceDict = ReplaceDict,
+                               dirout='report/', 
+                               fnameout = '.report03t.tex',
+                               dirlog='report/')

@@ -55,25 +55,25 @@ The analysis is performed by back-casting your last year's consumption to the ra
 The electric bill has three main components: facility charges, energy charges, and demand charges. The makeup of these charges for the year and by month are shown in Figures~\ref{fig:pie} and \ref{fig:bars}, respectively.
 \begin{figure}[!h]
 \centering
-\includegraphics[height=3in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.piecharts.pdf}
+\includegraphics[height=3in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/largeOfficesAll.A.piecharts.pdf}
 \caption{Makeup of annual charges}
 \label{fig:pie}
 \end{figure}
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.boxplots.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/largeOfficesAll.A.boxplots.pdf}
 \caption{Makeup of monthly charges}
 \label{fig:bars}
 \end{figure}
 
 Note that the demand charges are collected only in the four summer months, yet they account for <dmndpc> of the total annual bill. The expected annual charges by bill component are summarized in Table~\ref{tab:annual}.
 
-\begin{table}[h!]
+\begin{table}[th!]
   \centering
   \caption{Components of annual electric bill}
   \vspace{1.5ex}
-  \label{tab:annual}
+  \label{tab:energy}
   \begin{tabular}{ll}
     Bill component & Amount [\$] \\
     \midrule
@@ -91,7 +91,7 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.heatmaps.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/largeOfficesAll.A.heatmaps.pdf}
 \caption{Normalized consumption for <CustomerID>}
 \label{fig:heatmap}
 \end{figure}
@@ -100,7 +100,7 @@ Note that the demand charges are collected only in the four summer months, yet t
 \centering
 \includegraphics[width=\columnwidth, page=1, trim=0in 3in 0in 0.45in, clip]{visuals/synthetic20.A.billing.Heatmaps.pdf}
 \caption{Energy price on <RateCode>}
-\label{fig:heatmap}
+\label{fig:toumap}
 \end{figure}
 
 \lipsum[1][1-7]
@@ -132,7 +132,7 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 2.1in 0in 2.25in, clip]{visuals/synthetic20.A.whisker.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 2.1in 0in 2.1in, clip]{visuals/largeOfficesAll.A.whiskercharts.pdf}
 \caption{Average annual energy price for <CustomerID> compared to peers}
 \label{fig:PeerCompEn}
 \end{figure}
@@ -145,9 +145,9 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/synthetic20.A.duration.monthly.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/largeOfficesAll.A.duration.monthly.test.pdf}
 \caption{Normalized consumption for <CustomerID>}
-\label{fig:heatmap}
+\label{fig:duration}
 \end{figure}
 
 \lipsum[1][1-7]
@@ -156,7 +156,7 @@ Note that the demand charges are collected only in the four summer months, yet t
   \centering
   \caption{Monthly Demand Charges}
   \vspace{1.5ex}
-  \label{tab:annual}
+  \label{tab:demand}
   \begin{tabular}{llll}
     Month & Avg price [\$] & Month & Avg price [\$] \\
     \midrule
@@ -179,8 +179,8 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 4.25in, clip]{visuals/synthetic20.A.whisker.pdf}
-\caption{Average annual energy price for <CustomerID> compared to peers}
+\includegraphics[width=\columnwidth, page=1, trim=0in 3.8in 0in 0.5in, clip]{visuals/largeOfficesAll.A.whiskercharts.pdf}
+\caption{Average annual demand price for <CustomerID> compared to peers}
 \label{fig:PeerCompDmnd}
 \end{figure}
 

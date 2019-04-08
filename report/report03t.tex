@@ -9,6 +9,7 @@
 \usepackage{booktabs} % book-quality tables
 \usepackage{units}    % non-stacked fractions and better unit spacing
 \usepackage[T1]{fontenc} % 8-bit encoding of fonts (glyphs are a part of fonts)
+% \usepackage{siunitx} % table alignment
 
 \fancypagestyle{title}{ % defining header style for the first page
   \fancyhead[C,R]{}
@@ -67,14 +68,14 @@ The electric bill has three main components: facility charges, energy charges, a
 \label{fig:bars}
 \end{figure}
 
-Note that the demand charges are collected only in the four summer months, yet they account for <dmndpc> of the total annual bill. The expected annual charges by bill component are summarized in Table~\ref{tab:annual}.
+Note that the demand charges are collected only in the four summer months, yet they account for <dmndpc>\% of the total annual bill. The expected annual charges by bill component are summarized in Table~\ref{tab:annual}.
 
 \begin{table}[th!]
   \centering
-  \caption{Components of annual electric bill}
+  \caption{Components of Annual Electric Bill}
   \vspace{1.5ex}
-  \label{tab:energy}
-  \begin{tabular}{ll}
+  \label{tab:annual}
+  \begin{tabular}{lr}
     Bill component & Amount [\$] \\
     \midrule
     Facility & <facility> \\
@@ -107,20 +108,20 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{table}[th!]
   \centering
-  \caption{Components of annual electric bill}
+  \caption{Monthly Energy Charges}
   \vspace{1.5ex}
-  \label{tab:annual}
-  \begin{tabular}{llll}
-    Month & Avg price [\$] & Month & Avg price [\$] \\
+  \label{tab:energy}
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Avg price [\$] & & Month & Avg price [\$] \\
     \midrule
-    Jan & <EnAvg01> & Jul & <EnAvg07> \\
-    Feb & <EnAvg02> & Aug & <EnAvg08> \\
-    Mar & <EnAvg03> & Sep & <EnAvg09> \\
-    Apr & <EnAvg04> & Oct & <EnAvg10> \\
-    Jun & <EnAvg06> & Nov & <EnAvg11> \\
-    May & <EnAvg05> & Dec & <EnAvg12> \\
+    Jan & <EnAvg01> & & Jul & <EnAvg07> \\
+    Feb & <EnAvg02> & & Aug & <EnAvg08> \\
+    Mar & <EnAvg03> & & Sep & <EnAvg09> \\
+    Apr & <EnAvg04> & & Oct & <EnAvg10> \\
+    Jun & <EnAvg06> & & Nov & <EnAvg11> \\
+    May & <EnAvg05> & & Dec & <EnAvg12> \\
     \midrule
-    Annual average & <EnAvgAnnual>
+    Average & <EnAvgAnnual> & & &
   \end{tabular}
 \end{table}
 
@@ -157,17 +158,17 @@ Note that the demand charges are collected only in the four summer months, yet t
   \caption{Monthly Demand Charges}
   \vspace{1.5ex}
   \label{tab:demand}
-  \begin{tabular}{llll}
-    Month & Avg price [\$] & Month & Avg price [\$] \\
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Demand charge [\$] & & Month & Demand charge [\$] \\
     \midrule
-    Jan & <DmndAvg01> & Jul & <DmndAvg07> \\
-    Feb & <DmndAvg02> & Aug & <DmndAvg08> \\
-    Mar & <DmndAvg03> & Sep & <DmndAvg09> \\
-    Apr & <DmndAvg04> & Oct & <DmndAvg10> \\
-    Jun & <DmndAvg06> & Nov & <DmndAvg11> \\
-    May & <DmndAvg05> & Dec & <DmndAvg12> \\
+    Jan & <DmndAvg01> & & Jul & <DmndAvg07> \\
+    Feb & <DmndAvg02> & & Aug & <DmndAvg08> \\
+    Mar & <DmndAvg03> & & Sep & <DmndAvg09> \\
+    Apr & <DmndAvg04> & & Oct & <DmndAvg10> \\
+    May & <DmndAvg05> & & Nov & <DmndAvg11> \\
+    Jun & <DmndAvg06> & & Dec & <DmndAvg12> \\
     \midrule
-    Annual average & <DmndAvgAnnual>
+    Average & <DmndAvgAnnual>
   \end{tabular}
 \end{table}
 
@@ -179,7 +180,7 @@ Note that the demand charges are collected only in the four summer months, yet t
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=\columnwidth, page=1, trim=0in 3.8in 0in 0.5in, clip]{visuals/<CustomerID.whiskerchart.pdf}
+\includegraphics[width=\columnwidth, page=1, trim=0in 3.8in 0in 0.5in, clip]{visuals/<CustomerID>.whiskerchart.pdf}
 \caption{Average annual demand price for <CustomerID> compared to peers}
 \label{fig:PeerCompDmnd}
 \end{figure}

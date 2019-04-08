@@ -504,7 +504,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     df1['DayType'] = ''
     df1['RatePeriod'] = np.nan
     
-    print('reading TOU rates...')
+    print('Reading TOU rates...')
     rates = readTOURates(dirrate, ratein)
     
     print('Assigning rate periods...')

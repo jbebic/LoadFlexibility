@@ -60,7 +60,7 @@ if False:
 #%% Fix DST # Correct calculated billings to use DST adjusted times.
 if False:
     FixDST(dirin='input/', fnamein=fnamebase + '.A.csv',
-                   dirout='input/', fnameout=fnamebase + '.A.csv',
+                   dirout='input/', fnameout=fnamebase + '.A.csv', 
                    dirlog='input/',
                    tzinput = 'America/Los_Angeles',
                    OutputFormat = 'ISO')
@@ -98,7 +98,7 @@ if False:
 #                 dirlog='plots/')
 # =============================================================================
 #%% Calculate Billing
-if False:
+if True:
     CalculateBilling(dirin='testdata/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
                     dirrate = 'tou_data/', ratein = ratefile, 
                    dirout='testdata/', fnameout=fnamebase + '.A.billing.csv',
@@ -258,15 +258,45 @@ if False:
                                fnameout=fnamebase + '.A.whiskercharts.pdf', 
                                dirlog='testdata/')
 
-if False:
-    ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf', 
-                               considerCIDs = 'synthetic20.A.HighlightIDs.csv', 
-                               dirout='testdata/', 
-                               fnameout = '.boxplot.pdf',
-                               dirlog='testdata/')
 if True:
-    PopulateLaTeX(dirin='testdata/', fnamein= 'report02.tex', 
-                               considerCIDs = 'synthetic20.A.HighlightIDs.csv', 
-                               dirout='testdata/', 
-                               fnameout = '.report02.tex',
-                               dirlog='testdata/')
+    considerfname = fnamebase + '.A.HighlightIDs.csv'
+if False:   
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.piecharts.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.piechart.pdf',
+                        dirlog='testdata/')
+
+if False:   
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.boxplots.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.boxplot.pdf',
+                        dirlog='testdata/')
+
+if False:
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.whiskercharts.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.whiskerchart.pdf',
+                        dirlog='testdata/')
+
+if False:   
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.heatmaps.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.heatmap.pdf',
+                        dirlog='testdata/')
+
+if False:   
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.duration.monthly.test.pdf',
+                        considerCIDs = considerfname, 
+                        dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
+                        dirlog='testdata/')
+
+#%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
+considerfname = 'largeOffices_CustomerI.csv'
+ReplaceDict = {'<RateCode>':'TOU'}
+if False:   
+    PopulateLaTeX(dirin='testdata/', fnamein = 'summary.' + fnamebase + '.A.billing.csv',
+                  dirtex = 'report/', fnametex = 'report03t.tex',
+                  considerCIDs = 'synthetic20.A.HighlightIDs.csv',
+                  dirout='report/', fnameout = '.report03t.tex',
+                  ReplaceDict = {'<RateCode>': 'TOU-GS3-B'},
+                  dirlog='testdata/')

@@ -236,44 +236,38 @@ if False:
 #%% Extracting relevant plot pages for custoemrs listed in considerIDs
 considerfname = 'largeOffices_CustomerI.csv'
 if False:
-    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.piecharts.pdf', 
-                               considerCIDs = considerfname, 
-                               dirout='report/visuals/', 
-                               fnameout = '.piechart.pdf',
-                               dirlog='output/')
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.piecharts.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.piechart.pdf',
+                        dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.boxplots.pdf', 
-                               considerCIDs = considerfname, 
-                               dirout='report/visuals/', 
-                               fnameout = '.boxplot.pdf',
-                               dirlog='output/')
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.boxplots.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.boxplot.pdf',
+                        dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.whiskercharts.pdf', 
-                               considerCIDs = considerfname, 
-                               dirout='report/visuals/', 
-                               fnameout = '.whiskerchart.pdf',
-                               dirlog='output/')
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.whiskercharts.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.whiskerchart.pdf',
+                        dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.heatmaps.pdf', 
-                               considerCIDs = considerfname, 
-                               dirout='report/visuals/', 
-                               fnameout = '.heatmap.pdf',
-                               dirlog='output/')
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.heatmaps.pdf',
+                        considerCIDs = considerfname,
+                        dirout='report/visuals/', fnameout = '.heatmap.pdf',
+                        dirlog='output/')
 if False:
-    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.duration.monthly.test.pdf', 
-                               considerCIDs = considerfname, 
-                               dirout='report/visuals/', 
-                               fnameout = '.duration.monthly.test.pdf',
-                               dirlog='output/')
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.duration.monthly.test.pdf',
+                        considerCIDs = considerfname, 
+                        dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
+                        dirlog='output/')
 
-#%% Generating LaTeX files for custoemrs listed in considerIDs using latex template file as input
+#%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 considerfname = 'largeOffices_CustomerI.csv'
-ReplaceDict = {'<RateCode>':'TOU'}
+ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
 if True:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
-                  template = 'report03t.tex', 
+                  dirtex = 'report/', fnametex = 'report03t.tex', 
                   considerCIDs = considerfname,
-                  dirout='report/',
-                  fnameout = '.report03t.tex',
+                  dirout='report/', fnameout = '.report03t.tex',
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')

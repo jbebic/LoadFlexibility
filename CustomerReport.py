@@ -31,17 +31,15 @@ codeAuthors = "Irene M. Berry, Jovan Z. Bebic, GE Global Research\n"
 
 def getPrices(cid, foutLog, df1):
     # fetch data from input file
-        
+    PricesDict = {}
     return PricesDict
     
 def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv', 
-                  template = 'report02.tex', 
+                  dirtex='report/', fnametex = 'report03t.tex', 
                   considerCIDs = '', 
-                  dirout='testdata/',
-                  fnameout = '.report02.tex',
+                  dirout='testdata/', fnameout = '.report02.tex',
                   ReplaceDict = {},
-                  dirlog='testdata/',
-                  fnameLog='PopulateLaTeX.log'):
+                  dirlog='testdata/', fnameLog='PopulateLaTeX.log'):
     # Capture start time of code execution
     codeTstart = datetime.now()
     # open log file
@@ -70,26 +68,33 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                       # names=['datetimestr', 'Demand', 'CustomerID'],
                       # dtype={'datetimestr':np.str, 'Demand':np.float64, 'CustomerID':np.str}
                       )
-    UniqueIDs = df1[0].unique().tolist()
+    # UniqueIDs = df1[0].unique().tolist()
 
     print('Total number of records read: %d' %df1[0].size)
     foutLog.write('Total number of interval records read: %d\n' %df1[0].size)
 
     try: # Read in the LaTeX template file
-        with open(os.path.join(dirin, template), 'r') as file :
+        with open(os.path.join(dirtex, fnametex), 'r') as file :
             filetemplate = file.read()
     except:
-        foutLog.write("\n*** Couldn't open %s" %(os.path.join(dirin,template)))
-        print("*** Couldn't open %s" %(os.path.join(dirin,template)))
+        foutLog.write("\n*** Couldn't open %s" %(os.path.join(dirin,fnametex)))
+        print("*** Couldn't open %s" %(os.path.join(dirin,fnametex)))
         
     # Replace the target strings
-
     for cid in considerIDs:
         try:
             foutLog.write("\nGenerating report for %s " %cid )
             print("Generating report for %s " %cid)
             filedata = filetemplate.replace('<CustomerID>', cid)
 
+            for key in list(ReplaceDict.keys()):
+                filedata = filedata.replace(key, ReplaceDict[key])
+
+            ix_ad  = 1
+            ix_adc = 2
+            ix_aec = 3
+            ix_afc = 4
+            ix_atc = 5
             ix_mdc = 5+1*12+1 # monthly demand charges
             ix_mec = 5+2*12+1 # monthly energy charges
             ix_mfc = 5+3*12+1 # monthly facility charges
@@ -97,17 +102,29 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
     
             try:
                 df2 = df1[df1[0]==cid]
-                x = np.arange(1, 13)
+                
+                filedata = filedata.replace('<dmndpc>', '%.1f' %(df2.iloc[0,ix_adc]/df2.iloc[0,ix_atc]*100))
+                
+                filedata = filedata.replace('<facility>', '%.2f' %(df2.iloc[0,ix_afc]))
+                filedata = filedata.replace('<energy>', '%.2f' %(df2.iloc[0,ix_aec]))
+                filedata = filedata.replace('<demand>', '%.2f' %(df2.iloc[0,ix_adc]))
+                filedata = filedata.replace('<total>', '%.2f' %(df2.iloc[0,ix_atc]))
+
+                filedata = filedata.replace('<EnAvgAnnual>', '%.2f' %(df2.iloc[0,ix_aec]/12.))
+                filedata = filedata.replace('<DmndAvgAnnual>', '%.2f' %(df2.iloc[0,ix_adc]/12.))
+                
+                x = range(1,13)
                 y1 = df2.iloc[0,ix_mfc:ix_mfc+12].values
                 y2 = df2.iloc[0,ix_mec:ix_mec+12].values
                 y3 = df2.iloc[0,ix_mdc:ix_mdc+12].values
-                # for ix in x:
-                    # filedata = filedata.replace('<EnAvg'+, cid)
+                for month in range(12):
+                    filedata = filedata.replace('<EnAvg%02d>' %(x[month]), '%.2f' %(y2[month]))
+                    filedata = filedata.replace('<DmndAvg%02d>' %(x[month]), '%.2f' %(y3[month]))
             except:
                 foutLog.write("\n*** Unable to find billing data for %s " %cid )
                 print("*** Unable to find billing data for %s " %cid)
 
-            # Write the file out again
+            # Write the tex report file for this customer
             with open(os.path.join(dirout, cid+fnameout), 'w') as file:
               file.write(filedata)
         except:

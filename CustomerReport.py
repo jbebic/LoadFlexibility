@@ -169,6 +169,8 @@ def ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf'
 
         for cid in considerIDs:
             try:
+                foutLog.write("\nProcessing %s " %cid )
+                print("Processing %s " %cid)
                 for i in range(0, NumPages):
                     PageObj = pltPdf1.getPage(i)
                     Text = PageObj.extractText() 

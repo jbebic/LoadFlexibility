@@ -103,7 +103,7 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
             try:
                 df2 = df1[df1[0]==cid]
                 
-                filedata = filedata.replace('<dmndpc>', '%.1f' %(df2.iloc[0,ix_adc]/df2.iloc[0,ix_atc]*100))
+                filedata = filedata.replace('<dmndpc>', '%.1f' %((df2.iloc[0,ix_adc]+df2.iloc[0,ix_afc])/df2.iloc[0,ix_atc]*100))
                 
                 filedata = filedata.replace('<facility>', '%.2f' %(df2.iloc[0,ix_afc]))
                 filedata = filedata.replace('<energy>', '%.2f' %(df2.iloc[0,ix_aec]))
@@ -111,7 +111,7 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                 filedata = filedata.replace('<total>', '%.2f' %(df2.iloc[0,ix_atc]))
 
                 filedata = filedata.replace('<EnAvgAnnual>', '%.2f' %(df2.iloc[0,ix_aec]/12.))
-                filedata = filedata.replace('<DmndAvgAnnual>', '%.2f' %(df2.iloc[0,ix_adc]/12.))
+                filedata = filedata.replace('<DmndAvgAnnual>', '%.2f' %((df2.iloc[0,ix_adc]+df2.iloc[0,ix_afc])/12.))
                 
                 x = range(1,13)
                 y1 = df2.iloc[0,ix_mfc:ix_mfc+12].values
@@ -119,7 +119,7 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                 y3 = df2.iloc[0,ix_mdc:ix_mdc+12].values
                 for month in range(12):
                     filedata = filedata.replace('<EnAvg%02d>' %(x[month]), '%.2f' %(y2[month]))
-                    filedata = filedata.replace('<DmndAvg%02d>' %(x[month]), '%.2f' %(y3[month]))
+                    filedata = filedata.replace('<DmndAvg%02d>' %(x[month]), '%.2f' %(y1[month]+y3[month]))
             except:
                 foutLog.write("\n*** Unable to find billing data for %s " %cid )
                 print("*** Unable to find billing data for %s " %cid)

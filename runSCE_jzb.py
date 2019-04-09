@@ -98,7 +98,7 @@ if False:
 #                 dirlog='plots/')
 # =============================================================================
 #%% Calculate Billing
-if True:
+if False:
     CalculateBilling(dirin='testdata/', fnamein=fnamebase + '.A.csv', #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
                     dirrate = 'tou_data/', ratein = ratefile, 
                    dirout='testdata/', fnameout=fnamebase + '.A.billing.csv',
@@ -293,7 +293,7 @@ if False:
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 considerfname = 'largeOffices_CustomerI.csv'
 ReplaceDict = {'<RateCode>':'TOU'}
-if False:   
+if True:   
     PopulateLaTeX(dirin='testdata/', fnamein = 'summary.' + fnamebase + '.A.billing.csv',
                   dirtex = 'report/', fnametex = 'report03t.tex',
                   considerCIDs = 'synthetic20.A.HighlightIDs.csv',

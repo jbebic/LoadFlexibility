@@ -21,6 +21,7 @@ if True:
     fnamebase = 'largeOfficesAll' # Name your input files here
     ratefile = 'SCE-TOU-GS2-B.csv' # name of TOU rate profile
     ignoreCIDs_forGrouping = 'largeOfficesAll.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
+    considerfname = 'largeOffices_CustomerB.csv'
 
 if False:
     fnamebase = 'synthetic2_old' # Name your input files here
@@ -78,7 +79,7 @@ if False:
 #%% Plot heatmaps, Re-define the ignore list(10-12-2018)
 if False:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                 #considerCIDs = 'largeOfficesConsider.csv',
+                 considerCIDs = considerfname,
                  dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
                  dirlog='plots/')
 # =============================================================================
@@ -102,6 +103,13 @@ if False:
     PlotBillingData(dirin='output/', fnamein=fnamebase + '.A.billing.csv', 
                    dirout='plots/', fnameout=fnamebase + '.A.billing.pdf',
                    dirlog='plots/')
+    
+#%% Plot heatmap of TOU Price
+if False:
+    PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv',
+                         considerCIDs = considerfname,
+                         dirout='plots/', fnameout=fnamebase + '.A.billing.Heatmaps.pdf',
+                         dirlog='plots/')
     
 #%% Plot Billing Heatmaps (after calculate groups)
 if False:
@@ -204,7 +212,7 @@ if False:
 #%% Plot duration curves
 if False:
     PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
-                       considerCIDs = 'largeOffices_CustomerI.csv',
+                       considerCIDs = considerfname,
                        byMonthFlag=True, withDailyProfiles=True, 
                        dirout='plots/', fnameout=fnamebase + '.A.duration.monthly.test.pdf',
                        dirlog='plots/')
@@ -216,7 +224,9 @@ if False:
     
 if False:   
     PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf', byMonthFlag=True, considerCIDs ='troubleShootCIDs.csv', highlightCIDs = 'largeOffices_CustomerI.csv',
+                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf', byMonthFlag=True, 
+                               #considerCIDs ='troubleShootCIDs.csv',
+                               highlightCIDs = considerfname,
                                dirlog='plots/')
 if False:
     PlotMonthlySummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
@@ -230,11 +240,10 @@ if False:
 
 if False:
     PlotAnnualWhiskers(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = 'largeOffices_CustomerI.csv',
+                               dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = considerfname,
                                dirlog='plots/') # to plot fewer groups, use 'consderCIDs'
 
 #%% Extracting relevant plot pages for custoemrs listed in considerIDs
-considerfname = 'largeOffices_CustomerI.csv'
 if False:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.piecharts.pdf',
                         considerCIDs = considerfname,
@@ -260,9 +269,15 @@ if False:
                         considerCIDs = considerfname, 
                         dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
                         dirlog='output/')
+    
+if True:
+    ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.billing.Heatmaps.pdf',
+                        considerCIDs = considerfname, 
+                        dirout='report/visuals/', fnameout = '.billing.Heatmap.pdf',
+                        dirlog='output/')
+
 
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
-considerfname = 'largeOffices_CustomerI.csv'
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
 if True:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 

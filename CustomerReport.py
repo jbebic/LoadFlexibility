@@ -2,7 +2,8 @@
 """
 Created on Fri Dec  7 15:57:51 2018
 
-@author: 200018380
+@author: IMB, JZB
+
 """
 #%% Importing all the necessary Python packages
 import pandas as pd # multidimensional data analysis
@@ -13,6 +14,7 @@ import matplotlib.pyplot as plt # plotting
 import matplotlib.backends.backend_pdf as dpdf # pdf output
 from PyPDF2 import PdfFileReader, PdfFileWriter
 import re
+import subprocess
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -33,6 +35,86 @@ def getPrices(cid, foutLog, df1):
     # fetch data from input file
     PricesDict = {}
     return PricesDict
+
+def PurgeLaTeX(dirin='testdata/', considerCIDs = '',
+               dirtex='report/', 
+               dirlog='testdata/', fnameLog='PurgeLaTeX.log'):
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    # open log file
+    foutLog = createLog(codeName, "PurgeLaTeX", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
+    else:
+        foutLog.write("\n*** considerCIDs must be specified")
+        print("*** considerCIDs must be specified")
+        return
+
+    for cid in considerIDs:
+        foutLog.write("\nPurging LaTeX compilation files for %s" %(cid))
+        print("Purging LaTeX compilation files for %s" %(cid))
+        for f in os.listdir(dirtex):
+            if (re.search(cid + '.', f) and not(re.search('.pdf$', f) or re.search('.tex$', f))):
+                try:
+                    os.remove(os.path.join(dirtex, f))
+                except:
+                    foutLog.write("\n*** removal failed for %s" %(os.path.join(dirtex, f)))
+                    print("*** removal failed for %s" %(os.path.join(dirtex, f)))
+
+    # close log file
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    return
+    
+def CompileLaTeX(dirin='testdata/', considerCIDs = '',
+                 dirtex='report/', texext = '.report03t.tex',
+                 dirout='testdata/',
+                 dirlog='testdata/', fnameLog='CompileLaTeX.log'):
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    # open log file
+    foutLog = createLog(codeName, "PopulateLaTeX", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    if considerCIDs != '':
+        print('Reading: %s' %os.path.join(dirin,considerCIDs))
+        foutLog.write('Reading: %s\n' %os.path.join(dirin,considerCIDs))
+        df9 = pd.read_csv(os.path.join(dirin,considerCIDs), 
+                          header = 0, 
+                          usecols = [0],
+                          comment = '#',
+                          names=['CustomerID'],
+                          dtype={'CustomerID':np.str})
+        considerIDs = df9['CustomerID'].tolist()
+        considerIDs = [x.replace(" ", "") for x in considerIDs]
+    else:
+        foutLog.write("\n*** considerCIDs must be specified")
+        print("*** considerCIDs must be specified")
+        return
+
+    absp2cdir = os.path.abspath('.') # absolute path to current directory 
+    os.chdir(dirtex) # change working directory to where the LaTeX files are
+    for cid in considerIDs:
+        fnametex = cid + texext
+        try: # Execute latex 
+            subprocess.run(['pdflatex', os.path.join(fnametex)])
+        except:
+            foutLog.write("\n*** Couldn't open %s" %(os.path.join(fnametex)))
+            print("*** Couldn't open %s" %(os.path.join(fnametex)))
+
+    os.chdir(absp2cdir) # rstore the directory to where the function started from
+    # close log file
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    return
+
     
 def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv', 
                   dirtex='report/', fnametex = 'report03t.tex', 
@@ -131,6 +213,8 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
             foutLog.write("\n*** Something failed for customer %s " %cid )
             print("*** Something failed for customer %s " %cid)
 
+    # close log file
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     return
 
 def ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf', 
@@ -191,6 +275,8 @@ def ExtractPlotsFromPDF(dirin='testdata/', fnamein= 'synthetic20.A.boxplots.pdf'
         foutLog.write("\n*** Unable to open plot file %s " %(os.path.join(dirin, fnamein)))
         print("*** Unable to open plot file %s " %(os.path.join(dirin, fnamein)))
 
+    # close log file
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
     return
 
 def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv', 

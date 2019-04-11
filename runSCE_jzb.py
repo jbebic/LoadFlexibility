@@ -11,7 +11,7 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
-from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX
+from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX, CompileLaTeX, PurgeLaTeX
 
 if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -110,7 +110,6 @@ if False:
                    # considerCIDs =   'g1L.'+ fnamebase + '.Energy.A.groups.csv',
                    dirout='testdata/', fnameout=fnamebase + '.A.billing.Heatmaps.pdf',
                    dirlog='testdata/')     
-
     
 #%% Plot Billing (optional)
 if False:
@@ -258,8 +257,8 @@ if False:
                                fnameout=fnamebase + '.A.whiskercharts.pdf', 
                                dirlog='testdata/')
 
-if True:
-    considerfname = fnamebase + '.A.HighlightIDs.csv'
+#%% Extract plot pages
+considerfname = fnamebase + '.A.HighlightIDs.csv'
 if False:   
     ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.piecharts.pdf',
                         considerCIDs = considerfname,
@@ -289,14 +288,31 @@ if False:
                         considerCIDs = considerfname, 
                         dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
                         dirlog='testdata/')
+    
+if False:   
+    ExtractPlotsFromPDF(dirin='testdata/', fnamein= fnamebase + '.A.billing.Heatmaps.pdf',
+                        considerCIDs = considerfname, 
+                        dirout='report/visuals/', fnameout = '.billing.Heatmap.pdf',
+                        dirlog='testdata/')
 
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 considerfname = 'largeOffices_CustomerI.csv'
 ReplaceDict = {'<RateCode>':'TOU'}
-if True:   
+if False:   
     PopulateLaTeX(dirin='testdata/', fnamein = 'summary.' + fnamebase + '.A.billing.csv',
-                  dirtex = 'report/', fnametex = 'report03t.tex',
+                  dirtex = 'report/templates/', fnametex = 'report03t.tex',
                   considerCIDs = 'synthetic20.A.HighlightIDs.csv',
                   dirout='report/', fnameout = '.report03t.tex',
                   ReplaceDict = {'<RateCode>': 'TOU-GS3-B'},
                   dirlog='testdata/')
+
+if False:
+    CompileLaTeX(dirin='testdata/', considerCIDs = 'synthetic20.A.HighlightIDs.csv',
+                 dirtex = 'report/', texext='.report03t.tex',
+                 dirout='report/',
+                 dirlog='report/')
+
+if True:
+    PurgeLaTeX(dirin='testdata/', considerCIDs = 'synthetic20.A.HighlightIDs.csv',
+               dirtex = 'report/', 
+               dirlog = 'report/')

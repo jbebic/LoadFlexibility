@@ -270,7 +270,7 @@ if False:
                         dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
                         dirlog='output/')
     
-if True:
+if False:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.billing.Heatmaps.pdf',
                         considerCIDs = considerfname, 
                         dirout='report/visuals/', fnameout = '.billing.Heatmap.pdf',
@@ -281,8 +281,19 @@ if True:
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
 if True:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
-                  dirtex = 'report/', fnametex = 'report03t.tex', 
+                  dirtex = 'report/template/', fnametex = 'report03t.tex', 
                   considerCIDs = considerfname,
                   dirout='report/', fnameout = '.report03t.tex',
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')
+
+if False:
+    CompileLaTeX(dirin='output/', considerCIDs = considerfname,
+                 dirtex = 'report/', texext='.report03t.tex',
+                 dirout='report/',
+                 dirlog='report/')
+
+if False:
+    PurgeLaTeX(dirin='output/', considerCIDs = considerfname,
+               dirtex = 'report/', 
+               dirlog = 'report/')

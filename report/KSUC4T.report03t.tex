@@ -1,0 +1,188 @@
+\documentclass[11pt]{article}
+\usepackage{lipsum}
+\usepackage[letterpaper, landscape, twocolumn, left=0.5in, right=0.5in, top=1.25in, bottom=0.75in, headheight=0.6in]{geometry} % controls page layout
+\usepackage{fancyhdr} % controls headers and footers
+\usepackage{lastpage} % enables # of ##
+\usepackage{graphicx} % graphics
+\usepackage{grffile} % enables multiple periods in file name of \includegraphics
+\usepackage{amsmath}  % extended mathematics
+\usepackage{booktabs} % book-quality tables
+\usepackage{units}    % non-stacked fractions and better unit spacing
+\usepackage[T1]{fontenc} % 8-bit encoding of fonts (glyphs are a part of fonts)
+% \usepackage{siunitx} % table alignment
+
+\fancypagestyle{title}{ % defining header style for the first page
+  \fancyhead[C,R]{}
+  \fancyhead[L]{\begin{tabular}{ll}
+  \raisebox{-.47\height}{\includegraphics[height=0.75in, trim=0 -0.1in 0 0]{common/SCE_logo}} &
+  \textsc{\textbf{\Huge Customer Report for: KSUC4T}}
+  \end{tabular}}`
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\fancypagestyle{energy}{ % header style for energy charges
+  \fancyhead[L]{\textsc{\textbf{\Huge Energy Charges}}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textsc{\textbf{\Huge KSUC4T}}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\fancypagestyle{demand}{ % header style for demand charges
+  \fancyhead[L]{\textsc{\textbf{\Huge Demand Charges}}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textsc{\textbf{\Huge KSUC4T}}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+\pagestyle{title}
+This report summarizes the time-dependent portion of your electricity charges, the portion of the charges dependent on your usage patterns. It also compares your charges relative to those of others in your ``peer group'' -- those within the same North American Industry (NAICS) code and subscribed to the same time of use rate (TOU). It is provided to you for your information and as a backdrop for the conversation with Southern California Edison (SCE) to find opportunities for savings.
+
+The analysis is performed by back-casting your last year's consumption to the rates currently in effect. As such, it is a forecast of your future payments, not an accurate replica of your earlier ones. 
+
+\vspace{3ex}
+\textbf{\Large Components of the Bill}
+\vspace{1ex}
+
+The time-dependent part of an electric bill has three main components: energy charges, facility charges, and demand charges. The first component - energy charges - are collected to recover your utility's cost to procure electricity. They are calculated by multiplying your consumption over a given time interval by the price of electricity at the same interval and summing these charges over the billing period (typically a calendar month) The remaining two components are  The makeup of these charges for the year and by month are shown in Figures~\ref{fig:pie} and \ref{fig:bars}, respectively.
+\begin{figure}[!h]
+\centering
+\includegraphics[height=3in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/KSUC4T.piechart.pdf}
+\caption{Makeup of annual charges}
+\label{fig:pie}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/KSUC4T.boxplot.pdf}
+\caption{Makeup of monthly charges}
+\label{fig:bars}
+\end{figure}
+
+Note that the demand charges are collected only in the four summer months, yet they account for 58.4\% of the total annual bill. The expected annual charges by bill component are summarized in Table~\ref{tab:annual}.
+
+\begin{table}[th!]
+  \centering
+  \caption{Components of Annual Electric Bill}
+  \vspace{1.5ex}
+  \label{tab:annual}
+  \begin{tabular}{lr}
+    Bill component & Amount [\$] \\
+    \midrule
+    Facility & 17542.56 \\
+    Energy & 20879.50 \\
+    Demand & 11735.55 \\
+    \midrule
+    Total & 50157.62
+  \end{tabular}
+\end{table}
+\clearpage
+
+\newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
+\pagestyle{energy}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/KSUC4T.heatmap.pdf}
+\caption{Normalized consumption for KSUC4T}
+\label{fig:heatmap}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 3in 0in 0.45in, clip]{visuals/KSUC4T.billing.Heatmap.pdf}
+\caption{Energy price on TOU-GS3-B}
+\label{fig:toumap}
+\end{figure}
+
+\lipsum[1][1-7]
+
+\begin{table}[th!]
+  \centering
+  \caption{Monthly Energy Charges}
+  \vspace{1.5ex}
+  \label{tab:energy}
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Charge [\$] & & Month & Charge [\$] \\
+    \midrule
+    Jan & 1002.71 & & Jul & 2515.37 \\
+    Feb & 969.46 & & Aug & 2839.15 \\
+    Mar & 1247.39 & & Sep & 2473.91 \\
+    Apr & 1280.09 & & Oct & 1899.34 \\
+    Jun & 2144.65 & & Nov & 1491.86 \\
+    May & 1659.08 & & Dec & 1356.51 \\
+    \midrule
+    Average & 1739.96 & & &
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large Peer performance}
+\vspace{1ex}
+
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 2.1in 0in 2.1in, clip]{visuals/KSUC4T.whiskerchart.pdf}
+\caption{Average annual energy price for KSUC4T compared to peers}
+\label{fig:PeerCompEn}
+\end{figure}
+
+\clearpage
+
+\newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
+\pagestyle{demand}
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/KSUC4T.duration.monthly.test.pdf}
+\caption{Normalized load and demand profiles for KSUC4T}
+\label{fig:duration}
+\end{figure}
+
+\lipsum[1][1-7]
+
+\begin{table}[th!]
+  \centering
+  \caption{Monthly Demand Charges}
+  \vspace{1.5ex}
+  \label{tab:demand}
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Charge [\$] & & Month & Charge [\$] \\
+    \midrule
+    Jan & 966.11 & & Jul & 4828.60 \\
+    Feb & 915.26 & & Aug & 5239.29 \\
+    Mar & 1016.96 & & Sep & 5067.71 \\
+    Apr & 1067.81 & & Oct & 1983.07 \\
+    May & 1525.44 & & Nov & 1322.05 \\
+    Jun & 4176.28 & & Dec & 1169.50 \\
+    \midrule
+    Average & 2439.84
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large Peer performance}
+\vspace{1ex}
+
+\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 3.8in 0in 0.5in, clip]{visuals/KSUC4T.whiskerchart.pdf}
+\caption{Average annual demand price for KSUC4T compared to peers}
+\label{fig:PeerCompDmnd}
+\end{figure}
+
+\end{document}

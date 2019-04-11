@@ -11,7 +11,7 @@ from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
-from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX
+from CustomerReport import PlotMonthlySummaries, PlotAnnualSummaries, PlotAnnualWhiskers, ExtractPlotsFromPDF, PopulateLaTeX, CompileLaTeX, PurgeLaTeX
 
 if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
@@ -279,15 +279,15 @@ if False:
 
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
-if True:
+if False:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
-                  dirtex = 'report/template/', fnametex = 'report03t.tex', 
+                  dirtex = 'report/templates/', fnametex = 'report03t.tex', 
                   considerCIDs = considerfname,
                   dirout='report/', fnameout = '.report03t.tex',
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')
 
-if False:
+if True:
     CompileLaTeX(dirin='output/', considerCIDs = considerfname,
                  dirtex = 'report/', texext='.report03t.tex',
                  dirout='report/',

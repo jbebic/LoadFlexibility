@@ -105,6 +105,8 @@ def CompileLaTeX(dirin='testdata/', considerCIDs = '',
     for cid in considerIDs:
         fnametex = cid + texext
         try: # Execute latex 
+            foutLog.write("\nRunning LaTeX on: %s" %(cid))
+            print("Running LaTeX on: %s" %(cid))
             subprocess.run(['pdflatex', os.path.join(fnametex)])
         except:
             foutLog.write("\n*** Couldn't open %s" %(os.path.join(fnametex)))

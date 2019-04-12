@@ -306,13 +306,13 @@ if False:
                   ReplaceDict = {'<RateCode>': 'TOU-GS3-B'},
                   dirlog='testdata/')
 
-if False:
+if True:
     CompileLaTeX(dirin='testdata/', considerCIDs = 'synthetic20.A.HighlightIDs.csv',
                  dirtex = 'report/', texext='.report03t.tex',
                  dirout='report/',
                  dirlog='report/')
 
-if True:
+if False:
     PurgeLaTeX(dirin='testdata/', considerCIDs = 'synthetic20.A.HighlightIDs.csv',
                dirtex = 'report/', 
                dirlog = 'report/')

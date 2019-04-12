@@ -287,13 +287,13 @@ if False:
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')
 
-if True:
+if False:
     CompileLaTeX(dirin='output/', considerCIDs = considerfname,
                  dirtex = 'report/', texext='.report03t.tex',
                  dirout='report/',
                  dirlog='report/')
 
-if False:
+if True:
     PurgeLaTeX(dirin='output/', considerCIDs = considerfname,
                dirtex = 'report/', 
                dirlog = 'report/')

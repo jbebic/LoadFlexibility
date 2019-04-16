@@ -221,27 +221,32 @@ if False:
     ExportLoadFiles(dirin='output/', fnamein =fnamebase + '.A.normalized.csv', explist= 'troubleShootCIDs.csv', #fnamebase + '.A.ignore.csv',
                    dirout='output/', 
                    dirlog='output/') 
-    
+
+#%% Plot charts for customer reports
 if False:   
-    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf', byMonthFlag=True, 
-                               #considerCIDs ='troubleShootCIDs.csv',
+    PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', 
+                               #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                               dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf', 
+                               byMonthFlag=True, 
                                highlightCIDs = considerfname,
                                dirlog='plots/')
 if False:
-    PlotMonthlySummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.boxplots.pdf',
-                               dirlog='plots/')
+    PlotMonthlySummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                         considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                         dirout='plots/', fnameout=fnamebase + '.A.boxplots.pdf',
+                         dirlog='plots/')
 
 if False:
-    PlotAnnualSummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.piecharts.pdf',
-                               dirlog='plots/')
+    PlotAnnualSummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                        considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                        dirout='plots/', fnameout=fnamebase + '.A.piecharts.pdf',
+                        dirlog='plots/')
 
 if False:
-    PlotAnnualWhiskers(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
-                               dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = considerfname,
-                               dirlog='plots/') # to plot fewer groups, use 'consderCIDs'
+    PlotAnnualWhiskers(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
+                       considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
+                       dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = considerfname,
+                       dirlog='plots/') # to plot fewer groups, use 'consderCIDs'
 
 #%% Extracting relevant plot pages for custoemrs listed in considerIDs
 if False:
@@ -279,7 +284,7 @@ if False:
 
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
-if False:
+if True:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
                   dirtex = 'report/templates/', fnametex = 'report03t.tex', 
                   considerCIDs = considerfname,
@@ -293,7 +298,7 @@ if False:
                  dirout='report/',
                  dirlog='report/')
 
-if True:
+if False:
     PurgeLaTeX(dirin='output/', considerCIDs = considerfname,
                dirtex = 'report/', 
                dirlog = 'report/')

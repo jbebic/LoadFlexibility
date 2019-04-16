@@ -174,11 +174,11 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
             for key in list(ReplaceDict.keys()):
                 filedata = filedata.replace(key, ReplaceDict[key])
 
-            ix_ad  = 1
-            ix_adc = 2
-            ix_aec = 3
-            ix_afc = 4
-            ix_atc = 5
+            ix_ad  = 1 # annual demand in kWh
+            ix_adc = 2 # annual demand charges
+            ix_aec = 3 # annual energy chnrges
+            ix_afc = 4 # annual facility charges
+            ix_atc = 5 # annual total charges
             ix_mdc = 5+1*12+1 # monthly demand charges
             ix_mec = 5+2*12+1 # monthly energy charges
             ix_mfc = 5+3*12+1 # monthly facility charges
@@ -187,6 +187,7 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
             try:
                 df2 = df1[df1[0]==cid]
                 
+                filedata = filedata.replace('<totalkWh>', '%.0f' %(df2.iloc[0,ix_ad]))
                 filedata = filedata.replace('<dmndpc>', '%.1f' %((df2.iloc[0,ix_adc]+df2.iloc[0,ix_afc])/df2.iloc[0,ix_atc]*100))
                 
                 filedata = filedata.replace('<facility>', '%.2f' %(df2.iloc[0,ix_afc]))
@@ -341,9 +342,9 @@ def PlotMonthlySummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.bill
                 y1 = df2.iloc[0,ix_mfc:ix_mfc+12].values
                 y2 = df2.iloc[0,ix_mec:ix_mec+12].values
                 y3 = df2.iloc[0,ix_mdc:ix_mdc+12].values
-                ax0.bar(x, y1, color='C2', label = 'Facility', alpha=alpha)
-                ax0.bar(x, y2, color='C1', bottom = y1, label = 'Energy', alpha=alpha)
-                ax0.bar(x, y3, color='C0', bottom = y1+y2, label = 'Demand', alpha=alpha, )
+                ax0.bar(x, y2, color='C0', label = 'Energy', alpha=alpha)
+                ax0.bar(x, y1, color='C1', bottom = y2, label = 'Facility', alpha=alpha)
+                ax0.bar(x, y3, color='C2', bottom = y1+y2, label = 'Demand', alpha=alpha, )
                 if not ymaxAll:
                     ymax = (np.floor(df2.iloc[:,ix_mtc:ix_mtc+12].max().max()/500.)+1)*500
                 ax0.set_ylim([ymin,ymax])
@@ -419,7 +420,8 @@ def PlotAnnualSummaries(dirin='testdata/', fnamein= 'summary.synthetic20.A.billi
             try:
                 df2 = df1[df1[0]==cid]
                 y = df2.iloc[0,2:5].values.tolist()
-                ax0.pie(y, labels = ['Demand', 'Energy', 'Facility'], explode = [0.05, 0, 0], autopct='%1.1f%%', counterclock=False, startangle=90)
+                y1 = [y[1],y[2],y[0]] # adjusting the order of values 
+                ax0.pie(y1, labels = ['Energy', 'Facility', 'Demand'], explode = [0, 0.05, 0.05], autopct='%1.1f%%', counterclock=False, startangle=90)
                 ax0.axis('equal')
             except:
                 pass

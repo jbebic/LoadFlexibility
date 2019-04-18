@@ -10,6 +10,7 @@
 \usepackage{units}    % non-stacked fractions and better unit spacing
 \usepackage[T1]{fontenc} % 8-bit encoding of fonts (glyphs are a part of fonts)
 % \usepackage{siunitx} % table alignment
+\usepackage{etoolbox} % conditional compilation
 
 \fancypagestyle{title}{ % defining header style for the first page
   \fancyhead[C,R]{}
@@ -237,5 +238,16 @@ Your average annual demand price relative to the price paid by the members of yo
 Your total annual consumption is <totalkWh>~kWh.
 Considering Figures~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd} enables making an estimate of your savings per kWh by reducing your payments for energy and demand.
 To project annual savings, multiply your total energy consumption with the differences estimated from Figures~~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd}.
+% Percentiles relative to peer group:
+% Energy ..... : <pcEn>
+% Facility ... : <pcFac>
+% Demand ..... : <pcDmnd>
+% FnD ........ : <pcDnF>
+% Total bill .... : <total>
+% Projected savings
+% Energy ..... : <sEn>
+% Facility ... : <sDm>
+% Demand ..... : <sFac>
+% DnF ........ : <sDnF>
 
 \end{document}

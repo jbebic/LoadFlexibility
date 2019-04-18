@@ -284,7 +284,7 @@ if False:
 
 #%% Generating LaTeX files for customers listed in considerIDs using latex template file as input
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
-if True:
+if False:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
                   dirtex = 'report/templates/', fnametex = 'report03t.tex', 
                   considerCIDs = considerfname,
@@ -292,7 +292,7 @@ if True:
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')
 
-if False:
+if True:
     CompileLaTeX(dirin='output/', considerCIDs = considerfname,
                  dirtex = 'report/', texext='.report03t.tex',
                  dirout='report/',

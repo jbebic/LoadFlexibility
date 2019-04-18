@@ -15,6 +15,7 @@ import matplotlib.backends.backend_pdf as dpdf # pdf output
 from PyPDF2 import PdfFileReader, PdfFileWriter
 import re
 import subprocess
+from scipy import stats
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -205,6 +206,41 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                 for month in range(12):
                     filedata = filedata.replace('<EnAvg%02d>' %(x[month]), '%.2f' %(y2[month]))
                     filedata = filedata.replace('<DmndAvg%02d>' %(x[month]), '%.2f' %(y1[month]+y3[month]))
+
+                zb = df1.iloc[:,1].values # annual demand kWh
+                z1 = df1.iloc[:,2].values # annual demand charges [$]
+                z2 = df1.iloc[:,3].values # annual energy charges [$]
+                z3 = df1.iloc[:,4].values # annual facility charges [$]
+                z1n = z1/zb*100
+                z2n = z2/zb*100
+                z3n = z3/zb*100
+                x1n = z1n[df1.index[df1[0]==cid]][0]
+                x2n = z2n[df1.index[df1[0]==cid]][0]
+                x3n = z3n[df1.index[df1[0]==cid]][0]
+                pc1 = stats.percentileofscore(z1n, x1n)
+                pc2 = stats.percentileofscore(z2n, x2n)
+                pc3 = stats.percentileofscore(z3n, x3n)
+                pc4 = stats.percentileofscore(z1n+z3n, x1n+x3n)
+                filedata = filedata.replace('<pcDmnd>', '%.1f' %(pc1))
+                filedata = filedata.replace('<pcEn>', '%.1f' %(pc2))
+                filedata = filedata.replace('<pcFac>', '%.1f' %(pc3))
+                filedata = filedata.replace('<pcDnF>', '%.1f' %(pc4))
+                if True:
+                    sDm  = (x1n - np.percentile(z1n,25))/100.*df2.iloc[0,ix_ad]
+                    sEn  = (x2n - np.percentile(z2n,25))/100.*df2.iloc[0,ix_ad]
+                    sFac = (x3n - np.percentile(z3n,25))/100.*df2.iloc[0,ix_ad]
+                    sDnF = (x1n+x3n - np.percentile(z1n+z3n,25))/100.*df2.iloc[0,ix_ad]
+                else:
+                    sDm  = (pc1 - 25)/100.*(np.max(z1n)-np.min(z1n))/100*df2.iloc[0,ix_ad]
+                    sEn  = (pc2 - 25)/100.*(np.max(z2n)-np.min(z2n))/100*df2.iloc[0,ix_ad]
+                    sFac = (pc3 - 25)/100.*(np.max(z3n)-np.min(z3n))/100*df2.iloc[0,ix_ad]
+                    sDnF = (pc4 - 25)/100.*(np.max(z1n+z3n)-np.min(z1n+z3n))/100*df2.iloc[0,ix_ad]
+                # print("Estimated annual savings: $%.0f demand, $%.0f energy" %(sDmnd, sEn))
+                filedata = filedata.replace('<sDm>', '%.1f' %(sDm))
+                filedata = filedata.replace('<sEn>', '%.1f' %(sEn))
+                filedata = filedata.replace('<sFac>', '%.1f' %(sFac))
+                filedata = filedata.replace('<sDnF>', '%.1f' %(sDnF))
+                
             except:
                 foutLog.write("\n*** Unable to find billing data for %s " %cid )
                 print("*** Unable to find billing data for %s " %cid)
@@ -502,15 +538,21 @@ def PlotAnnualWhiskers(dirin='testdata/', fnamein= 'summary.synthetic20.A.billin
                 x1n = y1n[df1.index[df1[0]==cid]][0]
                 x2n = y2n[df1.index[df1[0]==cid]][0]
                 x3n = y3n[df1.index[df1[0]==cid]][0]
-                ax0.boxplot(y1n, vert=False)
-                ax0.plot(x1n,1,'d')
-                ax1.boxplot(y2n, vert=False)
+                ax0.boxplot(y1n+y3n, vert=False) # demand + facility
+                ax0.plot(x1n+x3n,1,'d')
+                ax1.boxplot(y2n, vert=False) # energy
                 ax1.plot(x2n,1,'d')
-                ax2.boxplot(y3n, vert=False)
+                ax2.boxplot(y3n, vert=False) # facility
                 ax2.plot(x3n,1,'d')
                 ax0.set_title('Demand Charges [c/kWh]')
                 ax1.set_title('Energy Charges [c/kWh]')
                 ax2.set_title('Facility Charges [c/kWh]')
+                temp1 = stats.percentileofscore(y1n, x1n)
+                temp2 = stats.percentileofscore(y3n, x3n)
+                temp3 = stats.percentileofscore(y2n, x2n)
+                print('Percentiles for %s: %.1f demand, %.1f facility, %.1f energy' %(cid, temp1, temp2, temp3))
+                foutLog.write('Percentiles for %s: %.1f demand, %.1f facility, %.1f energy\n' %(cid, temp1, temp2, temp3))
+
             except:
                 pass
     

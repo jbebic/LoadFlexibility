@@ -44,6 +44,19 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
+% Provisions for conditional compilation 
+\newtoggle{other}
+\toggle<other>{other} % tag <other> gets replaced by python, turns into true or false
+\newtoggle{leader}
+\toggle<leader>{leader} % tag <leader> gets replaced by python, ditto
+% The rest overcomes the conflict from using \verbatim inside etoolbox syntax
+% See: https://tex.stackexchange.com/questions/78684/etoolboxs-iftoggle-vs-verbatim
+\newcommand{\iftoggleverb}[1]{% 
+  \ifcsdef{etb@tgl@#1}
+    {\csname etb@tgl@#1\endcsname\iftrue\iffalse}
+    {\etb@noglobal\etb@err@notoggle{#1}\iffalse}%
+}
+
 \begin{document}
 
 %% Introductory Page
@@ -238,16 +251,29 @@ Your average annual demand price relative to the price paid by the members of yo
 Your total annual consumption is <totalkWh>~kWh.
 Considering Figures~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd} enables making an estimate of your savings per kWh by reducing your payments for energy and demand.
 To project annual savings, multiply your total energy consumption with the differences estimated from Figures~~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd}.
-% Percentiles relative to peer group:
-% Energy ..... : <pcEn>
-% Facility ... : <pcFac>
-% Demand ..... : <pcDmnd>
-% FnD ........ : <pcDnF>
-% Total bill .... : <total>
-% Projected savings
-% Energy ..... : <sEn>
-% Facility ... : <sDm>
-% Demand ..... : <sFac>
-% DnF ........ : <sDnF>
+
+\iftoggleverb{other}
+% the customer is in the ``other'' category, project the savings
+This customer is in the other category
+\begin{verbatim}
+Percentiles relative to peer group:
+  Energy ..... : <pcEn>
+  Facility ... : <pcFac>
+  Demand ..... : <pcDmnd>
+  FnD ........ : <pcDnF>
+  Total bill .... : <total>
+  
+Projected savings: 
+  Energy ..... : <sEn>
+  Facility ... : <sDm>
+  Demand ..... : <sFac>
+  DnF ........ : <sDnF>
+\end{verbatim}
+\fi
+
+\iftoggleverb{leader}
+% the customer is a ``leader'', we want to learn more about their demand-management strategies
+Congrats, you are a leader!
+\fi
 
 \end{document}

@@ -225,21 +225,22 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                 filedata = filedata.replace('<pcEn>', '%.1f' %(pc2))
                 filedata = filedata.replace('<pcFac>', '%.1f' %(pc3))
                 filedata = filedata.replace('<pcDnF>', '%.1f' %(pc4))
-                if True:
-                    sDm  = (x1n - np.percentile(z1n,25))/100.*df2.iloc[0,ix_ad]
-                    sEn  = (x2n - np.percentile(z2n,25))/100.*df2.iloc[0,ix_ad]
-                    sFac = (x3n - np.percentile(z3n,25))/100.*df2.iloc[0,ix_ad]
-                    sDnF = (x1n+x3n - np.percentile(z1n+z3n,25))/100.*df2.iloc[0,ix_ad]
-                else:
-                    sDm  = (pc1 - 25)/100.*(np.max(z1n)-np.min(z1n))/100*df2.iloc[0,ix_ad]
-                    sEn  = (pc2 - 25)/100.*(np.max(z2n)-np.min(z2n))/100*df2.iloc[0,ix_ad]
-                    sFac = (pc3 - 25)/100.*(np.max(z3n)-np.min(z3n))/100*df2.iloc[0,ix_ad]
-                    sDnF = (pc4 - 25)/100.*(np.max(z1n+z3n)-np.min(z1n+z3n))/100*df2.iloc[0,ix_ad]
+                sDm  = (x1n - np.percentile(z1n,25))/100.*df2.iloc[0,ix_ad]
+                sEn  = (x2n - np.percentile(z2n,25))/100.*df2.iloc[0,ix_ad]
+                sFac = (x3n - np.percentile(z3n,25))/100.*df2.iloc[0,ix_ad]
+                sDnF = (x1n+x3n - np.percentile(z1n+z3n,25))/100.*df2.iloc[0,ix_ad]
                 # print("Estimated annual savings: $%.0f demand, $%.0f energy" %(sDmnd, sEn))
                 filedata = filedata.replace('<sDm>', '%.1f' %(sDm))
                 filedata = filedata.replace('<sEn>', '%.1f' %(sEn))
                 filedata = filedata.replace('<sFac>', '%.1f' %(sFac))
                 filedata = filedata.replace('<sDnF>', '%.1f' %(sDnF))
+                # arrange conditional printing of savings
+                if ((sEn < 0) or (sDnF < 0)):
+                    filedata = filedata.replace('<other>', 'false')
+                    filedata = filedata.replace('<leader>', 'true')
+                else:
+                    filedata = filedata.replace('<other>', 'true')
+                    filedata = filedata.replace('<leader>', 'false')
                 
             except:
                 foutLog.write("\n*** Unable to find billing data for %s " %cid )

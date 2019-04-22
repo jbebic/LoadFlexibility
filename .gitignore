@@ -15,6 +15,11 @@ input/**
 plots/**
 plots2/**
 
+# Customer reports
+report/visuals/**
+report/*.tex
+report/*.pdf
+
 # log files
 *.log
 *.Rhistory

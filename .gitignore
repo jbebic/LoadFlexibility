@@ -19,6 +19,7 @@ plots2/**
 report/**
 !report/common
 !report/templates
+report/visuals/**
 
 # log files
 *.log

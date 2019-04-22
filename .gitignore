@@ -16,9 +16,9 @@ plots/**
 plots2/**
 
 # Customer reports
-report/visuals/**
-report/*.tex
-report/*.pdf
+report/**
+!report/common
+!report/templates
 
 # log files
 *.log

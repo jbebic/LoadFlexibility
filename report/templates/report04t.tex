@@ -1,0 +1,335 @@
+\documentclass[10pt]{article}
+\usepackage{lipsum}
+\usepackage[letterpaper, landscape, twocolumn, left=0.5in, right=0.5in, top=1.25in, bottom=0.75in, headheight=0.6in]{geometry} % controls page layout
+\usepackage{fancyhdr} % controls headers and footers
+\usepackage{lastpage} % enables # of ##
+\usepackage{graphicx} % graphics
+\usepackage{grffile} % enables multiple periods in file name of \includegraphics
+\usepackage{amsmath}  % extended mathematics
+\usepackage{booktabs} % book-quality tables
+\usepackage{units}    % non-stacked fractions and better unit spacing
+\usepackage[T1]{fontenc} % 8-bit encoding of fonts (glyphs are a part of fonts)
+% \usepackage{siunitx} % table alignment
+\usepackage{etoolbox} % conditional compilation
+
+\fancypagestyle{title}{ % defining header style for the first page
+  \fancyhead[C,R]{}
+  \fancyhead[L]{\begin{tabular}{ll}
+  \raisebox{-.47\height}{\includegraphics[height=0.75in, trim=0 -0.1in 0 0]{common/SCE_logo}} &
+  \textsc{\textbf{\Huge Customer Report for: <CustomerID>}}
+  \end{tabular}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\fancypagestyle{energy}{ % header style for energy charges
+  \fancyhead[L]{\textsc{\textbf{\Huge Analyzing your energy charges}}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textsc{\textbf{\Huge <CustomerID>}}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\fancypagestyle{demand}{ % header style for demand charges
+  \fancyhead[L]{\textsc{\textbf{\Huge Analyzing your demand charges}}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textsc{\textbf{\Huge <CustomerID>}}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\fancypagestyle{savings}{ % header style for savings page
+  \fancyhead[L]{\textsc{\textbf{\Huge Analyzing potential savings}}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textsc{\textbf{\Huge <CustomerID>}}}
+  \fancyfoot[L]{\today}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{\thepage/\pageref{LastPage}}
+}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Provisions for conditional compilation 
+\newtoggle{other}
+\toggle<other>{other} % tag <other> gets replaced by python, turns into true or false
+\newtoggle{leader}
+\toggle<leader>{leader} % tag <leader> gets replaced by python, ditto
+% The rest overcomes the conflict from using \verbatim inside etoolbox syntax
+% See: https://tex.stackexchange.com/questions/78684/etoolboxs-iftoggle-vs-verbatim
+\newcommand{\iftoggleverb}[1]{% 
+  \ifcsdef{etb@tgl@#1}
+    {\csname etb@tgl@#1\endcsname\iftrue\iffalse}
+    {\etb@noglobal\etb@err@notoggle{#1}\iffalse}%
+}
+
+\begin{document}
+
+%% Introductory Page
+\pagestyle{title}
+This report summarizes the time-dependent portion of your electricity bill, the portion of the charges dependent on your usage patterns.
+It also compares your charges relative to those of others in your ``peer group'' -- those within the same North American Industry (NAICS) code and subscribed to the same time of use rate (TOU).
+These calculations are based on if you are a bundled customer, and not a direct access customer.
+If you are a direct access customer, the calculations are provided for illustrative purposes only.  
+It is provided to you for your information and as a backdrop for the conversation with Southern California Edison (SCE) to find opportunities for savings.
+
+The analysis is performed by using your last year's hourly consumption and applying the rates currently in effect.
+As such, it could be considered a forecast of your future payments, if your consumption were to remain the same.
+
+\vspace{3ex}
+\textbf{\Large Components of your Bill}
+\vspace{1ex}
+
+The time-dependent part of an electric bill has three main components: energy charges, facility charges, and demand charges.
+The relative contribution of each charge to your bill for the year and by month are shown in Figures~\ref{fig:pie} and \ref{fig:bars}, respectively.
+\begin{figure}[!h]
+\centering
+\includegraphics[height=1.8in, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/<CustomerID>.piechart.pdf}
+\caption{Makeup of annual charges}
+\label{fig:pie}
+\end{figure}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.9\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/<CustomerID>.boxplot.pdf}
+\caption{Makeup of monthly charges}
+\label{fig:bars}
+\end{figure}
+
+The first component, \emph{energy}, is the easiest to understand.
+These charges are calculated based on the total energy (kWh) consumed, metered in 15~min intervals, and priced at the time-varying rates.
+The other two, \emph{facility} and \emph{demand}, are different.
+These charges are calculated based on the shape of your load profile -- the more uneven the shape, the more you pay relative to the energy consumed.
+
+\vfill\eject % An equivalent of \columnbreak w/o using the multicolumn package
+
+In your case <dmndpc>\% of the total annual bill is determined by the shape of your load, not by the energy you consumed.
+It is therefore possible to reduce your electric bill by changing the shape of your consumption.
+% Improvements are often possible by implementing changes that do not interfere with your operations.
+We are taking this initiative to determine what is possible, at what cost, and if our customers are receptive to such changes.
+For reference, the annual charges by bill component are also summarized in Table~\ref{tab:annual}.
+
+\begin{table}[th!]
+  \centering
+  \caption{Components of annual electric bill}
+  \vspace{1.5ex}
+  \label{tab:annual}
+  \begin{tabular}{lr}
+    Bill component & Amount [\$] \\
+    \midrule
+    Energy & <energy> \\
+    Facility & <facility> \\
+    Demand & <demand> \\
+    \midrule
+    Total & <total>
+  \end{tabular}
+\end{table}
+\clearpage
+
+%% Energy Charges Page
+\newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
+\pagestyle{energy}
+
+We review energy charges first.
+Your normalized consumption for the year is shown in Figure~\ref{fig:heatmap}.
+\emph{Normalized} here means that the consumption metered in each interval is divided by the annual average.
+This enables comparison of shapes for differently sized customer loads using the same scale.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/<CustomerID>.heatmap.pdf}
+\caption{Normalized consumption for <CustomerID>}
+\label{fig:heatmap}
+\end{figure}
+
+The top part of the figure is the heatmap -- it provides a relative view of how much energy you consume each hour of the day (on the vertical axis) for each day of the year (on the horizontal axis).
+The bottom part of the figure consists of a series of boxplots for each week. 
+Each boxplot shows how much your consumption within a given week varies (shown by vertical bars), and how much the outliers (shown by circles) influence your demand charges for the month relative to your energy consumption.
+
+The price of energy for your rate is shown in Figure~\ref{fig:toumap}.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 3in 0in 0.45in, clip]{visuals/<CustomerID>.billing.Heatmap.pdf}
+\caption{Energy price on <RateCode>}
+\label{fig:toumap}
+\end{figure}
+The rate varies with the season of the year, weekdays versus weekends and public holidays, and with the time of day.
+Note the darker vertical stripes denoting the weekends, and the high energy price during the summer-peak periods.
+
+% \lipsum[1][1-7]
+For reference, the monthly energy charges are summarized in Table~\ref{tab:energy}.
+These charges can be reduced by shifting the load away from the more expensive periods.
+% Techniques such as pre-cooling of the space before the peak rate comes into effect and letting the temperature get closer to the comfort limit during the peak rate are simple and effective ways to influence consumption and reduce costs.
+Pre-cooling of the space before, and setting the thermostats closer to the comfort limits during the peak rate are simple and effective ways to reduce costs.
+
+\begin{table}[th!]
+  \centering
+  \caption{Monthly energy charges}
+  \vspace{1.5ex}
+  \label{tab:energy}
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Charge [\$] & & Month & Charge [\$] \\
+    \midrule
+    Jan & <EnAvg01> & & Jul & <EnAvg07> \\
+    Feb & <EnAvg02> & & Aug & <EnAvg08> \\
+    Mar & <EnAvg03> & & Sep & <EnAvg09> \\
+    Apr & <EnAvg04> & & Oct & <EnAvg10> \\
+    May & <EnAvg05> & & Nov & <EnAvg11> \\
+    Jun & <EnAvg06> & & Dec & <EnAvg12> \\
+    \midrule
+    Average & <EnAvgAnnual> & & &
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large How you compare with customers similar to you}
+\vspace{1ex}
+
+% \lipsum[1][1-7]
+Your average energy price relative to the price paid by the members of your peer group is shown in Figure~\ref{fig:PeerCompEn}.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 2.1in 0in 2.1in, clip]{visuals/<CustomerID>.whiskerchart.pdf}
+\caption{Average annual energy price for <CustomerID> compared to peers}
+\label{fig:PeerCompEn}
+\end{figure}
+
+\clearpage
+
+%% Demand Charges Page
+\newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
+\pagestyle{demand}
+% \lipsum[1][1-7]
+
+As was discussed earlier in the report, the demand charges are a function of the load shape.
+Specifically, the function of the peak load in the rate-defined time intervals.
+To understand the potential for reduction of demand charges it is therefore important to understand the load shapes.
+Figure~\ref{fig:duration} shows your load shapes.
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 0.45in 0in 0.45in, clip]{visuals/<CustomerID>.duration.monthly.test.pdf}
+\caption{Normalized load and demand profiles for <CustomerID>}
+\label{fig:duration}
+\end{figure}
+
+The top half of the figure shows daily load profiles for each month of the year.
+The bottom half shows the daily duration curves, obtained by sorting the 15~min load data in the descending order.
+These curves provide insight into the load peaks.
+For example, sharp narrow peaks are easier to mitigate.
+Further analysis can now be undertaken to understand which loads are contributing to the peaks and then scheduling their operation to prevent peak forming.
+The shape of your consumption, compared to customers similar to you, could be used to help identify technologies that would help reduce your bill.
+% \lipsum[1][1-7]
+
+For reference, your monthly demand charges are summarized in Table~\ref{tab:demand}.
+
+\vfill\eject % An equivalent of \columnbreak w/o using the multicolumn package
+
+\begin{table}[th!]
+  \centering
+  \caption{Monthly demand charges}
+  \vspace{1.5ex}
+  \label{tab:demand}
+  \begin{tabular}{p{0.75in}rp{0.2in}p{0.75in}r}
+    Month & Charge [\$] & & Month & Charge [\$] \\
+    \midrule
+    Jan & <DmndAvg01> & & Jul & <DmndAvg07> \\
+    Feb & <DmndAvg02> & & Aug & <DmndAvg08> \\
+    Mar & <DmndAvg03> & & Sep & <DmndAvg09> \\
+    Apr & <DmndAvg04> & & Oct & <DmndAvg10> \\
+    May & <DmndAvg05> & & Nov & <DmndAvg11> \\
+    Jun & <DmndAvg06> & & Dec & <DmndAvg12> \\
+    \midrule
+    Average & <DmndAvgAnnual>
+  \end{tabular}
+\end{table}
+
+\vspace{3ex}
+\textbf{\Large How you compare with customers similar to you}
+\vspace{1ex}
+
+Your average annual demand price relative to the price paid by the members of your peer group is shown in Figure~\ref{fig:PeerCompDmnd}.
+%\lipsum[1][1-7]
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\columnwidth, page=1, trim=0in 3.8in 0in 0.5in, clip]{visuals/<CustomerID>.whiskerchart.pdf}
+\caption{Average annual demand price for <CustomerID> compared to peers}
+\label{fig:PeerCompDmnd}
+\end{figure}
+
+\vspace{3ex}
+\textbf{\Large Opportunities for savings}
+\vspace{1ex}
+
+Your total annual consumption is <totalkWh>~kWh.
+Relative to customers similar to you, this is the <pckWh> percentile.
+Considering Figures~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd} enables making an estimate of your savings per kWh by reducing your payments for energy and demand.
+To project annual savings, multiply your total energy consumption with the differences estimated from Figures~\ref{fig:PeerCompEn} and \ref{fig:PeerCompDmnd}.
+Our projections of potential savings are discussed next. 
+
+%% Estimated Savings Page
+\newgeometry{twocolumn, left=0.5in, right=0.5in, top=0.75in, bottom=0.75in, headheight=0.1in}
+\pagestyle{savings}
+
+Your percentile rankings, relative to the entire population of customers similar to you, are shown in Table~\ref{tab:percentiles}. 
+The higher your percentile, the more opportunity for savings you have. 
+
+\begin{table}[th!]
+  \centering
+  \caption{Your rankings by charge category}
+  \vspace{1.5ex}
+  \label{tab:percentiles}
+  \begin{tabular}{p{1.25in}r}
+    Charge category & Percentile [\%] \\
+    \midrule
+    Energy & <pcEn> \\
+    Facility & <pcFac> \\
+    Demand & <pcDmnd> \\
+    \midrule
+    Total & <pcTot>
+  \end{tabular}
+\end{table}
+
+\iftoggleverb{other}
+% the customer is in the ``other'' category, project the savings
+The potential savings are estimated here by assuming that your load shape can be modified so to result in your normalized charges for energy facility and demand be equal to the normalized charges of customers that are at the upper edge of the first quartile. 
+Your potential savings, estimated in this way, are shown in Table~\ref{tab:savings}. 
+
+\begin{table}[th!]
+  \centering
+  \caption{Your potential savings by charge category}
+  \vspace{1.5ex}
+  \label{tab:savings}
+  \begin{tabular}{p{1.25in}rrrr}
+    Charge category & Now [\$] & After [\$] & Savings [\$] & Savings [\%] \\
+    \midrule
+    Energy   & <energy>   & <aEn>  & <sEn>  & <spEn> \\
+    Facility & <facility> & <aFac> & <sFac> & <spFac> \\
+    Demand   & <demand>   & <aDm>  & <sDm>  & <spDm> \\
+    \midrule
+    Total    & <total>    & <aTot> & <sTot> & <spTot> \\
+  \end{tabular}
+\end{table}
+
+\fi
+
+\iftoggleverb{leader}
+% the customer is a ``leader'', we want to learn more about their demand-management strategies
+You are within the first quartile by total charges.
+We are interested in understanding your strategies for load shifting and deploying those strategies with other customers.
+We are also interested in the set of technologies you use in this process and would like to understand more about the payback period on the investment you made. 
+
+\fi
+
+\vfill\eject % An equivalent of \columnbreak w/o using the multicolumn package
+
+\vspace{3ex}
+\textbf{\Large Legal disclaimer}
+\vspace{1ex}
+
+\lipsum[1-4]
+
+\end{document}

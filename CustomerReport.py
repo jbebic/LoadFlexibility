@@ -177,7 +177,7 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
 
             ix_ad  = 1 # annual demand in kWh
             ix_adc = 2 # annual demand charges
-            ix_aec = 3 # annual energy chnrges
+            ix_aec = 3 # annual energy charges
             ix_afc = 4 # annual facility charges
             ix_atc = 5 # annual total charges
             ix_mdc = 5+1*12+1 # monthly demand charges
@@ -187,14 +187,19 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
     
             try:
                 df2 = df1[df1[0]==cid]
+                totalkWh = df2.iloc[0,ix_ad]
+                nFac = df2.iloc[0,ix_afc]
+                nEn = df2.iloc[0,ix_aec]
+                nDm = df2.iloc[0,ix_adc]
+                nTot = df2.iloc[0,ix_atc]
                 
-                filedata = filedata.replace('<totalkWh>', '%.0f' %(df2.iloc[0,ix_ad]))
-                filedata = filedata.replace('<dmndpc>', '%.1f' %((df2.iloc[0,ix_adc]+df2.iloc[0,ix_afc])/df2.iloc[0,ix_atc]*100))
+                filedata = filedata.replace('<totalkWh>', '%.0f' %(totalkWh))
+                filedata = filedata.replace('<dmndpc>', '%.1f' %((nDm+nFac)/nTot*100))
                 
-                filedata = filedata.replace('<facility>', '%.2f' %(df2.iloc[0,ix_afc]))
-                filedata = filedata.replace('<energy>', '%.2f' %(df2.iloc[0,ix_aec]))
-                filedata = filedata.replace('<demand>', '%.2f' %(df2.iloc[0,ix_adc]))
-                filedata = filedata.replace('<total>', '%.2f' %(df2.iloc[0,ix_atc]))
+                filedata = filedata.replace('<facility>', '%.2f' %(nFac))
+                filedata = filedata.replace('<energy>', '%.2f' %(nEn))
+                filedata = filedata.replace('<demand>', '%.2f' %(nDm))
+                filedata = filedata.replace('<total>', '%.2f' %(nTot))
 
                 filedata = filedata.replace('<EnAvgAnnual>', '%.2f' %(df2.iloc[0,ix_aec]/12.))
                 filedata = filedata.replace('<DmndAvgAnnual>', '%.2f' %((df2.iloc[0,ix_adc]+df2.iloc[0,ix_afc])/12.))
@@ -207,35 +212,61 @@ def PopulateLaTeX(dirin='testdata/', fnamein= 'summary.synthetic20.A.billing.csv
                     filedata = filedata.replace('<EnAvg%02d>' %(x[month]), '%.2f' %(y2[month]))
                     filedata = filedata.replace('<DmndAvg%02d>' %(x[month]), '%.2f' %(y1[month]+y3[month]))
 
-                zb = df1.iloc[:,1].values # annual demand kWh
-                z1 = df1.iloc[:,2].values # annual demand charges [$]
-                z2 = df1.iloc[:,3].values # annual energy charges [$]
-                z3 = df1.iloc[:,4].values # annual facility charges [$]
+                zb = df1.iloc[:,ix_ad].values # annual demand kWh
+                z1 = df1.iloc[:,ix_adc].values # annual demand charges [$]
+                z2 = df1.iloc[:,ix_aec].values # annual energy charges [$]
+                z3 = df1.iloc[:,ix_afc].values # annual facility charges [$]
+                z5 = df1.iloc[:,ix_atc].values # annual total charges [$]
                 z1n = z1/zb*100
                 z2n = z2/zb*100
                 z3n = z3/zb*100
+                z5n = z5/zb*100
                 x1n = z1n[df1.index[df1[0]==cid]][0]
                 x2n = z2n[df1.index[df1[0]==cid]][0]
                 x3n = z3n[df1.index[df1[0]==cid]][0]
+                x5n = z5n[df1.index[df1[0]==cid]][0]
+                pc0 = stats.percentileofscore(zb, totalkWh)
                 pc1 = stats.percentileofscore(z1n, x1n)
                 pc2 = stats.percentileofscore(z2n, x2n)
                 pc3 = stats.percentileofscore(z3n, x3n)
                 pc4 = stats.percentileofscore(z1n+z3n, x1n+x3n)
+                pc5 = stats.percentileofscore(z5n, x5n)
+                filedata = filedata.replace('<pckWh>', '%.1f' %(pc0))
                 filedata = filedata.replace('<pcDmnd>', '%.1f' %(pc1))
                 filedata = filedata.replace('<pcEn>', '%.1f' %(pc2))
                 filedata = filedata.replace('<pcFac>', '%.1f' %(pc3))
                 filedata = filedata.replace('<pcDnF>', '%.1f' %(pc4))
-                sDm  = (x1n - np.percentile(z1n,25))/100.*df2.iloc[0,ix_ad]
-                sEn  = (x2n - np.percentile(z2n,25))/100.*df2.iloc[0,ix_ad]
-                sFac = (x3n - np.percentile(z3n,25))/100.*df2.iloc[0,ix_ad]
-                sDnF = (x1n+x3n - np.percentile(z1n+z3n,25))/100.*df2.iloc[0,ix_ad]
-                # print("Estimated annual savings: $%.0f demand, $%.0f energy" %(sDmnd, sEn))
-                filedata = filedata.replace('<sDm>', '%.1f' %(sDm))
-                filedata = filedata.replace('<sEn>', '%.1f' %(sEn))
-                filedata = filedata.replace('<sFac>', '%.1f' %(sFac))
-                filedata = filedata.replace('<sDnF>', '%.1f' %(sDnF))
+                filedata = filedata.replace('<pcTot>', '%.1f' %(pc5))
+                # after
+                aDm  = np.percentile(z1n,25)/100.*totalkWh
+                aEn  = np.percentile(z2n,25)/100.*totalkWh
+                aFac = np.percentile(z3n,25)/100.*totalkWh
+                aDnF = np.percentile(z1n+z3n,25)/100.*totalkWh
+                aTot = aEn + aFac + aDm
+                filedata = filedata.replace('<aDm>', '%.2f' %(aDm))
+                filedata = filedata.replace('<aEn>', '%.2f' %(aEn))
+                filedata = filedata.replace('<aFac>', '%.2f' %(aFac))
+                filedata = filedata.replace('<aDnF>', '%.2f' %(aDnF))
+                filedata = filedata.replace('<aTot>', '%.2f' %(aTot))
+                # savings
+                sDm  = (x1n - np.percentile(z1n,25))/100.*totalkWh
+                sEn  = (x2n - np.percentile(z2n,25))/100.*totalkWh
+                sFac = (x3n - np.percentile(z3n,25))/100.*totalkWh
+                sDnF = (x1n+x3n - np.percentile(z1n+z3n,25))/100.*totalkWh
+                sTot = sEn + sFac + sDm
+                filedata = filedata.replace('<sDm>', '%.2f' %(sDm))
+                filedata = filedata.replace('<sEn>', '%.2f' %(sEn))
+                filedata = filedata.replace('<sFac>', '%.2f' %(sFac))
+                filedata = filedata.replace('<sDnF>', '%.2f' %(sDnF))
+                filedata = filedata.replace('<sTot>', '%.2f' %(sTot))
+                # savings percentage
+                filedata = filedata.replace('<spDm>', '%.1f' %(sDm/nDm*100))
+                filedata = filedata.replace('<spEn>', '%.1f' %(sEn/nEn*100))
+                filedata = filedata.replace('<spFac>', '%.1f' %(sFac/nFac*100))
+                filedata = filedata.replace('<spTot>', '%.1f' %(sTot/nTot*100))
+                
                 # arrange conditional printing of savings
-                if ((sEn < 0) or (sDnF < 0)):
+                if (sTot < 0):
                     filedata = filedata.replace('<other>', 'false')
                     filedata = filedata.replace('<leader>', 'true')
                 else:

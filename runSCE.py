@@ -17,15 +17,16 @@ if False:
     fnamebase = 'waterSupplyandIrrigationSystems' # Name your input files here
     ratefile = 'SCE-TOU-PA-2-B.csv' # name of TOU rate profile
 
-if True:
+if False:
     fnamebase = 'largeOfficesAll' # Name your input files here
     ratefile = 'SCE-TOU-GS2-B.csv' # name of TOU rate profile
     ignoreCIDs_forGrouping = 'largeOfficesAll.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
-    considerfname = 'largeOffices_CustomerB.csv'
+    considerfname = 'largeOffices_CustomerI.csv'
 
-if False:
+if True:
     fnamebase = 'synthetic2_old' # Name your input files here
     ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
+    considerfname = 'groceryStores_CustomerI.csv'
 
 # =============================================================================
 # #%% Create profiles
@@ -77,7 +78,7 @@ if False:
                    dirout='output/', fnameout=fnamebase + '.A.normalized.csv',
                    dirlog='output/')
 #%% Plot heatmaps, Re-define the ignore list(10-12-2018)
-if False:    
+if True:    
     PlotHeatMaps(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv',
                  considerCIDs = considerfname,
                  dirout='plots/', fnameout=fnamebase + '.A.HeatMaps.pdf',
@@ -105,7 +106,7 @@ if False:
                    dirlog='plots/')
     
 #%% Plot heatmap of TOU Price
-if False:
+if True:
     PlotHeatMapOfBilling(dirin='output/', fnamein=fnamebase + '.A.billing.csv',
                          considerCIDs = considerfname,
                          dirout='plots/', fnameout=fnamebase + '.A.billing.Heatmaps.pdf',
@@ -210,7 +211,7 @@ if False:
                    dirout='output/', 
                    dirlog='output/')
 #%% Plot duration curves
-if False:
+if True:
     PlotDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', #ignoreCIDs = fnamebase + '.A.ignore.csv', 
                        considerCIDs = considerfname,
                        byMonthFlag=True, withDailyProfiles=True, 
@@ -223,59 +224,59 @@ if False:
                    dirlog='output/') 
 
 #%% Plot charts for customer reports
-if False:   
+if True:   
     PlotFamilyOfDurationCurves(dirin='output/', fnamein=fnamebase + '.A.normalized.csv', 
                                #ignoreCIDs = fnamebase + '.A.ignore.csv',
                                dirout='plots/', fnameout=fnamebase + '.A.FamilyOfDurationCurves.pdf', 
                                byMonthFlag=True, 
                                highlightCIDs = considerfname,
                                dirlog='plots/')
-if False:
+if True:
     PlotMonthlySummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
                          considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
                          dirout='plots/', fnameout=fnamebase + '.A.boxplots.pdf',
                          dirlog='plots/')
 
-if False:
+if True:
     PlotAnnualSummaries(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
                         considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
                         dirout='plots/', fnameout=fnamebase + '.A.piecharts.pdf',
                         dirlog='plots/')
 
-if False:
+if True:
     PlotAnnualWhiskers(dirin='output/', fnamein= 'summary.' + fnamebase + '.A.billing.csv', 
                        considerCIDs = considerfname, #ignoreCIDs = fnamebase + '.A.ignore.csv',
                        dirout='plots/', fnameout=fnamebase + '.A.whiskercharts.pdf', highlightCIDs = considerfname,
                        dirlog='plots/') # to plot fewer groups, use 'consderCIDs'
 
 #%% Extracting relevant plot pages for custoemrs listed in considerIDs
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.piecharts.pdf',
                         considerCIDs = considerfname,
                         dirout='report/visuals/', fnameout = '.piechart.pdf',
                         dirlog='output/')
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.boxplots.pdf',
                         considerCIDs = considerfname,
                         dirout='report/visuals/', fnameout = '.boxplot.pdf',
                         dirlog='output/')
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.whiskercharts.pdf',
                         considerCIDs = considerfname,
                         dirout='report/visuals/', fnameout = '.whiskerchart.pdf',
                         dirlog='output/')
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.heatmaps.pdf',
                         considerCIDs = considerfname,
                         dirout='report/visuals/', fnameout = '.heatmap.pdf',
                         dirlog='output/')
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.duration.monthly.test.pdf',
                         considerCIDs = considerfname, 
                         dirout='report/visuals/', fnameout = '.duration.monthly.test.pdf',
                         dirlog='output/')
     
-if False:
+if True:
     ExtractPlotsFromPDF(dirin='plots/', fnamein= fnamebase + '.A.billing.Heatmaps.pdf',
                         considerCIDs = considerfname, 
                         dirout='report/visuals/', fnameout = '.billing.Heatmap.pdf',
@@ -286,15 +287,19 @@ if False:
 ReplaceDict = {'<RateCode>':'TOU-GS3-B'}
 if True:
     PopulateLaTeX(dirin='output/', fnamein= 'summary.'+ fnamebase + '.A.billing.csv', 
-                  dirtex = 'report/templates/', fnametex = 'report04t.tex', 
+                  dirtex = 'report/templates/', fnametex = 'report05t.tex', 
                   considerCIDs = considerfname,
-                  dirout='report/', fnameout = '.report04t.tex',
+                  dirout='report/', fnameout = '.report05t.tex',
                   ReplaceDict = ReplaceDict,
                   dirlog='report/')
 
-if False:
+if True:
     CompileLaTeX(dirin='output/', considerCIDs = considerfname,
-                 dirtex = 'report/', texext='.report04t.tex',
+                 dirtex = 'report/', texext='.report05t.tex',
+                 dirout='report/',
+                 dirlog='report/')
+    CompileLaTeX(dirin='output/', considerCIDs = considerfname,
+                 dirtex = 'report/', texext='.report05t.tex',
                  dirout='report/',
                  dirlog='report/')
 

@@ -1,0 +1,30 @@
+ Volume in drive C is OSDisk
+ Volume Serial Number is 98F0-53C1
+
+ Directory of C:\Users\leed2\Documents\GitHub\LoadFlexibility\private
+
+01/25/2019  05:52 PM    <DIR>          .
+01/25/2019  05:52 PM    <DIR>          ..
+01/28/2019  02:12 PM            13,116 AnonymizeCIDs.log
+09/17/2018  05:56 PM       226,857,613 groceryStores.csv
+01/07/2019  04:45 PM        32,504,291 groceryStores_2.csv
+10/31/2018  01:27 PM       125,499,537 groceryStores_CZ10.csv
+10/31/2018  01:29 PM        21,156,571 groceryStores_CZ13.csv
+10/31/2018  01:28 PM        44,454,489 groceryStores_CZ14.csv
+10/31/2018  01:31 PM        19,976,727 groceryStores_CZ15.csv
+10/31/2018  01:31 PM         6,890,824 groceryStores_CZ16.csv
+10/31/2018  01:32 PM         3,432,696 groceryStores_CZ5.csv
+10/31/2018  01:30 PM       133,841,719 groceryStores_CZ6.csv
+10/31/2018  01:32 PM       160,426,555 groceryStores_CZ8.csv
+10/31/2018  01:29 PM       146,350,396 groceryStores_CZ9.csv
+09/21/2018  12:38 PM     1,550,501,971 largeOfficesAll.csv
+09/18/2018  05:09 PM       214,077,031 synthetic2.A.csv
+08/02/2018  01:28 PM       642,980,034 synthetic2.anonymized.csv
+08/15/2018  02:02 PM             9,863 synthetic2.keys.csv
+09/18/2018  05:09 PM             3,448 synthetic2.lookup.csv
+07/19/2018  01:05 PM       672,020,138 synthetic2_old.csv
+07/27/2018  03:46 PM       669,042,635 synthetic3.csv
+10/19/2018  05:27 PM       573,535,518 synthetic4.csv
+10/19/2018  05:27 PM       573,535,518 waterSupplyandIrrigationSystems.csv
+              21 File(s)  5,817,110,690 bytes
+               2 Dir(s)  417,875,013,632 bytes free

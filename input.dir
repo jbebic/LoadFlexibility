@@ -1,0 +1,73 @@
+ Volume in drive C is OSDisk
+ Volume Serial Number is 98F0-53C1
+
+ Directory of C:\Users\leed2\Documents\GitHub\LoadFlexibility\input
+
+03/27/2019  10:00 AM    <DIR>          .
+03/27/2019  10:00 AM    <DIR>          ..
+07/31/2018  11:24 AM         1,191,357 18474316.csv
+07/31/2018  11:24 AM         1,086,216 21861_input.csv
+07/31/2018  11:24 AM         1,193,803 22649411.csv
+07/31/2018  11:24 AM         1,193,353 23622540.csv
+07/31/2018  11:24 AM         1,191,349 30482450.csv
+07/31/2018  11:24 AM         1,191,349 31069388.csv
+07/31/2018  11:24 AM         1,191,341 31390050.csv
+07/31/2018  11:24 AM         1,191,698 32819727.csv
+08/03/2018  10:52 AM                20 ExportCIDs.A.csv
+08/03/2018  10:52 AM                20 ExportCIDs.csv
+08/03/2018  10:55 AM               439 ExportLoadFiles.log
+01/28/2019  06:44 PM            21,752 FixDST.log
+01/25/2019  06:26 PM       220,897,265 groceryStores.A.csv
+01/25/2019  05:59 PM             3,448 groceryStores.lookup.csv
+11/02/2018  08:41 AM       123,139,620 groceryStores_CZ10.A.csv
+11/02/2018  08:29 AM             1,881 groceryStores_CZ10.lookup.csv
+11/02/2018  10:38 AM        20,818,649 groceryStores_CZ13.A.csv
+11/02/2018  10:37 AM               339 groceryStores_CZ13.lookup.csv
+11/02/2018  10:50 AM        43,940,801 groceryStores_CZ14.A.csv
+11/02/2018  10:48 AM               684 groceryStores_CZ14.lookup.csv
+11/02/2018  11:17 AM        19,659,184 groceryStores_CZ15.A.csv
+11/02/2018  11:16 AM               303 groceryStores_CZ15.lookup.csv
+11/02/2018  11:26 AM         6,937,740 groceryStores_CZ16.A.csv
+11/02/2018  11:25 AM               126 groceryStores_CZ16.lookup.csv
+11/02/2018  10:31 AM         3,465,743 groceryStores_CZ5.A.csv
+11/02/2018  10:31 AM                76 groceryStores_CZ5.lookup.csv
+10/31/2018  01:57 PM       132,549,158 groceryStores_CZ6.A.csv
+10/31/2018  01:44 PM             1,951 groceryStores_CZ6.lookup.csv
+11/01/2018  01:35 PM       157,936,586 groceryStores_CZ8.A.csv
+11/01/2018  01:16 PM             2,410 groceryStores_CZ8.lookup.csv
+11/01/2018  03:45 PM       145,425,527 groceryStores_CZ9.A.csv
+11/01/2018  03:29 PM             2,163 groceryStores_CZ9.lookup.csv
+10/09/2018  11:23 AM     1,510,882,282 largeOfficesAll.A.csv
+10/16/2018  08:59 AM             2,333 largeOfficesAll.A.ignore.csv
+10/08/2018  03:50 PM            23,500 largeOfficesAll.lookup.csv
+09/28/2018  01:39 PM               228 largeOfficesConsider.csv
+09/18/2018  10:55 AM    <DIR>          New folder
+09/10/2018  01:56 PM             1,740 purelyBundledCustomers.csv
+03/27/2019  10:01 AM               845 ReviewLoads.log
+01/07/2019  05:08 PM       192,475,108 synthetic2.A.csv
+08/02/2018  01:58 PM               172 synthetic2.A.ignore.csv
+08/06/2018  10:20 AM       634,816,938 synthetic2.A.normalized.csv
+07/19/2018  01:05 PM       672,020,138 synthetic2.csv
+09/10/2018  01:37 PM               526 synthetic2.g1c.csv
+08/24/2018  11:22 AM               572 synthetic2.ignore.csv
+01/25/2019  03:08 PM             3,448 synthetic2.lookup.csv
+01/28/2019  06:44 PM       663,089,376 synthetic2_old.A.csv
+01/28/2019  02:12 PM             9,864 synthetic2_old.lookup.csv
+07/17/2018  08:35 AM         1,086,349 synthetic2_single customer.csv
+01/08/2019  09:57 AM       642,980,034 synthetic3.A.csv
+01/25/2019  03:14 PM             2,130 synthetic3.lookup.csv
+01/25/2019  05:42 PM       552,027,994 synthetic4.A.csv
+01/25/2019  05:42 PM             8,480 synthetic4.lookup.csv
+09/28/2018  01:36 PM    <DIR>          to be deleted to confirm
+10/12/2018  01:56 PM               411 TOU-GS2-B.csv
+10/12/2018  01:31 PM               411 TOU-GS3-B.csv
+03/27/2019  09:38 AM                77 troubleShootCIDs.csv
+07/27/2018  01:59 PM         2,452,831 two_grocers_DST_test.csv
+10/23/2018  01:44 PM       569,787,353 waterSupplyandIrrigationSystems.A.csv
+12/07/2018  01:03 PM                36 waterSupplyandIrrigationSystems.g1L.groupIDs.csv
+12/07/2018  01:03 PM               164 waterSupplyandIrrigationSystems.g1o.groupIDs.csv
+12/07/2018  01:03 PM                36 waterSupplyandIrrigationSystems.g2L.groupIDs.csv
+12/07/2018  01:03 PM               164 waterSupplyandIrrigationSystems.g2o.groupIDs.csv
+10/23/2018  10:57 AM             8,480 waterSupplyandIrrigationSystems.lookup.csv
+              62 File(s)  6,325,918,371 bytes
+               4 Dir(s)  417,875,169,280 bytes free

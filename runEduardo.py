@@ -20,7 +20,7 @@ if False:
 if True:
     groupName='g1L'
     NormalizeGroup(dirin='input/', fnamein=fnamebase + '.A.csv',
-                           considerCIDs=considerfname + '.' + fnamebase + "." + groupName + ".groupIDs.csv",
+                           considerCIDs='groceryStores_CustomerI' + '.' + fnamebase + "." + groupName + ".groupIDs.csv",
                            demandUnit='kW',
                            dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.normalized.csv',
                            dirlog='eduardo/')    

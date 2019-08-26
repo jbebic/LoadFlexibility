@@ -86,6 +86,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
     df3c = pd.DataFrame(df2count.to_records()) 
     df3 = df3.assign(Count =pd.Series(df3c['Demand'].values, index=df3.index))
     df3['AvgDemand'] = df3['Demand'] / df3c['Demand']
+    df3['AggrDmnd'] = df3['AggrDmnd']
     
     idList = ",".join(UniqueIDs)
     print("Normalizing group that includes " + idList)
@@ -100,7 +101,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
             dAvg = df3.loc[relevant,normalizeVar].mean()
             dMin = df3.loc[relevant,normalizeVar].min()
             dMax = df3.loc[relevant,normalizeVar].max()
-            df3.loc[relevant,'AggrDmnd'] = df3.loc[relevant,normalizeVar].copy() # /dAvg 
+            # df3.loc[relevant,'AggrDmnd'] = df3.loc[relevant,normalizeVar].copy() # /dAvg 
             df3.loc[relevant,'DailyAverage'] = np.asarray([ df3.loc[relevant,'Demand'].mean() for x in range(0,len(relevant))])
                 
     elif normalizeBy=='day':
@@ -115,7 +116,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
                 dAvg = df3.loc[relevant,normalizeVar].mean()
                 dMin = df3.loc[relevant,normalizeVar].min()
                 dMax = df3.loc[relevant,normalizeVar].max()
-                df3.loc[relevant,'AggrDmnd'] = df3.loc[relevant,normalizeVar].copy() # /dAvg 
+                # df3.loc[relevant,'AggrDmnd'] = df3.loc[relevant,normalizeVar].copy() # /dAvg 
                 df3.loc[relevant,'DailyAverage'] = np.asarray([ df3.loc[relevant,'Demand'].mean() for x in range(0,sum(relevant))])
     else:
         print("Normalizing demand in entire data set")
@@ -126,7 +127,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
         foutLog.write('maxDemand: %.2f\n' %dMax)
         foutLog.write('avgDemand: %.2f\n' %dAvg)
         foutLog.write('minDemand: %.2f\n' %dMin)
-        df3['AggrDmnd'] = df3[normalizeVar].copy() # /dAvg
+        # df3['AggrDmnd'] = df3[normalizeVar].copy() # /dAvg
         df3.loc[relevant,'DailyAverage'] = np.asarray([ df3['Demand'].mean() for x in range(0,len(relevant))])
             
     # assign groupName as CustomerID

@@ -86,7 +86,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
     df3c = pd.DataFrame(df2count.to_records()) 
     df3 = df3.assign(Count =pd.Series(df3c['Demand'].values, index=df3.index))
     df3['AvgDemand'] = df3['Demand'] / df3c['Demand']
-    df3['AggrDmnd'] = df3['AggrDmnd']
+    df3['AggrDmnd'] = df3['Demand']
     
     idList = ",".join(UniqueIDs)
     print("Normalizing group that includes " + idList)

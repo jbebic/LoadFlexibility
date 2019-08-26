@@ -25,6 +25,7 @@ if True:
     groupName='all'
     AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.csv',
                            # considerCIDs='groceryStores_CustomerI' + '.' + fnamebase + "." + groupName + ".groupIDs.csv",
-                           demandUnit='kW',
+                           demandUnit='Wh',
                            dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
-                           dirlog='eduardo/')
+                           dirlog='eduardo/', 
+                           normalizeBy="all")

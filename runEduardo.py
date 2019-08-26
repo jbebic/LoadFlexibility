@@ -9,7 +9,7 @@ from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from OutputsForMAPS import AggregateLoadsForMAPS
 
 if True:
-    fnamebase = 'synthetic2.A' # Name your input files here
+    fnamebase = 'synthetic2' # Name your input files here
     # ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
     # considerfname = 'groceryStores_CustomerI.csv'
 
@@ -23,7 +23,7 @@ if False:
     
 if True:
     groupName='all'
-    AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.csv',
+    AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                            # considerCIDs='groceryStores_CustomerI' + '.' + fnamebase + "." + groupName + ".groupIDs.csv",
                            demandUnit='Wh',
                            dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
@@ -34,7 +34,7 @@ if False:
     for groupName in ['g1L', 'g1o']:
         AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.csv',
                               dirconsider='output/',
-                              considerCIDs = groupName +  '.' + fnamebase + "." + ".groupIDs.csv",
+                              considerCIDs = groupName +  '.' + fnamebase + '.Energy.A.groups.csv',
                               demandUnit='Wh',
                               dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
                               dirlog='eduardo/', 

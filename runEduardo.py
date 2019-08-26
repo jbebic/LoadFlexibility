@@ -21,7 +21,7 @@ if False:
                               dirlog='input/', 
                               outfmt='ISO')
     
-if True:
+if False:
     groupName='all'
     AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                            # considerCIDs='groceryStores_CustomerI' + '.' + fnamebase + "." + groupName + ".groupIDs.csv",
@@ -30,7 +30,7 @@ if True:
                            dirlog='eduardo/', 
                            normalizeBy="all")
 
-if False:
+if True:
     for groupName in ['g1L', 'g1o']:
         AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                               dirconsider='output/',

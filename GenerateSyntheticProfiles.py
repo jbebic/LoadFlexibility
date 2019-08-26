@@ -28,7 +28,8 @@ def logTime(foutLog, logMsg, tbase):
 def GenerateSyntheticProfiles(NumProfiles, tstart, tend, meMean=200, htllr=2.0, # meMean: monthly energy Mean [MWh], htllr: high to low load ratio
                               dirout='./', fnameout='synthetic.csv', 
                               dirlog='./', fnameLog='GenerateSyntheticProfiles.log',
-                              IDlen=6): # IDlen: Length of randomly assigned ID
+                              IDlen=6, # IDlen: Length of randomly assigned ID
+                              outfmt='SCE'): 
                               
     #%% Version and copyright info to record on the log file
     codeName = 'GenerateSyntheticProfiles.py'
@@ -95,16 +96,23 @@ def GenerateSyntheticProfiles(NumProfiles, tstart, tend, meMean=200, htllr=2.0, 
             df = df.append(df1, ignore_index=True)
             i += 1
 
-    #%% generating SCE-like datetime string
-    df['datetimestr']=df['datetime'].dt.strftime('%d%b%Y:%H:%M').str.upper()
-    df.sort_values(['CustomerID', 'datetimestr'], ascending=[True, True], inplace=True)
-
-    print("Writing output file")
-    # df1.to_csv('synthetic2.csv', index_label='datetime', columns=['Demand','CustomerID'], header=['Demand','CustomerID'], float_format='%.5f', date_format='%Y-%m-%d %H:%M')
-    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-    df.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr','Demand','CustomerID'], header=['datetimestr','Demand','CustomerID'], float_format='%.5f')
-    logTime(foutLog, '\nRunFinished at: ', codeTstart)
-    print('Finished')
+    if outfmt == 'SCE':   #%% generating SCE-like datetime string
+        df['datetimestr']=df['datetime'].dt.strftime('%d%b%Y:%H:%M').str.upper()
+        df.sort_values(['CustomerID', 'datetimestr'], ascending=[True, True], inplace=True)
+    
+        print("Writing output file")
+        # df1.to_csv('synthetic2.csv', index_label='datetime', columns=['Demand','CustomerID'], header=['Demand','CustomerID'], float_format='%.5f', date_format='%Y-%m-%d %H:%M')
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+        df.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr','Demand','CustomerID'], header=['datetimestr','Demand','CustomerID'], float_format='%.5f')
+        
+    else:
+        df.sort_values(['CustomerID', 'datetime'], ascending=[True, True], inplace=True)
+        print("Writing output file")
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+        df.to_csv(os.path.join(dirout,fnameout), index=False, columns=['CustomerID', 'datetime','Demand',], header=['CustomerID', 'datetime','Demand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M')
+        
+        logTime(foutLog, '\nRunFinished at: ', codeTstart)
+        print('Finished')
     
     return
 

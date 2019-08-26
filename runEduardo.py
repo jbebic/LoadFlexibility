@@ -32,7 +32,7 @@ if True:
 
 if False:
     for groupName in ['g1L', 'g1o']:
-        AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.csv',
+        AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                               dirconsider='output/',
                               considerCIDs = groupName +  '.' + fnamebase + '.Energy.A.groups.csv',
                               demandUnit='Wh',

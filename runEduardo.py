@@ -9,7 +9,7 @@ from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from OutputsForMAPS import AggregateLoadsForMAPS
 
 if True:
-    fnamebase = 'synthetic3' # Name your input files here
+    fnamebase = 'synthetic2.A' # Name your input files here
     # ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
     # considerfname = 'groceryStores_CustomerI.csv'
 

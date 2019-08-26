@@ -128,7 +128,8 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
         foutLog.write('avgDemand: %.2f\n' %dAvg)
         foutLog.write('minDemand: %.2f\n' %dMin)
         # df3['AggrDmnd'] = df3[normalizeVar].copy() # /dAvg
-        df3.loc[relevant,'DailyAverage'] = np.asarray([ df3['Demand'].mean() for x in range(0,len(relevant))])
+        # df3.loc[relevant,'DailyAverage'] = np.asarray([ df3['Demand'].mean() for x in range(0,len(relevant))])
+        df3['DailyAverage'] = df3['Demand'].mean()
             
     # assign groupName as CustomerID
     cid = np.asarray([groupName for i in range(0,len(df3),1)])

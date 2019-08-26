@@ -29,3 +29,13 @@ if True:
                            dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
                            dirlog='eduardo/', 
                            normalizeBy="all")
+
+if False:
+    for groupName in ['g1L', 'g1o']:
+        AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.csv',
+                              dirconsider='output/',
+                              considerCIDs = groupName +  '.' + fnamebase + "." + ".groupIDs.csv",
+                              demandUnit='Wh',
+                              dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
+                              dirlog='eduardo/', 
+                              normalizeBy="all")

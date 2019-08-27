@@ -54,7 +54,7 @@ if True:
     AggregateLoadsForMAPS(dirin='private/', fnamein=fnamebase + '.A.csv',
                           dirconsider='output/',
                           considerCIDs = ConsiderList,
-                          demandUnit='W',
+                          demandUnit='kWh',
                           dirout='eduardo/', fnameout= 'aggregate.csv',
                           dirlog='eduardo/', 
                           normalizeBy="all")

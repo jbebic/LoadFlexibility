@@ -143,8 +143,12 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
         df3 = df3.assign(CustomerID=pd.Series(cid,index=df3.index))
      
         # write to data file and to log
-        print('Writing: %s' %os.path.join(dirout,fnameout))
-        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+        if considerCIDs == '': 
+            fnamesave = 'all.' + fnameout
+        else:
+            fnamesave = considerCIDs + '.' + fnameout
+        print('Writing: %s' %os.path.join(dirout,fnamesave))
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnamesave))
         df3.to_csv( os.path.join(dirout,fnameout), columns=['CustomerID', 'datetime', 'AggrDmnd', 'DailyAverage', 'Demand', 'AvgDemand'], float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False) # this is a multiindexed dataframe, so only the data column is written
         logTime(foutLog, '\nRunFinished at: ', codeTstart)
         print('Finished: ' + considerCIDs)

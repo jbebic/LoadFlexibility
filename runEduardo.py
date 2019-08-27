@@ -30,7 +30,7 @@ if False:
                            dirlog='eduardo/', 
                            normalizeBy="all")
 
-if True:
+if False:
     for groupName in ['g1L', 'g1o']:
         AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                               dirconsider='output/',
@@ -39,3 +39,23 @@ if True:
                               dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
                               dirlog='eduardo/', 
                               normalizeBy="all")
+
+if True:
+    ConsiderList = ['g1L.synthetic2.Energy.A.groups.csv', 
+                    'g1o.synthetic2.Energy.A.groups.csv',
+                    'g2L.synthetic2.Energy.A.groups.csv', 
+                    'g2o.synthetic2.Energy.A.groups.csv',
+                    'g3L.synthetic2.Energy.A.groups.csv', 
+                    'g3o.synthetic2.Energy.A.groups.csv', 
+                    'g4L.synthetic2.Energy.A.groups.csv', 
+                    'g4o.synthetic2.Energy.A.groups.csv',
+                    '']
+
+    AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
+                          dirconsider='output/',
+                          considerCIDs = ConsiderList,
+                          demandUnit='Wh',
+                          dirout='eduardo/', fnameout= 'aggregate.csv',
+                          dirlog='eduardo/', 
+                          normalizeBy="all")
+        

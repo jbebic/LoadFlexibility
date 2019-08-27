@@ -35,7 +35,7 @@ if False:
         AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
                               dirconsider='output/',
                               considerCIDs = groupName +  '.' + fnamebase + '.Energy.A.groups.csv',
-                              demandUnit='Wh',
+                              demandUnit='W',
                               dirout='eduardo/', fnameout=fnamebase + "." + groupName +  '.aggregate.csv',
                               dirlog='eduardo/', 
                               normalizeBy="all")
@@ -54,7 +54,7 @@ if True:
     AggregateLoadsForMAPS(dirin='private/', fnamein=fnamebase + '.A.csv',
                           dirconsider='output/',
                           considerCIDs = ConsiderList,
-                          demandUnit='Wh',
+                          demandUnit='W',
                           dirout='eduardo/', fnameout= 'aggregate.csv',
                           dirlog='eduardo/', 
                           normalizeBy="all")

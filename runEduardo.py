@@ -51,7 +51,7 @@ if True:
                     'g4o.synthetic2.Energy.A.groups.csv',
                     '']
 
-    AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv',
+    AggregateLoadsForMAPS(dirin='private/', fnamein=fnamebase + '.A.csv',
                           dirconsider='output/',
                           considerCIDs = ConsiderList,
                           demandUnit='Wh',

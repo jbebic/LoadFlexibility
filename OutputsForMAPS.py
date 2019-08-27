@@ -71,7 +71,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
             scale = 1.0
         elif "GW" in demandUnit:
             scale = 1000.0 
-        elif "Wh" in demandUnit:
+        elif "W" in demandUnit:
             scale = 1.0/1000.0/1000.0
         if not('h' in demandUnit):
             deltaT = df1.ix[1,'datetime'] - df1.ix[0,'datetime']
@@ -81,6 +81,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
             pass
         else:
             print("Converting Demand from " + demandUnit + " to MWh using scaling factor of " +  str(scale))
+            foutLog.write("Converting Demand from " + demandUnit + " to MWh using scaling factor of " +  str(scale) + "\n")
             df1['Demand']  = df1['Demand'] * scale    
         
         df1['DailyAverage'] = 0.0 # Add column of normalized demand to enable setting it with slice index later
@@ -97,6 +98,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
         
         idList = ",".join(UniqueIDs)
         print("Normalizing group that includes " + idList)
+        foutLog.write("Normalizing group that includes " + idList + "\n")
         
         normalizeVar = 'AvgDemand'
         if normalizeBy=='month':

@@ -82,5 +82,5 @@ if False:
 
 if True:
    PlotHeatMaps(dirin='eduardo/', fnamein='g1L.' + fnamebase + '.Energy.A.groups.csv.aggregate.csv',
-                dirout='eduardo/', fnameout='g1L' + fnamebase + '.aggregate.HeatMaps.pdf',
+                dirout='eduardo/', fnameout='g1L.' + fnamebase + '.aggregate.HeatMaps.pdf',
                 dirlog='eduardo/')

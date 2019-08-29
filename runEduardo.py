@@ -7,6 +7,7 @@ Created on Thu Aug 22 12:52:38 2019
 
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from OutputsForMAPS import AggregateLoadsForMAPS
+from PlotHeatMaps import PlotHeatMaps
 
 if True:
     # fnamebase = 'synthetic2' # Name your input files here
@@ -60,7 +61,7 @@ if False:
                           dirlog='eduardo/', 
                           normalizeBy="all")
 
-if True:
+if False:
     ConsiderList = ['g1L.largeOfficesAll.Energy.A.groups.csv',
                     'g1o.largeOfficesAll.Energy.A.groups.csv',
                     'g2L.largeOfficesAll.Energy.A.groups.csv',
@@ -78,3 +79,8 @@ if True:
                           dirout='eduardo/', fnameout= 'aggregate.csv',
                           dirlog='eduardo/', 
                           normalizeBy="all")
+
+if True:
+   PlotHeatMaps(dirin='eduardo/', fnamein='g1L.' + fnamebase + '.Energy.A.groups.csv.aggregate.csv',
+                dirout='eduardo/', fnameout='g1L' + fnamebase + '.aggregate.HeatMaps.pdf',
+                dirlog='eduardo/')

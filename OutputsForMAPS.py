@@ -31,8 +31,8 @@ codeVersion = '1.0'
 codeCopyright = 'GNU General Public License v3.0'
 codeAuthors = 'Jovan Bebic, GE Global Research\n'
 
-def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv', 
-                   dirconsider='./', considerCIDs='',
+def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='',
+                   dirconsider='./', considerCIDs='', 
                    dirout='./', fnameout='IntervalData.aggregated.csv', 
                    dirlog='./', fnameLog='AggregateLoadsForMAPS.log', 
                    InputFormat = 'ISO', groupName='group',
@@ -59,7 +59,7 @@ def AggregateLoadsForMAPS(dirin='./', fnamein='IntervalData.csv',
     considerCIDs = None
     
     for considerCIDs in cIDlist:
-        UniqueIDs, foutLog = findUniqueIDs(dirconsider, UniqueIDsBase, foutLog, ignoreCIDs='', considerCIDs=considerCIDs)
+        UniqueIDs, foutLog = findUniqueIDs(dirconsider, UniqueIDsBase, foutLog, ignoreCIDs=ignoreCIDs, considerCIDs=considerCIDs)
         df1 = df1Base.sort_values(by=['CustomerID', 'datetime'])
     
         foutLog.write('Number of customer IDs to be aggregated: %d\n' %len(UniqueIDs))    

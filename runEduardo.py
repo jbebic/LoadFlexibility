@@ -9,7 +9,8 @@ from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from OutputsForMAPS import AggregateLoadsForMAPS
 
 if True:
-    fnamebase = 'synthetic2' # Name your input files here
+    # fnamebase = 'synthetic2' # Name your input files here
+    fnamebase = 'largeOfficesAll' # Name your input files here
     # ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
     # considerfname = 'groceryStores_CustomerI.csv'
 
@@ -40,7 +41,7 @@ if False:
                               dirlog='eduardo/', 
                               normalizeBy="all")
 
-if True:
+if False:
     ConsiderList = ['g1L.synthetic2.Energy.A.groups.csv', 
                     'g1o.synthetic2.Energy.A.groups.csv',
                     'g2L.synthetic2.Energy.A.groups.csv', 
@@ -58,4 +59,22 @@ if True:
                           dirout='eduardo/', fnameout= 'aggregate.csv',
                           dirlog='eduardo/', 
                           normalizeBy="all")
-        
+
+if True:
+    ConsiderList = ['g1L.largeOfficesAll.Energy.A.groups.csv',
+                    'g1o.largeOfficesAll.Energy.A.groups.csv',
+                    'g2L.largeOfficesAll.Energy.A.groups.csv',
+                    'g2o.largeOfficesAll.Energy.A.groups.csv',
+                    'g3L.largeOfficesAll.Energy.A.groups.csv',
+                    'g3o.largeOfficesAll.Energy.A.groups.csv',
+                    'g4L.largeOfficesAll.Energy.A.groups.csv',
+                    'g4o.largeOfficesAll.Energy.A.groups.csv',
+                    '']
+
+    AggregateLoadsForMAPS(dirin='input/', fnamein=fnamebase + '.A.csv', ignoreCIDs='largeOfficesAll.A.ignore.csv',
+                          dirconsider='output/',
+                          considerCIDs = ConsiderList,
+                          demandUnit='kWh',
+                          dirout='eduardo/', fnameout= 'aggregate.csv',
+                          dirlog='eduardo/', 
+                          normalizeBy="all")

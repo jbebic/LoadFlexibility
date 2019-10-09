@@ -700,7 +700,7 @@ def SaveDeltaByMonth(dirin_raw = './',
     codeTstart = datetime.now()
     
     # open log file
-    foutLog = createLog(codeName, "PlotDeltaByDay", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "SaveDeltaByMonth", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
     months = [ date(2016, m,1).strftime('%B') for m in range(1, 13,1)]
     durations_we = pd.DataFrame(columns=months)
@@ -790,7 +790,7 @@ def SaveDeltaByMonth(dirin_raw = './',
             
     print('\nWriting: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekdays.csv" ))))
     durations = durations.T
-    durations.to_csv(dirout + "/" + fnameout.replace('csv',  ".Weekdays.csv" ))     
+    durations.to_csv(dirout + "/" + fnameout.replace('.csv',  ".Weekdays.csv" ))     
     
     print('Writing: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekends.csv" ))))
     durations_we = durations_we.T

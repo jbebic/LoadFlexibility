@@ -61,6 +61,7 @@ if ('GroupAnalysisMaster' in steps) or ('All' in steps): # performs normalizing 
                         #steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']) 
 
 if ('SaveDeltaByMonth' in steps) or ('All' in steps):
+# This can be run after normalized group step in GroupAnalysisMaster   
     SaveDeltaByMonth(dirin_raw='output/', 
                      dirout='output/', 
                      fnamebase=fnamebase,

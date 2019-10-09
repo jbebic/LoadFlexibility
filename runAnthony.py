@@ -16,8 +16,8 @@ from PlotBilling import PlotBillingData
 # steps = ['All']
 # steps = ['CalculateBilling']
 # steps = ['CalculateGroups']
-# steps = ['GroupAnalysisMaster']
-steps = ['SaveDeltaByMonth']
+steps = ['GroupAnalysisMaster']
+# steps = ['SaveDeltaByMonth']
 
 if True:
     fnamebase = 'largeOfficesAll' # Name your input files here
@@ -61,7 +61,7 @@ if ('GroupAnalysisMaster' in steps) or ('All' in steps): # performs normalizing 
                         #steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']) 
 
 if ('SaveDeltaByMonth' in steps) or ('All' in steps):
-# This can be run after normalized group step in GroupAnalysisMaster   
+# This can be run after NormalizedGHroup step in GroupAnalysisMaster   
     SaveDeltaByMonth(dirin_raw='output/', 
                      dirout='output/', 
                      fnamebase=fnamebase,

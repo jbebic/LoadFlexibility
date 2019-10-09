@@ -347,7 +347,7 @@ def plotDeltaDuration(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-
         
     return ax0, ymax, ymaxC, ymaxD, x_out, y_out
 
-def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0, showCycles=False):
+def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0, showCycles=True):
     
     """ adds specific day's shifted energy to axis """
     df = df.sort_values(by='datetime', ascending=True)                  
@@ -689,6 +689,7 @@ def PlotDeltaByDay(dirin='./', fnameinL='leaders.csv',   fnameino='others.csv',
 def SaveDeltaByMonth(dirin_raw = './', 
                     dirout = './', 
                     fnamebase = 'fnamebase',
+                    datayear = 2016,
                     fnameout = 'duration.csv', 
                     Ngroups=1,
                     dirlog='./', 
@@ -702,14 +703,14 @@ def SaveDeltaByMonth(dirin_raw = './',
     # open log file
     foutLog = createLog(codeName, "SaveDeltaByMonth", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
     
-    months = [ date(2016, m,1).strftime('%B') for m in range(1, 13,1)]
+    months = [ date(datayear, m,1).strftime('%B') for m in range(1, 13,1)]
     durations_we = pd.DataFrame(columns=months)
     durations    = pd.DataFrame(columns=months)
     
     # iterate over each month of the year
     print("Calculating Average Delta for")
     for m in range(1, 13,1):
-        print('\n%s' %(date(2016, m,1).strftime('%B')))
+        print('\n%s' %(date(datayear, m,1).strftime('%B')))
         
         for n in range(1,Ngroups+1,1): 
             groupL = 'g' + str(n) + 'L'
@@ -772,7 +773,7 @@ def SaveDeltaByMonth(dirin_raw = './',
             
             # delta between leaders and others
             normDelta = np.flipud( np.sort((normLeaders - normOthers)) )
-            durations[(date(2016, m,1).strftime('%B'))] = normDelta  #*np.mean(avgOthers)
+            durations[(date(datayear, m,1).strftime('%B'))] = normDelta  #*np.mean(avgOthers)
             
             # sum & normalize the leaders 
             leaders_we = leaders_we.T
@@ -786,7 +787,7 @@ def SaveDeltaByMonth(dirin_raw = './',
             
             # delta between leaders and others
             normDelta_we = np.flipud( np.sort((normLeaders_we - normOthers_we)) )
-            durations_we[(date(2016, m,1).strftime('%B'))] = normDelta_we # *np.mean(avgOthers_we)
+            durations_we[(date(datayear, m,1).strftime('%B'))] = normDelta_we # *np.mean(avgOthers_we)
             
     print('\nWriting: %s' %os.path.join(os.path.join(dirout, fnameout.replace('.csv',  ".Weekdays.csv" ))))
     durations = durations.T

@@ -5,7 +5,7 @@ Created on Mon Sep 30 10:43:24 2019
 @author: jzb@achillearesearch.com
 """
 
-from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary, GroupAnalysisMaster
+from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary, GroupAnalysisMaster, SaveDeltaByMonth
 from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
@@ -14,10 +14,10 @@ from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
 
 # steps = ['All']
-#steps = ['CalculateBilling']
+# steps = ['CalculateBilling']
 # steps = ['CalculateGroups']
-steps = ['GroupAnalysisMaster']
-
+# steps = ['GroupAnalysisMaster']
+steps = ['SaveDeltaByMonth']
 
 if True:
     fnamebase = 'largeOfficesAll' # Name your input files here
@@ -59,3 +59,11 @@ if ('GroupAnalysisMaster' in steps) or ('All' in steps): # performs normalizing 
                         demandUnit='Wh',
                         steps=['PlotDeltaSummary'])
                         #steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']) 
+
+if ('SaveDeltaByMonth' in steps) or ('All' in steps):
+    SaveDeltaByMonth(dirin_raw='output/', 
+                     dirout='output/', 
+                     fnamebase=fnamebase,
+                     Ngroups=4,
+                     fnameout= fnamebase + '.DurationCurves.csv',
+                     dirlog='output/')

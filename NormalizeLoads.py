@@ -14,10 +14,9 @@ from datetime import datetime # time stamps
 import os # operating system interface
 from SupportFunctions import getData, getDataAndLabels, logTime, createLog, findUniqueIDs
 
-
 #%% Version and copyright info to record on the log file
 codeName = 'NormalizeLoads.py'
-codeVersion = '1.2'
+codeVersion = '1.21'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
 codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
 
@@ -32,7 +31,7 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
     codeTstart = datetime.now()
     
     # open log file
-    foutLog = createLog(codeName, "DeltaLoads", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    foutLog = createLog(codeName, "ReviewLoads", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
 
     # Output file information to log file
     print('Reading: %s' %os.path.join(dirin,fnamein))
@@ -83,17 +82,138 @@ def ReviewLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerC
 
     foutLog.write('Number of customer IDs after consider/ignore: %d\n' %len(UniqueIDs))
     
-    foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand\n')
+    colNames = ['CustomerID','RecordsRead', 'minDemand', 'avgDemand', 'maxDemand', 'totalEnergy']
+    df3 = pd.DataFrame(columns = colNames)
+    
+    foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand, totalEnergy\n')
     i = 1
     for cid in UniqueIDs:
         print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
         i += 1
         df2 = df1[df1['CustomerID'] == cid]
-        foutLog.write('%s, %d, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max()))
+        foutLog.write('%s, %d, %.2f, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max(), df2['Demand'].sum()))
+        temp = {'CustomerID' : cid,
+                'RecordsRead': df2['Demand'].size,
+                'minDemand': df2['Demand'].min(),
+                'avgDemand' : df2['Demand'].mean(),
+                'maxDemand' : df2['Demand'].max(),
+                'totalEnergy' : df2['Demand'].sum()}
+        df3 = df3.append(temp, ignore_index = True)
+
+    print('\nWriting: %s' %os.path.join(dirout,fnameout))
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+    df3.to_csv( os.path.join(dirout,fnameout), float_format='%.2f', index=False)
 
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     print('Finished')
     return
+
+# %% Function definitions
+def ConvertTo1515(dirin='./', fnamein='IntervalData.csv', 
+                  considerCIDs='', ignoreCIDs='',
+                  dirout='./', fnameout='IntervalData.1515.csv', 
+                  saveSummary = False, fnamesummary = 'IntervalData.summary.csv',
+                  dirlog='./', fnameLog='ConvertTo1515.log', 
+                  InputFormat = 'ISO'):
+
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # Open log file
+    foutLog = createLog(codeName, "ConvertTo1515", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin, fnamein, foutLog, datetimeIndex=True)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs=ignoreCIDs, considerCIDs=considerCIDs)
+    df1 = df1.sort_values(by=['CustomerID', 'datetime'])
+
+    foutLog.write('Number of customer IDs in the input file: %d\n' %len(UniqueIDs))
+
+    colNames = ['CustomerID', 'RecordsRead', 'minDemand', 'avgDemand', 'maxDemand', 'totalEnergy']
+    df3 = pd.DataFrame(columns = colNames)
+    
+    foutLog.write('CustomerID, RecordsRead, minDemand, avgDemand, maxDemand, totalEnergy\n')
+    i = 1
+    for cid in UniqueIDs:
+        print ('%s (%d of %d)' %(cid, i, len(UniqueIDs)))
+        i += 1
+        df2 = df1[df1['CustomerID'] == cid]
+        foutLog.write('%s, %d, %.2f, %.2f, %.2f, %.2f\n' %(cid, df2['Demand'].size, df2['Demand'].min(), df2['Demand'].mean(), df2['Demand'].max(), df2['Demand'].sum()))
+        temp = {'CustomerID' : cid,
+                'RecordsRead': df2['Demand'].size,
+                'minDemand': df2['Demand'].min(),
+                'avgDemand' : df2['Demand'].mean(),
+                'maxDemand' : df2['Demand'].max(),
+                'totalEnergy' : df2['Demand'].sum()}
+        df3 = df3.append(temp, ignore_index = True)
+
+    if saveSummary:
+        print('\nWriting: %s' %os.path.join(dirout,fnamesummary))
+        foutLog.write('Writing: %s\n' %os.path.join(dirout,fnamesummary))
+        df3.to_csv( os.path.join(dirout,fnamesummary), float_format='%.2f', index=False)
+    
+    print('\nExtracting 1515 data')
+    foutLog.write('\nExtracting 1515 data\n')
+    all_IDs = df3['CustomerID'].tolist()
+    # Selecting linearly independent, 1515 compliant groups, pedestrian-way using two loops...
+    # The inner loop creates a row array with exactly nSel elements set to 1
+    # The outer loop checks if this new row is linearly independent relative to other already selected rows 
+    # in the matrix by calculating the rank. A test matrix Mx2 is created and rank2 computed and 
+    # if it is greater than the rank of existing Mx matrix the row is added. 
+    N = len(all_IDs)
+    nSel = 15
+    Mx = np.zeros((1,N)).astype(int) # Zero row to enable np.vstack
+    rank = np.linalg.matrix_rank(Mx) # rank is zero
+    rowNum = 0
+    df6 = pd.DataFrame(columns = ['1515Row', 'Demand'])
+    df6.index.name = 'datetime'
+
+    while rank < N:
+        row = np.zeros(N).astype(int)
+        while (row.sum() < nSel):
+            i = np.random.randint(N)
+            row[i] = 1 # Set it to 1 (it may already be 1, but it is faster to just set it then set conditionaly)
+        # test if this set meets the 15/15 rule
+        ix = row.nonzero()[0] # extract indices of nonzero elements
+        ids = np.array(all_IDs)[ix].tolist() # sample the list of all_IDs with these indices to get the list of 15 chosen IDs
+        chosen = df3.index[df3['CustomerID'].isin(ids)] # chosen are the df3 indices that have CustomerID in the list of 15 chosen IDs
+        totalEn = df3.loc[chosen, 'totalEnergy'].sum() # totalEnergy of the group
+        # print('.', end = '') # the last row takes a long time, uncomment this to animate the user
+        if (df3.loc[chosen, 'totalEnergy'].max() < 0.15*totalEn):
+            # The 15/15 criteria is met, the row can be added to the matrix if it is linearly independent of other rows already in the matrix
+            Mx2 = np.vstack((Mx, row))
+            rank2 = np.linalg.matrix_rank(Mx2)
+            if rank2 > rank:
+                # The row is linearly independent, add it to the matrix and save the records for export
+                # add it to the matrix portion
+                Mx = Mx2
+                rank = rank2
+                # save the records portion
+                # need to add all values
+                rowNum += 1
+                print('Recording row %d' %(rowNum))
+                df4 = df1.loc[df1['CustomerID'].isin(ids)]
+                df4pivot = pd.pivot_table(df4, values=[ 'Demand'], index= ['datetime'], columns=None, aggfunc=np.sum, fill_value=0.0, margins=False, dropna=True, margins_name='All')
+                df5 = pd.DataFrame(df4pivot.to_records())
+                df5.set_index(['datetime'], inplace=True)
+                df5.sort_index(inplace=True) # sort on datetime
+                df5['1515Row'] = rowNum
+                df6 = df6.append(df5)
+
+    print('\nWriting: %s' %os.path.join(dirout,fnameout))
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
+    df6.to_csv( os.path.join(dirout,fnameout), float_format='%.2f')
+                
+    df7 = pd.DataFrame(Mx[1:,:], columns = all_IDs)
+    df7.index += 1
+    df7.index.name = '1515Row'
+    print('\nWriting: %s' %os.path.join(dirout,fnameout.replace('.csv', '.lookup.csv')))
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout.replace('.csv', '.lookup.csv')))
+    df7.to_csv(os.path.join(dirout,fnameout.replace('.csv', '.lookup.csv')))
+
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    print('Finished')
+    return
+
     
 def NormalizeLoads(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='',
                    dirout='./', fnameout='IntervalData.normalized.csv', 
@@ -354,12 +474,39 @@ def NormalizeGroup(dirin='./', fnamein='IntervalData.csv',
 
     return
 
-
+#%% Testing
 if __name__ == "__main__":
-    ReviewLoads(dirin='input/', fnamein='synthetic2.csv',
-                dirout='output/', fnameout='synthetic2.summary.csv',
-                dirlog='output/')
+    if False:
+        N = 115
+        nSel = 15
+        Mx = np.zeros((1,N)).astype(int)
+        rank = np.linalg.matrix_rank(Mx)
+        while rank < N:
+            row = np.zeros(N).astype(int)
+            while (row.sum() < nSel):
+                i = np.random.randint(N)
+                row[i] = 1 # Set it to 1 to save the if condition
+            Mx2 = np.vstack((Mx, row))
+            rank2 = np.linalg.matrix_rank(Mx2)
+            if rank2 > rank:
+                Mx = Mx2
+                rank = rank2
+        print(Mx)
+        
+    if True:
+        ConvertTo1515(dirin='input/', fnamein='synthetic150.csv', 
+                      dirout='input/', fnameout='synthetic150.1515.csv', 
+                      saveSummary = True, fnamesummary = 'synthetic150.summary.csv',
+                      dirlog='input/',
+                      InputFormat = 'ISO')
+            
+    if False:
+        ReviewLoads(dirin='input/', fnamein='synthetic150.csv',
+                    dirout='input/', fnameout='synthetic150.summary.csv',
+                    dirlog='input/', 
+                    InputFormat = 'ISO')
 
-    NormalizeLoads(dirin='input/', fnamein='synthetic2.csv', ignoreCIDs='synthetic2.ignoreCIDs.csv',
-                   dirout='output/', fnameout='synthetic2.normalized.csv',
-                   dirlog='output/')
+    if False:
+        NormalizeLoads(dirin='input/', fnamein='synthetic2.csv', ignoreCIDs='synthetic2.ignoreCIDs.csv',
+                       dirout='output/', fnameout='synthetic2.normalized.csv',
+                       dirlog='output/')

@@ -238,44 +238,48 @@ def assignDayType(df, datetimeIndex=True):
         df.at[df.index.dayofweek >= 5, 'DayType'] = 'we' # weekend
         
         # New Year's Day
-        if (df[(df.index.month == 1) & (df.index.day == 1)].index[0].dayofweek == 6):
-            df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
-            df.at[(df.index.month == 1) & (df.index.day == 2), 'DayType'] = 'o'
-        else:
-            df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+        if(df[(df.index.month == 1) & (df.index.day == 1)].index.size > 0):
+            if (df[(df.index.month == 1) & (df.index.day == 1)].index[0].dayofweek == 6):
+                df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
+                df.at[(df.index.month == 1) & (df.index.day == 2), 'DayType'] = 'o'
+            else:
+                df.at[(df.index.month == 1) & (df.index.day == 1), 'DayType'] = 'h'
     
         # Presidents' Day: 3rd Monday in February
         df.at[(df.index.month == 2) & (df.index.dayofweek == 0) &
                (15 <= df.index.day) & (df.index.day <= 21), 'DayType'] = 'h'
         
-        # Independence Day    
-        if (df[(df.index.month == 7) & (df.index.day == 4)].index[0].dayofweek == 6):
-            df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
-            df.at[(df.index.month == 7) & (df.index.day == 5), 'DayType'] = 'o'
-        else:
-            df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+        # Independence Day
+        if(df[(df.index.month == 7) & (df.index.day == 4)].index.size > 0):
+            if (df[(df.index.month == 7) & (df.index.day == 4)].index[0].dayofweek == 6):
+                df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
+                df.at[(df.index.month == 7) & (df.index.day == 5), 'DayType'] = 'o'
+            else:
+                df.at[(df.index.month == 7) & (df.index.day == 4), 'DayType'] = 'h'
         
         # Labor Day: 1st Monday in September
         df.at[(df.index.month == 9) & (df.index.dayofweek == 0) & 
                (1 <= df.index.day) & (df.index.day <= 7), 'DayType'] = 'h'
     
         # Veterans Day
-        if (df[(df.index.month == 11) & (df.index.day == 11)].index[0].dayofweek == 6):
-            df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
-            df.at[(df.index.month == 11) & (df.index.day == 12), 'DayType'] = 'o'
-        else:
-            df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+        if(df[(df.index.month == 11) & (df.index.day == 11)].index.size > 0):
+            if (df[(df.index.month == 11) & (df.index.day == 11)].index[0].dayofweek == 6):
+                df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
+                df.at[(df.index.month == 11) & (df.index.day == 12), 'DayType'] = 'o'
+            else:
+                df.at[(df.index.month == 11) & (df.index.day == 11), 'DayType'] = 'h'
     
         # Thanksgiving Day: 4th Thursday in November
         df.at[(df.index.month == 11) & (df.index.dayofweek == 3) &
                (22 <= df.index.day) & (df.index.day <= 28), 'DayType'] = 'h'
     
         # Christmas Day
-        if (df[(df.index.month == 12) & (df.index.day == 25)].index[0].dayofweek == 6):
-            df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'
-            df.at[(df.index.month == 12) & (df.index.day == 26), 'DayType'] = 'o'
-        else:
-            df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'  
+        if(df[(df.index.month == 12) & (df.index.day == 25)].index.size > 0):
+            if (df[(df.index.month == 12) & (df.index.day == 25)].index[0].dayofweek == 6):
+                df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'
+                df.at[(df.index.month == 12) & (df.index.day == 26), 'DayType'] = 'o'
+            else:
+                df.at[(df.index.month == 12) & (df.index.day == 25), 'DayType'] = 'h'  
             
     else:
                 

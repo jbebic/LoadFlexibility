@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep  7 11:51:10 2018
+Revisions Oct, 2019
+@author: jzb
 
+Created on Fri Sep  7 11:51:10 2018
 @author: berryi
 """
 #%% Import all the necessary Python packages
@@ -65,12 +67,21 @@ def findShiftingEvents(df0, threshold=0.1):
     
     # idendify modes
     mode = np.asarray(['0' for x in range(0, len(df),1)])
-    charge = df['NormDelta']>0
+    charge = df['NormDelta']>0 # dataseries with binary values
     mode[charge] = 'c' 
     discharge = df['NormDelta']<0
     mode[discharge] = 'd' 
     df = df.assign(mode=mode)
     rawmode = mode.copy()
+    
+    # The following code unifies the '0' intervals between two charging 'c' or 
+    # discharging 'd' intervals with their surrounding same-polarity interval. 
+    # For example: c c c c 0 0 0 c c c c becomes: c c c c c c c c c c c
+    # while:       c c c c 0 0 0 d d d d stays the same.
+    # The start and the end of the array are special cases, as follows.
+    # Zeroes before the first c or d are set to c or d and, likewise,
+    # zeroes after the last c or d are set to c or d. 
+    # Compare 'mode' with 'rawmode' after this block of code to inspect the changes
     gaps = np.where(mode=='0')[0]
     for ig in range(0, len(gaps)):
         v0 = [x for x in range(0, gaps[ig]) if not(x in gaps)]
@@ -85,40 +96,63 @@ def findShiftingEvents(df0, threshold=0.1):
             if before==after:
                 mode[gaps[ig]]=before
     
-    # identify transitions
+    # Identify transitions - store index positions at which the current rawmode is different than the next one
     rawtransitions = np.asarray( np.where( (rawmode[:-1] != rawmode[1:])  )[0])
+    
+    # initialize rawCycle to zero for the full length of charge dataseries (could have been discharge series here)
     rawCycle = np.asarray([ 0 for x in range(0, len(charge)) ])
+    # set rawCycle array to an integer array labelling contiguous c, 0, or d intervals. 
+    # The end of the rawCycle array remains labeled 0, the same as the start of the array
     if len(rawtransitions) > 1:
         for i in range(1, len(rawtransitions),1):
             rawCycle[rawtransitions[i-1]+1:rawtransitions[i]+1 ] = i
     df = df.assign(rawCycle=rawCycle)
     
+    # dataseries with integrals of NormDelta per rawCycle, used later to pick out charge/discharge intervals that are greater than SOC*threshold
     energy = df.groupby(['rawCycle'])['NormDelta'].cumsum()
-    totalEnergy = np.cumsum( df['NormDelta'].values)
-    totalEnergy = totalEnergy - np.min(totalEnergy)
     
+    # totalEnergy is the normalized state of charge of virtual battery considering the 24h day 
+    totalEnergy = np.cumsum( df['NormDelta'].values) # integral of NormDelta
+    totalEnergy = totalEnergy - np.min(totalEnergy) # shift to ensure it is always positive - "kiss zero" at one point in the 24 day.
+    df = df.assign(totalEnergy=totalEnergy)
+
+    SOC = np.cumsum( df['AbsDelta'].values) # SOC = integral of AbsDelta
+    SOC = SOC - np.min(SOC) # shift to ensure it is always positive - "kiss zero" at one point in the 24 day.
+    df = df.assign(SOC=SOC)
+    
+    # rawtransitions0 identifes index positions where the current value of mode is not zero and 
+    # it is different from the next value of mode.
     rawtransitions0 = np.asarray( np.where( (mode[:-1] != mode[1:]) & (mode[:-1]!='0')  )[0])
+    
+    # deltaEnergy are final values of energy in individual charge/discharge intervals
     deltaEnergy = energy[rawtransitions0].values
     deltaEnergy = np.nan_to_num(deltaEnergy)
+    # rawdischarges and charges are the end-indices of qualifying charge discharge intervals
     rawdischarges = rawtransitions0[ deltaEnergy<-np.max(totalEnergy)*threshold ] 
     rawcharges = rawtransitions0[ deltaEnergy>np.max(totalEnergy)*threshold ]
     
+    # chargeTransitions is the list of end-indices of qualifying charge intervals that are:
+    # a) nested between two qualifying discharge intervals and 
+    # b) where more energy got discharged in the next discharge interval than charged in the current charge interval
+    # if b) fails, then the end of the next discharge interval gets added to the list of dischargeTransitions
     chargeTransitions = []
     dischargeTransitions = []
     for i in range(1, len(rawdischarges),1):
+        # c is the list of end-indices of qualifying charge intervals nested between qualifying discharge intervals
         c = [ x for x in rawcharges if x > rawdischarges[i-1] and x < rawdischarges[i] ]
         if len(c)>0:
+            # only the first charge interval is considered in each pass of the for loop - note c[0] within if condition
             if abs(energy.values[c[0]]) < abs(energy.values[rawdischarges[i]]):
-                chargeTransitions.append(c[0])
+                chargeTransitions.append(c[0]) 
             else:
                 dischargeTransitions.append(rawdischarges[i])
 
     transitions = []
     for x in chargeTransitions:
         try:
-            i0 = np.max(np.where( mode[:x]!='c'  )[0] )+1
-            e0 = totalEnergy[i0-1]
-            i1 = i0 + np.min(np.where( totalEnergy[i0:]<e0  )[0]) 
+            i0 = np.max(np.where( mode[:x]!='c'  )[0] )+1 # i0 is the last time before charge transition where the system wasn't charging + 1
+            e0 = totalEnergy[i0-1] # e0 is the SOC just before then
+            i1 = i0 + np.min(np.where( totalEnergy[i0:]<e0  )[0]) # i1 is the first time after the onset of charge interval that SOC went below what it was at the start
             transitions.append(i0)
             transitions.append(i1)
         except:
@@ -351,7 +385,7 @@ def plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0, showCycles=True):
     
     """ adds specific day's shifted energy to axis """
     df = df.sort_values(by='datetime', ascending=True)                  
-    y = np.cumsum(df['NormDelta'])
+    y = np.cumsum(df['AbsDelta']) # was 'NormDelta', corrected Nov 6, 2019
     y = y - np.min(y)  
     ax0.plot(np.arange(df.shape[0]), y, ls, lw=lw, c=c, alpha=a)
     ax0.set_xlim([0,df.shape[0]])
@@ -402,10 +436,12 @@ def annualSummaryPage(pltPdf1, df1, fnamein, normalized=False, threshold=0.1):
     yMaxP_D = 0.0
     yMaxP_C = 0.0
     
-    # iterate over each month
     dailyEnergy = []
     shiftedEnergy = []
-    for m in range(1, 13,1):
+
+    # iterate over each month
+    months = list(set(df1.index.month))
+    for m in months:
         days = list(set(df1.loc[(month==m)].index.day))
         
         # plot shifted energy
@@ -851,6 +887,125 @@ def PlotDeltaSummary(dirin='./', fnamein='delta.csv',
     
     return
 
+def SaveDeltaSummary(dirin='./', fnamein='delta.csv', 
+                     dirout_summary='./', fnameout_summary='Summary.csv', 
+                     normalized=False, threshold=0.1, SOCres=1000, dtint = 15,
+                     dirlog='./', fnameLog='SaveDeltaSummary.log'):
+    """ Identifies duration of contiguous SOC levels and saves the file  
+        SOCres - State of Charge resolution. different days oof the year have significantly different SOCs, the resolution 
+                 applies to the maximum SOC observed, not each day. 
+        dtint - metering interval duration, used to adjust delta_t to be inclusive of last interval duration
+    """
+    
+    # Capture start time of code execution
+    codeTstart = datetime.now()
+    
+    # open log file
+    foutLog = createLog(codeName, "SaveDeltaSummary", codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+    
+    # load data from file, find initial list of unique IDs. Update log file    
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
+
+    # add season & day type
+    df1 = assignDayType(df1)
+    
+    # add extra columns to hold data
+    df1['Cycles'] = np.nan
+    df1['rawCycles'] = np.nan
+    df1['totalEnergy'] = np.nan
+    df1['SOC'] = np.nan
+
+    # Initialize variables
+    month = df1.index.month
+    day = df1.index.day
+
+    # Iterate over months and days
+    months = list(set(df1.index.month))
+    for m in months:
+        days = list(set(df1.loc[(month==m)].index.day))
+        for d in days:
+            relevant = (month==m) & (day==d)
+            df1x = findShiftingEvents(df1.loc[relevant], threshold=threshold)
+            df1.loc[relevant, ['Cycles']] = df1x['cycle']
+            df1.loc[relevant, ['rawCycles']] = df1x['rawCycle']
+            df1.loc[relevant, ['totalEnergy']] = df1x['totalEnergy']
+            df1.loc[relevant, ['SOC']] = df1x['SOC']
+            
+    # Setup for SOC duration calculations
+    SOCday = []
+    SOCmonth = []
+    SOCdt = []
+    SOCval = []
+    SOCdaytype = []
+    SOCinc = df1['SOC'].max()/SOCres
+    # Iterate over months and days
+    months = list(set(df1.index.month))
+    for m in months:
+        print('Processing month: %d of %d' %(m, len(months)))
+        days = list(set(df1.loc[(month==m)].index.day))
+        for d in days:
+            relevant = (month==m) & (day==d)
+            SOCarr = df1.loc[relevant]['SOC'].values
+            TSarr = df1.loc[relevant].index.values # TSarr = timestamp array
+            SOClvl = 0
+            while SOClvl <= SOCarr.max():
+                # search the interval
+                # SOCatlvl = np.where((SOCarr >= SOClvl) & (SOCarr < SOClvl+SOCinc)) # yields indices where the level is in the range
+                SOCatlvl = np.where(SOCarr >= SOClvl)[0] # yields indices where the level is above the "scan line"
+                # search for contiguous ranges of indices
+                ix0 = SOCatlvl[0]
+                ixz = ix0
+                thisSOCdt = []
+                for ix in SOCatlvl[1:]:
+                    if ((ix - ixz) == 1):
+                        ixz = ix
+                    else:
+                        thisSOCdt.append((TSarr[ixz]-TSarr[ix0])/np.timedelta64(1, 'm')+dtint)
+                        ix0 = ix
+                        ixz = ix0
+                # the last segment is added
+                thisSOCdt.append((TSarr[ixz]-TSarr[ix0])/np.timedelta64(1, 'm')+dtint)
+
+                if SOClvl < SOCarr[0]:
+                    # The duration of the first and the last period are to be summed
+                    try:
+                        if len(thisSOCdt) > 1:
+                            thisSOCdt[0] += thisSOCdt[-1]
+                            del thisSOCdt[-1]
+                    except:
+                        pass
+                
+                # capture into final SOC lists but only if there is something to save
+                if len(thisSOCdt) > 0:
+                    SOCday.extend([d]*len(thisSOCdt))
+                    SOCmonth.extend([m]*len(thisSOCdt))
+                    SOCdt.extend(thisSOCdt)
+                    SOCval.extend([SOClvl]*len(thisSOCdt))
+                    temp = df1.loc[relevant]['DayType'].values[0]
+                    SOCdaytype.extend([temp]*len(thisSOCdt))
+                # increment SOClvl to continue the while loop
+                SOClvl += SOCinc
+                
+    # Write output files
+    print('Writing output file: %s' %os.path.join(os.path.join(dirout_summary, fnameout_summary)))
+    foutLog.write('\n\nWriting: %s' %os.path.join(dirout_summary, fnameout_summary))
+    df1.reset_index(inplace = True)
+    df1.to_csv(os.path.join(dirout_summary,fnameout_summary), 
+               columns=['CustomerID', 'datetime', 'NormDelta', 'AbsDelta', 
+                        'Leaders', 'Others',  'NormLeaders', 'NormOthers', 
+                        'DailyAvgLeaders', 'DailyAvgOthers', 'totalEnergy', 'SOC',
+                        'Cycles', 'rawCycles', 'DayType'], 
+               float_format='%.5f', date_format='%Y-%m-%d %H:%M', index=False)
+
+    # SOC duration output file
+    fnameout_SOCduration = fnameout_summary.replace('Summary.csv', 'SOCduration.csv')
+    df2 = pd.DataFrame(np.column_stack([SOCmonth, SOCday, SOCdaytype, SOCval, SOCdt]), columns = ['SOCmonth', 'SOCday', 'SOCdaytype', 'SOCval', 'SOCdt'])
+    print('Writing output file: %s' %os.path.join(os.path.join(dirout_summary, fnameout_SOCduration)))
+    foutLog.write('\n\nWriting: %s' %os.path.join(dirout_summary, fnameout_SOCduration))
+    df2.to_csv(os.path.join(dirout_summary, fnameout_SOCduration), float_format='%.5f', index=False)
+
+    # finish log with run time
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
 
 
 def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
@@ -858,7 +1013,7 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                         fnamein='IntervalData.csv',  
                         Ngroups=4, threshold=1.0, demandUnit='Wh',
                         dirlog='./', fnameLog='GroupAnalysisMaster.log',
-                        steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']):
+                        steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary', 'SaveDeltaSummary']):
 
     # Capture start time of code execution
     codeTstart = datetime.now()
@@ -944,6 +1099,17 @@ def GroupAnalysisMaster(dirin_raw='./',  dirout_data='./', dirout_plots='./',
                        fnamein=fnameout_raw  + ".csv",
                        dirout_plots=dirout_plots, 
                        fnameout_plots=fnameout_raw + '.Summary.pdf',
+                       threshold=threshold,
+                       dirlog=dirlog)
+            foutLogMaster.write('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
+            print('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
+
+        if ('SaveDeltaSummary' in steps):
+            # Save complete summary of load flexibility 
+            SaveDeltaSummary(dirin=dirout_data, 
+                       fnamein=fnameout_raw  + ".csv",
+                       dirout_summary=dirout_data, 
+                       fnameout_summary=fnameout_raw + '.Summary.csv',
                        threshold=threshold,
                        dirlog=dirlog)
             foutLogMaster.write('\n\tPlotted load flexibility summary : '  + str(datetime.now()-codeTstartx))
@@ -1607,6 +1773,7 @@ def PlotDeltaSummaryByDay(dirin='./', fnamein='IntervalData.normalized.csv',
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     
     return
+
 def annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized=False, threshold=0.1):
     
     """ create page summary for specific month & add to pdf """
@@ -1697,7 +1864,105 @@ def annualSummaryPageByDay(pltPdf1, df1, dirout, fnamein, normalized=False, thre
         
     return pltPdf1, yMax, yMaxD, yMaxP, 0, 0, yMaxD_C, yMaxD_D
 
+#%% Unit tests
+if __name__ == "__main__":
+    if False: # generate a file for one week of data
+        # Set file and directory names
+        dirout = 'test/'
+        fnameout = 'CyclesTest.csv'
+        
+        # Set a time range
+        tstart = '7/1/2019' # start point of index data (Monday)
+        tend = '7/8/2019' # end point of index data (wish to include the entire week, so giving end date the following Monday)
+        time = pd.date_range(tstart, tend, freq='15min', closed = 'left') # excludes the right-end boundary, index finishes at 11:45pm on Sunday
     
+        # set up the dataframe to hold test data
+        colNames = ['CustomerID','datetime','NormDelta','AbsDelta','Leaders','Others','NormLeaders','NormOthers','DailyAvgLeaders','DailyAvgOthers']
+        df = pd.DataFrame(columns = colNames)
+        df['datetime'] = time
+        df.set_index(['datetime'], inplace=True)
+        df.sort_index(inplace=True) # sort on datetime
+        df['CustomerID'] = 'delta'
+        
+        # determine the number of days and 15-min intervals in the specified range
+        temp1 = pd.to_datetime(tstart)
+        temp2 = pd.to_datetime(tend)
+        dtime = temp2 - temp1
+        days  = dtime/pd.Timedelta( 1, 'D') # number of days in the time interval 
+        nsam  = dtime/pd.Timedelta(15, 'm') # number of 15 min intervals in the specified date range
+        
+        # loop on complete days and set dataframe variables
+        while temp1 < temp2: 
+            # extract the datetime indices for the day in question
+            ixday  = df.index[(df.index >= temp1) & (df.index < temp1 + pd.Timedelta(1, 'D'))]
+            
+            # set one 9 to 5 cycle
+            ix9to5 = df.index[(df.index >= temp1 + pd.Timedelta(9, 'h')) & (df.index < temp1 + pd.Timedelta(17, 'h'))]
+            df.loc[ixday, 'NormLeaders'] = np.float64(1.0)
+            
+            y1 = 1.0 + np.random.uniform(0,1)
+            df.loc[ix9to5, 'NormOthers'] = y1
+            ixrest = df.loc[ixday][~df.loc[ixday].index.isin(ix9to5)].index
+            # Solve "ix9to5.size*y1 + ixrest.size*y2 = ixday.size*1.0" for y2
+            y2 = (ixday.size*1.0 - ix9to5.size*y1)/ixrest.size
+            df.loc[ixrest, 'NormOthers'] = y2
+    
+            # generate random values for daily averages (distribution parameters chosen after LargeOffices g4 delta file)
+            daL = (0.65 + np.random.normal(0,0.03)) # daily average Leaders
+            daO = (5.18 + np.random.normal(0,0.66)) # daily average Others
+            
+            # Store all variables
+            df.loc[ixday, 'DailyAvgLeaders'] = daL
+            df.loc[ixday, 'DailyAvgOthers'] = daO
+            df.loc[ixday,  'NormDelta'] = df.loc[ixday, 'NormLeaders'] - df.loc[ixday, 'NormOthers']
+            df.loc[ixday,  'Leaders']   = df.loc[ixday, 'NormLeaders'] * df.loc[ixday, 'DailyAvgLeaders']
+            df.loc[ixday,  'Others']    = df.loc[ixday, 'NormOthers']  * df.loc[ixday, 'DailyAvgOthers']
+            df.loc[ixday,  'AbsDelta']  = df.loc[ixday, 'NormDelta']   * df.loc[ixday, 'DailyAvgOthers']
+                    
+            # increment working variable
+            temp1 += pd.Timedelta(1, 'D')
+        
+        # setting values using the loc function above results in coercion of datatypes, which breaks the cumsum function later in the code
+        # the fix is to convert select values to numeric types and undo the impact of coercion
+        cols2numeric = ['NormDelta','AbsDelta','Leaders','Others','NormLeaders','NormOthers','DailyAvgLeaders','DailyAvgOthers']
+        df[cols2numeric] = df[cols2numeric].apply(pd.to_numeric)
+
+        print("Writing data file: %s\n" %os.path.join(dirout,fnameout))
+        # df.sort_values(['CustomerID', 'datetime'], ascending=[True, True], inplace=True)
+        df.reset_index(inplace = True)
+        df.to_csv(os.path.join(dirout,fnameout), index=False, columns = colNames, float_format='%.5f', date_format='%Y-%m-%d %H:%M')
+
+    if True:
+        fnameroot = 'CyclesTest3'
+        # read the csv file
+        df = pd.read_csv(os.path.join('test/', fnameroot + '.csv'), header = 0)
+        df['datetime'] = pd.to_datetime(df['datetime'], format='%Y-%m-%d %H:%M')
+        df.set_index(['datetime'], inplace=True)
+        df.sort_index(inplace=True) # sort on datetime
+        
+        # assigning holiday, other, weekday, and weekend
+        df = assignDayType(df)
+
+        # open pdf for figures
+        print("Opening plot files")
+        pltPdf1  = dpdf.PdfPages(os.path.join('test/', fnameroot + '.pdf'))
+        # df1x = findShiftingEvents(df1.loc[relevant], threshold=0.1)
+        # plotShiftedEnergy(ax0, df, lw=1, c='b', ls='-',a=1.0, showCycles=True): 
+        annualSummaryPage(pltPdf1, df, 'CyclesTest', False, threshold=0.1)
+        # save to pdf
+        pltPdf1.close()
+
+    if False:
+        SaveDeltaSummary(dirin='test/', 
+                   fnamein='CyclesTest3.csv',
+                   dirout_summary='test/', 
+                   fnameout_summary='CyclesTest3' + '.Summary.csv',
+                   threshold=0.1,
+                   dirlog='test/')
+
+
+        
+#%%
 #def plotDeltaDurationX(ax0, df, lineWidth=1, lineColor ='steelblue', lineStyle='-', lineAlpha=1.0, threshold=0.1,  addText=False, varType='Norm'):
 #    
 #    """ adds specific day's duration curve to axis """

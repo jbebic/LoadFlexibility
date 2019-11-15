@@ -23,7 +23,7 @@ if True:
     fnamebase = 'largeOfficesAll' # Name your input files here
     ratefile = 'SCE-TOU-GS2-B.csv' # name of TOU rate profile
     ignoreCIDs_forGrouping = 'largeOfficesAll.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
-    considerfname = 'largeOffices_CustomerI.csv'
+    # considerfname = 'largeOffices_CustomerI.csv'
 
 #%% Calculate Billing
 if ('CalculateBilling' in steps) or ('All' in steps):
@@ -57,11 +57,11 @@ if ('GroupAnalysisMaster' in steps) or ('All' in steps): # performs normalizing 
                         Ngroups=4, 
                         threshold=0.5,
                         demandUnit='Wh',
-                        steps=['PlotDeltaSummary'])
-                        #steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary']) 
+                        steps=['SaveDeltaSummary'])
+                        #steps=['NormalizeGroup', 'DeltaLoads', 'PlotDeltaByDayWithDuration', 'PlotDeltaSummary', 'SaveDeltaSummary']) 
 
 if ('SaveDeltaByMonth' in steps) or ('All' in steps):
-# This can be run after NormalizedGHroup step in GroupAnalysisMaster   
+# This can be run after NormalizedGroup step in GroupAnalysisMaster   
     SaveDeltaByMonth(dirin_raw='output/', 
                      dirout='output/', 
                      fnamebase=fnamebase,

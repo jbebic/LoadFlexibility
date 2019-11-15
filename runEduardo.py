@@ -80,7 +80,18 @@ if False:
                           dirlog='eduardo/', 
                           normalizeBy="all")
 
-if True:
+if False:
    PlotHeatMaps(dirin='eduardo/', fnamein='g1L.' + fnamebase + '.Energy.A.groups.csv.aggregate.csv',
                 dirout='eduardo/', fnameout='g1L.' + fnamebase + '.aggregate.HeatMaps.pdf',
+                dirlog='eduardo/')
+
+if True:
+    for groupName in ['g1L', 'g1o', 'g2L', 'g2o', 'g3L', 'g3o', 'g4L', 'g4o']:
+        PlotHeatMaps(dirin='eduardo/', fnamein=groupName + '.' + fnamebase + '.Energy.A.groups.csv.aggregate.csv',
+                     dirout='eduardo/', fnameout=groupName  + '.' + fnamebase + '.aggregate.HeatMaps.pdf',
+                     dirlog='eduardo/')
+
+if False:
+   PlotHeatMaps(dirin='eduardo/', fnamein='all.' + fnamebase + '.aggregate.csv',
+                dirout='eduardo/', fnameout='all.' + fnamebase + '.aggregate.HeatMaps.pdf',
                 dirlog='eduardo/')

@@ -18,14 +18,14 @@ from NormalizeLoads import ConvertTo1515 # ReviewLoads, NormalizeLoads,  Normali
 if True:
     fnamebase = 'largeOfficesAll' # Name your input files here
 
-if True:
+if False:
     ConvertTo1515(dirin='input/', fnamein = fnamebase + '.A.csv',
                   dirout='input/', fnameout= fnamebase + '.A.1515.pv.csv',
                   saveSummary = True, fnamesummary = fnamebase + '.A.summary.pv.csv',
                   considerCIDs = fnamebase + '.A.pv.csv',
                   dirlog='input/')
 
-if False:
+if True:
     ConvertTo1515(dirin='input/', fnamein = fnamebase + '.A.csv',
                   dirout='input/', fnameout= fnamebase + '.A.1515.all.csv',
                   saveSummary = True, fnamesummary = fnamebase + '.A.summary.all.csv',

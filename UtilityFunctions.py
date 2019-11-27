@@ -27,7 +27,7 @@ from SupportFunctions import getData, getDataAndLabels, logTime, createLog, assi
 codeName = 'UtilityFunctions.py'
 codeVersion = '1.5'
 codeCopyright = 'GNU General Public License v3.0' # 'Copyright (C) GE Global Research 2018'
-codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\n"
+codeAuthors = "Jovan Bebic & Irene Berry, GE Global Research\nJovan Bebic, Achillea Research\n"
 
 #%% Function definitions
 def readTOURates(dirin, ratein):
@@ -589,6 +589,134 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
     print('Finished')
     
     return 
+
+def CalculateCorrelation(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', considerCIDs='', 
+                     dirprice  = './', pricein='TOU-GS3-B.csv',
+                     dirout='./', fnameout='Correlations.csv', fnameoutsummary=[],
+                     dirlog='./', fnameLog='CalculateCorrelation.log',
+                     tzinput = 'America/Los_Angeles',
+                     demandUnit='Wh', varName='Demand',
+                     writeDataFile=False,
+                     writeSummaryFile=True):
+    """ Generalization of the CalculateBilling function 
+    
+        Establishes a scalar metric for separation of leaders and others based on the correlation to 
+        any signal - the anticipated use case is alignment of consumption to to the LMP. 
+        The premise of this is that the highest impact to LMP can be made by reducing the load when 
+        LMP is high, so it is of interest to test the correlation of homegeneous load groups with LMP 
+        and use that correlation to separate the group into leaders and others. 
+        The leaders are be the loads least correlated to the LMP, others are (as before) the rest. 
+        In doing this, preference is given to the load groups on uniform rates because the loads on 
+        TOU rates have a motivation to shift away from high prices within the rates. 
+        Shifting to another driver introduces an error in estimates that is hard to quantify using 
+        just the smart meter data.
+        
+    """
+    
+    # if no summary file output name is specified:
+    if fnameoutsummary:
+        pass
+    else:
+        fnameoutsummary = 'summary.'  + fnameout
+        
+    # Capture start time of code execution and open log file
+    codeTstart = datetime.now()
+    foutLog = createLog(codeName, 'CalculateCorrelation', codeVersion, codeCopyright, codeAuthors, dirlog, fnameLog, codeTstart)
+
+    # read data & down-select to uniqueIDs   
+    df1, UniqueIDs, foutLog = getDataAndLabels(dirin,  fnamein, foutLog, datetimeIndex=True)
+    UniqueIDs, foutLog = findUniqueIDs(dirin, UniqueIDs, foutLog, ignoreCIDs, considerCIDs)
+    df1.loc[df1['CustomerID'].isin(UniqueIDs)]
+    
+    # update units into kWh
+    if "kW" in demandUnit:
+        scale = 1.0
+    elif "MW" in demandUnit:
+        scale = 1000.0
+    elif "GW" in demandUnit:
+        scale = 1000.0 * 1000.0
+    elif "W" in demandUnit:
+        scale = 1.0/1000.0
+    if not('h' in demandUnit):
+        deltaT = df1.ix[1,'datetime'] - df1.ix[0,'datetime']
+        timeStep = deltaT.seconds/60
+        scale = scale * timeStep / 60
+    if np.isclose(scale,1.0):
+        pass
+    else:
+        foutLog.write("Converting Demand from " + demandUnit + " to kWh using scaling factor of " +  str(scale) + "\n")
+        print("Converting Demand from " + demandUnit + " to kWh using scaling factor of " +  str(scale))
+        df1['Demand']  = df1['Demand'] * scale    
+
+    print('Reading the price-strip file: %s' %os.path.join(dirprice, pricein))
+    foutLog.write('\nReading the price-strip file: %s' %os.path.join(dirprice, pricein))
+    df2 = pd.read_csv(os.path.join(dirprice, pricein), header = 0)
+    df2['datetime'] = pd.to_datetime(df2['date'])
+    df2.set_index(['datetime'], inplace=True)
+    df2.sort_index(inplace=True) # sort on datetime
+    foutLog.write('Time records start on: %s\n' %df2.index[0].strftime('%Y-%m-%d %H:%M'))
+    foutLog.write('Time records end on: %s\n' %df2.index[-1].strftime('%Y-%m-%d %H:%M'))
+    deltat1 = df2.index[1]-df2.index[0]
+    deltat2 = df2.index[-1]-df2.index[0]
+    foutLog.write('Expected number of interval records: %.1f\n' %(deltat2.total_seconds()/deltat1.total_seconds()))
+    # reindex to align with interval data
+    df1a = pd.pivot_table(df1, index=df1.index, values=['Demand'], columns=['CustomerID'])
+    df1a.columns = df1a.columns.droplevel(0) # eliminates a redundant index level, the one associated with the Demand
+    df2a = df2['price'].resample('15min').mean() # returns a series of subsampled price data
+    df3 = df1a.join(df2a) # joins the two dataframes on datetime index 
+    # df3 has N+1 columns, where N is the number of unique CustomerIDs and +1 is the "price' column
+    months = df3.index.month.unique().tolist()
+    
+    # preparing the df_summary dataframe for saving summary file. 
+    # It is created with the column multiindex that matches that of the df_summary in CalculateBilling.
+    # at the timeof creation it is populated by nan, and these are later replaced by the month and year series.
+    ycolNames = ['Demand', 'DemandCharge', 'EnergyCharge', 'FacilityCharge', 'TotalCharge']
+    multi_index = pd.MultiIndex.from_product([ycolNames, ['entire year']+months], names=[None, 'month'])
+
+    df_summary = pd.DataFrame(columns=multi_index, index=UniqueIDs)
+    df_summary.index.name = 'CustomerID'
+    df_summary.sort_index(inplace=True)
+    
+    # Create empty dataframes to hold month-specific demand aggregates and correlation to price values
+    # dfCm = pd.DataFrame(index=df1a.columns.tolist()) # correlation
+    # dfDm = pd.DataFrame(index=df1a.columns.tolist()) # demand
+    # Calculating demand and correlation coefficients in the loop to align with summary.xxxx.a.billing.csv file format
+    for m in months:
+        relevant = df3[df3.index.month == m].index
+        sCm = df3.loc[relevant].corr()['price'][0:-1] # month-specific correlation to price into series indexed by CustomerID
+        sDm = df3.loc[relevant].sum()[0:-1] # month-specific total demand into series indexed by CustomerID
+        # dfCm = pd.concat([dfCm, sCm.rename('%d' %(m))], axis=1) # adding the month-specific column to dfCm
+        # dfDm = pd.concat([dfDm, sDm.rename('%d' %(m))], axis=1) #  adding the month-specific column to dfDm
+        df_summary['Demand', m] = sDm
+        df_summary['DemandCharge', m] = sCm
+        df_summary['EnergyCharge', m] = sCm
+        df_summary['FacilityCharge', m] = sCm
+        df_summary['TotalCharge', m] = sCm
+
+    # Create empty dataframes to hold full-year demand aggregates and correlation to price values
+    # dfCy = pd.DataFrame(index=df1a.columns.tolist()) # correlation
+    # dfDy = pd.DataFrame(index=df1a.columns.tolist()) # demand
+    sCy = df3.corr()['price'][0:-1] # correlation for the year
+    sDy = df3.sum()[0:-1] # demand for the year
+    # dfCy = pd.concat([dfCy, sCy.rename('entire year')], axis=1) # adding the entire year column to dfCy
+    # dfDy = pd.concat([dfDy, sDy.rename('entire year')], axis=1) # adding the entire year column to dfDy
+    
+    # assignment of values to df_summary
+    df_summary['Demand', 'entire year'] = sDy
+    df_summary['DemandCharge', 'entire year'] = sCy
+    df_summary['EnergyCharge', 'entire year'] = sCy
+    df_summary['FacilityCharge', 'entire year'] = sCy
+    df_summary['TotalCharge', 'entire year'] = sCy
+
+    target_index = [ycolNames+12*[ycolNames[0]]+12*[ycolNames[1]]+12*[ycolNames[2]]+12*[ycolNames[3]]+12*[ycolNames[4]],
+                    5*['entire year']+months+months+months+months+months]
+    df_summary = df_summary.reindex(columns=target_index)
+    foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
+    print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
+    df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')   
+    
+    return
+
 def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', considerCIDs='', highlightCIDs='',
                      dirout='./', fnamebase='naics',
                      dirplot='./',
@@ -949,6 +1077,13 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
     return 
 
 if __name__ == "__main__":
+    if True:
+        CalculateCorrelation(dirin='testdata/', fnamein='synthetic30.A.csv', ignoreCIDs='', considerCIDs='', 
+                     dirprice  = 'testdata/', pricein='20170101-20171231_CAISO_Average_Price.csv',
+                     dirout='testdata/', fnameout='Correlations.csv', fnameoutsummary=[],
+                     dirlog='testdata/', fnameLog='CalculateCorrelation.log',
+                     writeDataFile=False,
+                     writeSummaryFile=True)
     if False:
         SplitToGroups(3, 
                       dirin='testdata/', fnamein='synthetic20.normalized.csv', ignoreCIDs='', considerCIDs='',

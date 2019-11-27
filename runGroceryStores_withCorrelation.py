@@ -6,15 +6,15 @@ Created on Mon Sep 30 10:43:24 2019
 """
 
 from GroupAnalysis import DeltaLoads, PlotDeltaByDay, PlotDeltaSummary, GroupAnalysisMaster, SaveDeltaByMonth
-from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups
+from UtilityFunctions import ConvertFeather, FixDST, ExportLoadFiles, AnonymizeCIDs, CalculateBilling, CalculateGroups, CalculateCorrelation
 from GenerateSyntheticProfiles import GenerateSyntheticProfiles
 from NormalizeLoads import ReviewLoads, NormalizeLoads,  NormalizeGroup
 from PlotDurationCurves import PlotDurationCurves, PlotFamilyOfDurationCurves
 from PlotHeatMaps import PlotHeatMaps, PlotHeatMapOfBilling
 from PlotBilling import PlotBillingData
 
-steps = ['All']
-# steps = ['CalculateBilling']
+# steps = ['All']
+steps = ['CalculateCorrelation']
 # steps = ['CalculateGroups']
 # steps = ['GroupAnalysisMaster']
 # steps = ['SaveDeltaByMonth']
@@ -25,13 +25,13 @@ if True:
     ignoreCIDs_forGrouping = 'GroceryStores.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
     # considerfname = 'largeOffices_CustomerI.csv'
 
-#%% Calculate Billing
-if ('CalculateBilling' in steps) or ('All' in steps):
-    CalculateBilling(dirin='output2/', fnamein=fnamebase + '.A.csv', #'input/',
-                    ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
-                    dirrate = 'tou_data/', ratein = ratefile, 
-                    dirout='output2/', fnameout=fnamebase + '.A.billing.csv',
-                    dirlog='output2/', writeDataFile=True)
+#%% CalcualteCorrelation
+if ('CalculateCorrelation' in steps) or ('All' in steps):
+    CalculateCorrelation(dirin='output2/', fnamein=fnamebase + '.A.csv', 
+                         ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
+                         dirprice  = 'tou_data/', pricein='20170101-20171231_CAISO_Average_Price.csv',
+                         dirout='output2/', fnameout=fnamebase + '.A.billing.csv', 
+                         dirlog='output2/', fnameLog='CalculateCorrelation.log')
 
 
 #%% Grouping

@@ -245,18 +245,18 @@ def FixDST(dirin='./', fnamein='IntervalDataDST.csv',
         print('\nWriting: %s in %s format' %(os.path.join(dirout,fnameout), OutputFormat))
         foutLog.write('Writing: %s in %s format\n' %(os.path.join(dirout,fnameout), OutputFormat))
         df1.sort_values(by=['CustomerID', 'datetimestr'], inplace = True)
-        df1.to_csv(os.path.join(dirout,fnameout), index=False, float_format='%.1f', columns=['datetimestr', 'Demand', 'CustomerID'])
+        df1.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr', 'Demand', 'CustomerID'])
     elif OutputFormat == 'ISO':
         print('\nWriting: %s in %s format' %(os.path.join(dirout,fnameout), OutputFormat))
         foutLog.write('Writing: %s in %s format\n' %(os.path.join(dirout,fnameout), OutputFormat))
         df1.set_index(['CustomerID', 'datetime'], inplace=True)
         df1.sort_index(inplace=True) # need to sort on datetime **TODO: Check if this is robust
-        df1.to_csv(os.path.join(dirout,fnameout), index=True, float_format='%.1f', date_format='%Y-%m-%d %H:%M', columns=['Demand'])
+        df1.to_csv(os.path.join(dirout,fnameout), index=True, date_format='%Y-%m-%d %H:%M', columns=['Demand'])
     else:
         print('\nUnrecognized output format, writing in %s in SCE format' %os.path.join(dirout,fnameout))
         foutLog.write('\nUnrecognized output format, writing in %s in SCE format\n' %os.path.join(dirout,fnameout))
         df1.sort_values(by=['CustomerID', 'datetimestr'], inplace = True)
-        df1.to_csv(os.path.join(dirout,fnameout), index=False, float_format='%.1f', columns=['datetimestr', 'Demand', 'CustomerID'])
+        df1.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr', 'Demand', 'CustomerID'])
         
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
@@ -293,7 +293,7 @@ def ConvertFeather(dirin='./', fnamein='IntervalData.feather',
     if writeOutput:
         print('\nWriting: %s' %os.path.join(dirout,fnameout))
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameout))
-        df1.to_csv(os.path.join(dirout,fnameout), index=False, float_format='%.1f', columns=['datetimestr', 'Demand', 'CustomerID'])
+        df1.to_csv(os.path.join(dirout,fnameout), index=False, columns=['datetimestr', 'Demand', 'CustomerID'])
 
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
@@ -561,7 +561,6 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         dfwrite = df3.loc[df3['CustomerID'].isin(UniqueIDs)]
         dfwrite.to_csv(os.path.join(dirout,fnameout), 
                    index=False, 
-                   float_format='%.4f',
                    date_format='%Y-%m-%d %H:%M',
                    columns = ['CustomerID', 'datetime', 'Demand', 'EnergyCharge', 'DemandCharge', 'FacilityCharge', 'TotalCharge']) 
 
@@ -582,7 +581,7 @@ def CalculateBilling(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', cons
         
         foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
         print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
-        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')   
+        df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True)   
         
     logTime(foutLog, '\nRunFinished at: ', codeTstart)
     foutLog.close()
@@ -713,7 +712,7 @@ def CalculateCorrelation(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', 
     df_summary = df_summary.reindex(columns=target_index)
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
     print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
-    df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')   
+    df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True)   
     
     return
 

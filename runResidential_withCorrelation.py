@@ -22,15 +22,17 @@ steps = ['CalculateCorrelation']
 if True:
     fnamebase = 'VengeanceResFilter_RangeL10Pof8760and35040' # Name your input files here
     ratefile = 'SCE-TOU-GS3-B.csv' # name of TOU rate profile
-    ignoreCIDs_forGrouping = 'GroceryStores.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
-    # considerfname = 'largeOffices_CustomerI.csv'
+    ignorefname = 'GroceryStores.A.ignore.csv' # the ignoreCIDs for grouping (e.g. sites with solarPV, etc)
+    considerfname = 'VengeanceConsiderOnly.csv'
 
 #%% CalcualteCorrelation
 if ('CalculateCorrelation' in steps) or ('All' in steps):
     CalculateCorrelation(dirin='output/', fnamein=fnamebase + '.A.csv', 
-              #3        #ignoreCIDs = ignoreCIDs_forGrouping, #considerCIDs ='purelyBundledCustomers.csv', #fnamebase + '.g1c.csv', 
+              #3        #ignoreCIDs = ignorefname, 
+                         considerCIDs =considerfname, #fnamebase + '.g1c.csv', 
                          dirprice  = 'tou_data/', pricein='20170101-20171231_CAISO_Average_Price.csv',
-              #4         dirout='output/', fnameout=fnamebase + '.A.billing.csv', 
+                         demandUnit='kWh', 
+                         dirout='output/', fnameout=fnamebase + '.A.billing.csv', 
                          dirlog='output/', fnameLog='CalculateCorrelation.log')
 
 

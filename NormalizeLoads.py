@@ -493,7 +493,7 @@ if __name__ == "__main__":
                 rank = rank2
         print(Mx)
         
-    if True:
+    if False:
         ConvertTo1515(dirin='input/', fnamein='synthetic150.csv', 
                       dirout='input/', fnameout='synthetic150.1515.csv', 
                       saveSummary = True, fnamesummary = 'synthetic150.summary.csv',
@@ -506,7 +506,7 @@ if __name__ == "__main__":
                     dirlog='input/', 
                     InputFormat = 'ISO')
 
-    if False:
-        NormalizeLoads(dirin='input/', fnamein='synthetic2.csv', ignoreCIDs='synthetic2.ignoreCIDs.csv',
-                       dirout='output/', fnameout='synthetic2.normalized.csv',
+    if True:
+        NormalizeLoads(dirin='input/', fnamein='synthetic10-15min.csv', # ignoreCIDs='synthetic2.ignoreCIDs.csv',
+                       dirout='output/', fnameout='synthetic10-15min.normalized.csv',
                        dirlog='output/')

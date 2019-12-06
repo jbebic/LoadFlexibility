@@ -637,6 +637,7 @@ def CalculateCorrelation(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', 
         scale = 1000.0 * 1000.0
     elif "W" in demandUnit:
         scale = 1.0/1000.0
+
     if not('h' in demandUnit):
         deltaT = df1.ix[1,'datetime'] - df1.ix[0,'datetime']
         timeStep = deltaT.seconds/60
@@ -662,14 +663,15 @@ def CalculateCorrelation(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', 
     # reindex to align with interval data
     df1a = pd.pivot_table(df1, index=df1.index, values=['Demand'], columns=['CustomerID'])
     df1a.columns = df1a.columns.droplevel(0) # eliminates a redundant index level, the one associated with the Demand
-    df2a = df2['price'].resample('15min').mean() # returns a series of subsampled price data
+    temp = (df1a.index[1]-df1a.index[0]).seconds/60
+    df2a = df2['price'].resample(str(temp)+'min').mean() # returns a series of subsampled price data
     df3 = df1a.join(df2a) # joins the two dataframes on datetime index 
     # df3 has N+1 columns, where N is the number of unique CustomerIDs and +1 is the "price' column
     months = df3.index.month.unique().tolist()
     
     # preparing the df_summary dataframe for saving summary file. 
     # It is created with the column multiindex that matches that of the df_summary in CalculateBilling.
-    # at the timeof creation it is populated by nan, and these are later replaced by the month and year series.
+    # at the time of creation it is populated by nan, and these are later replaced by the monthly and entire year series.
     ycolNames = ['Demand', 'DemandCharge', 'EnergyCharge', 'FacilityCharge', 'TotalCharge']
     multi_index = pd.MultiIndex.from_product([ycolNames, ['entire year']+months], names=[None, 'month'])
 
@@ -677,43 +679,41 @@ def CalculateCorrelation(dirin='./', fnamein='IntervalData.csv', ignoreCIDs='', 
     df_summary.index.name = 'CustomerID'
     df_summary.sort_index(inplace=True)
     
-    # Create empty dataframes to hold month-specific demand aggregates and correlation to price values
-    # dfCm = pd.DataFrame(index=df1a.columns.tolist()) # correlation
-    # dfDm = pd.DataFrame(index=df1a.columns.tolist()) # demand
     # Calculating demand and correlation coefficients in the loop to align with summary.xxxx.a.billing.csv file format
     for m in months:
         relevant = df3[df3.index.month == m].index
         sCm = df3.loc[relevant].corr()['price'][0:-1] # month-specific correlation to price into series indexed by CustomerID
         sDm = df3.loc[relevant].sum()[0:-1] # month-specific total demand into series indexed by CustomerID
-        # dfCm = pd.concat([dfCm, sCm.rename('%d' %(m))], axis=1) # adding the month-specific column to dfCm
-        # dfDm = pd.concat([dfDm, sDm.rename('%d' %(m))], axis=1) #  adding the month-specific column to dfDm
+        # demand column set to the demand series
         df_summary['Demand', m] = sDm
+        # all charge columns are set to the same value for compatibility with the toolchain
         df_summary['DemandCharge', m] = sCm
         df_summary['EnergyCharge', m] = sCm
         df_summary['FacilityCharge', m] = sCm
         df_summary['TotalCharge', m] = sCm
 
     # Create empty dataframes to hold full-year demand aggregates and correlation to price values
-    # dfCy = pd.DataFrame(index=df1a.columns.tolist()) # correlation
-    # dfDy = pd.DataFrame(index=df1a.columns.tolist()) # demand
     sCy = df3.corr()['price'][0:-1] # correlation for the year
     sDy = df3.sum()[0:-1] # demand for the year
-    # dfCy = pd.concat([dfCy, sCy.rename('entire year')], axis=1) # adding the entire year column to dfCy
-    # dfDy = pd.concat([dfDy, sDy.rename('entire year')], axis=1) # adding the entire year column to dfDy
     
-    # assignment of values to df_summary
+    # assignment of entire year values to df_summary
     df_summary['Demand', 'entire year'] = sDy
     df_summary['DemandCharge', 'entire year'] = sCy
     df_summary['EnergyCharge', 'entire year'] = sCy
     df_summary['FacilityCharge', 'entire year'] = sCy
     df_summary['TotalCharge', 'entire year'] = sCy
 
+    # reordering the columns of df_summary for consistent output
     target_index = [ycolNames+12*[ycolNames[0]]+12*[ycolNames[1]]+12*[ycolNames[2]]+12*[ycolNames[3]]+12*[ycolNames[4]],
                     5*['entire year']+months+months+months+months+months]
     df_summary = df_summary.reindex(columns=target_index)
     foutLog.write('Writing: %s\n' %os.path.join(dirout,fnameoutsummary))
     print('Writing: %s' %os.path.join(dirout,fnameoutsummary))
-    df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.2f')   
+    df_summary.to_csv(os.path.join(dirout, fnameoutsummary), index=True, float_format='%.8f')
+
+    logTime(foutLog, '\nRunFinished at: ', codeTstart)
+    foutLog.close()
+    print('Finished')
     
     return
 
@@ -1078,7 +1078,7 @@ def CalculateGroups(dirin='./', fnamein='summary.billing.csv', ignoreCIDs='', co
 
 if __name__ == "__main__":
     if True:
-        CalculateCorrelation(dirin='testdata/', fnamein='synthetic30.A.csv', ignoreCIDs='', considerCIDs='', 
+        CalculateCorrelation(dirin='testdata/', fnamein='synthetic10-60min.A.csv', ignoreCIDs='', considerCIDs='', 
                      dirprice  = 'testdata/', pricein='20170101-20171231_CAISO_Average_Price.csv',
                      dirout='testdata/', fnameout='Correlations.csv', fnameoutsummary=[],
                      dirlog='testdata/', fnameLog='CalculateCorrelation.log',

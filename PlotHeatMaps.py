@@ -44,8 +44,9 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True, varName
     ax0.set_ylabel('Hour')
     ax0.set_xlabel('Day of Year')
     ax0.set_xlim([0,365])
-    ax0.set_ylim([0,24*4])
-    ax0.set_yticks(np.linspace(0, 96, num=5).tolist())
+    temp = df2['hour'][1]-df2['hour'][0]
+    ax0.set_ylim([0,24/temp])
+    ax0.set_yticks(np.linspace(0, 24/temp, num=5).tolist())
     ax0.set_yticklabels(np.linspace(0, 24, num=5, dtype=np.int16).tolist())
     ax0.set_yticklabels(['0', '6', '12', '18', '24'])        
 
@@ -118,8 +119,8 @@ def outputLoadHeatmap(pltPdf, df1,  title, cid, foutLog, weeklyBox=True, varName
     except:
         
         successFlag = False
-        foutLog.write("\n*** Unable to create duration plot for %s " %cid )
-        print("*** Unable to create duration plot for %s " %cid)
+        foutLog.write("\n*** Unable to create heatmap for %s " %cid )
+        print("*** Unable to create heatmap for %s " %cid)
         
         try:
             plt.close()    
@@ -582,6 +583,6 @@ def PlotHeatMapOfBilling(dirin='./', fnamein='IntervalData.normalized.csv', igno
     return
 
 if __name__ == "__main__":
-    PlotHeatMaps(dirin='output/', fnamein='synthetic2.normalized.csv',
-                 dirout='plots/', fnameout='HeatMaps.synthetic2.pdf',
+    PlotHeatMaps(dirin='output/', fnamein='synthetic10-15min.normalized.csv',
+                 dirout='plots/', fnameout='HeatMaps.synthetic10-15min.pdf',
                  dirlog='output/')

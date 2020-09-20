@@ -14,7 +14,7 @@ The LoadFlexibility tool-chain makes extensive use of numerical and plotting lib
 Open Anaconda command prompt and create the environment by following these steps:
 1. Start-> All Programs -> Anaconda3 (64-bit) -> Anaconda Prompt
 1. Change the directory to the root directory of LoadFlexibility tool-chain
-1. Type: "conda env create --file LoadFlexibility-env.txt"
+1. Type: "conda create -n LF-env --file LoadFlexibility-env.txt"
 
 ## Running Spyder within the new environment
 ### Method 1
